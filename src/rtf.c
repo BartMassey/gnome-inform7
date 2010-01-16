@@ -17,6 +17,8 @@
  
 #include <ctype.h>
 #include <string.h>
+#include <glib.h>
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
 /* The following two functions were adapted from GLib's g_strescape and
