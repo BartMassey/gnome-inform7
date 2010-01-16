@@ -7,7 +7,7 @@ schemadir = @GCONF_SCHEMA_FILE_DIR@
 dist_schema_DATA = gnome-inform7.schemas
 
 docdir = $(datadir)/doc/$(PACKAGE)
-doc_DATA = AUTHORS ChangeLog COPYING NEWS README THANKS TODO
+dist_doc_DATA = AUTHORS ChangeLog COPYING INSTALL NEWS README
 
 install-data-local:
 	GCONF_CONFIG_SOURCE=$(GCONF_SCHEMA_CONFIG_SOURCE) \

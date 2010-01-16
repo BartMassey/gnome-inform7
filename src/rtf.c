@@ -15,9 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
  
-#include <gnome.h>
 #include <ctype.h>
 #include <string.h>
+#include <gtk/gtk.h>
 
 /* The following two functions were adapted from GLib's g_strescape and
    g_strcompress */

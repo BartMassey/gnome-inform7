@@ -14,106 +14,79 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
-#ifndef STORY_H
-#define STORY_H
 
+#ifndef _STORY_H_
+#define _STORY_H_
+
+#include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 #include <gtksourceview/gtksourcebuffer.h>
-#include <libgnomevfs/gnome-vfs.h>
-#include <libgnomecanvas/libgnomecanvas.h>
+#include "app.h"
+#include "document.h"
+#include "panel.h"
 
-#include "skein.h"
+#define I7_TYPE_STORY             	(i7_story_get_type())
+#define I7_STORY(obj)             	(G_TYPE_CHECK_INSTANCE_CAST((obj), I7_TYPE_STORY, I7Story))
+#define I7_STORY_CLASS(klass)     	(G_TYPE_CHECK_CLASS_CAST((klass), I7_TYPE_STORY, I7StoryClass))
+#define I7_IS_STORY(obj)          	(G_TYPE_CHECK_INSTANCE_TYPE((obj), I7_TYPE_STORY))
+#define I7_IS_STORY_CLASS(klass)  	(G_TYPE_CHECK_CLASS_TYPE((klass), I7_TYPE_STORY))
+#define I7_STORY_GET_CLASS(obj)   	(G_TYPE_INSTANCE_GET_CLASS((obj), I7_TYPE_STORY, I7StoryClass))
 
-enum {
-    FORMAT_Z5 = 5,
-    FORMAT_Z6 = 6,
-    FORMAT_Z8 = 8,
-    FORMAT_GLULX = 256
-};
+typedef enum {
+	LEFT = 0,
+	RIGHT,
+	I7_STORY_NUM_PANELS
+} I7StoryPanel;
 
-enum {
-    HEADING_TITLE,
-    HEADING_LINE,
-    NUM_HEADING_COLUMNS
-};
-
-/* Compiling actions */
-enum {
-    COMPILE_NONE,
-    COMPILE_REFRESH_INDEX,
-    COMPILE_SAVE_DEBUG_BUILD,
-    COMPILE_RUN,
-    COMPILE_RELEASE
-};
-
-struct history {
-    int tab;
-    int subtab;
-    char *page;
-    char *anchor;
-};
-
-typedef struct history History;
-
-enum {
-    SKEIN_LEFT = 0,
-    SKEIN_RIGHT,
-    SKEIN_INSPECTOR,
-    NUM_SKEINS
-};
+typedef enum {
+    I7_STORY_FORMAT_Z5 = 5,
+    I7_STORY_FORMAT_Z6 = 6,
+    I7_STORY_FORMAT_Z8 = 8,
+    I7_STORY_FORMAT_GLULX = 256
+} I7StoryFormat;
 
 typedef struct {
-    /* The toplevel window in which this story is being edited */
-    GtkWidget *window;
-    /* This story's filename */
-    gchar *filename;
-    /* File monitor */
-    GnomeVFSMonitorHandle *monitor;
-    /* The program code */
-    GtkSourceBuffer *buffer;
-    /* The user's notes */
-    GtkTextBuffer *notes;
-    /* The tree of section headings */
-    GtkTreeStore *headings;
-    /* Various settings */
-    int story_format;
-    gboolean make_blorb;
-    
-    /* Which interpreter is running it */
-    gulong handler_finished;
-    gulong handler_input;
-    
-    /* Compile actions */
-    int action;
-	gchar *copyblorbto;
-    
-    /* Skein */
-    Skein *theskein;
-    GnomeCanvasGroup *skeingroup[NUM_SKEINS];
-    gboolean drawflag[NUM_SKEINS];
-    int drawcounter;
-    gboolean editingskein;
-    gboolean redrawingskein;
-    gint old_horizontal_spacing;
-    gint old_vertical_spacing;
-        
-    /* History navigation */
-    GQueue *back[2];
-    GQueue *forward[2];
-    History *current[2];
-    gulong handler_notebook_change[2];
-    gulong handler_errors_change[2];
-    gulong handler_index_change[2];
-} Story;
+	I7DocumentClass parent_class;
+} I7StoryClass;
 
-Story *new_story();
-void delete_story(Story *oldstory);
-Story *get_story(GtkWidget *widget);
-void set_story_filename(Story *thestory, gchar *filename);
-void for_each_story_window(void (*func)(GtkWidget *));
-void for_each_story_window_idle(GSourceFunc func);
-void for_each_story_buffer(void (*func)(GtkSourceBuffer *));
-gchar *get_story_extension(Story *thestory);
+typedef struct {
+	I7Document parent_instance;
 
-#endif
+	GtkWidget *facing_pages;
+	I7Panel *panel[I7_STORY_NUM_PANELS];
+} I7Story;
+
+GType i7_story_get_type(void) G_GNUC_CONST;
+I7Story *i7_story_new(I7App *app, const gchar *filename, const gchar *title, const gchar *author);
+I7Story *i7_story_new_from_file(I7App *app, const gchar *filename);
+I7Story *i7_story_new_from_dialog(I7App *app);
+I7Story *i7_story_new_from_uri(I7App *app, const gchar *uri);
+gboolean i7_story_open(I7Story *story, const gchar *directory);
+I7StoryPanel i7_story_choose_panel(I7Story *story, I7PanelPane newtab);
+void i7_story_show_pane(I7Story *story, I7PanelPane pane);
+void i7_story_show_tab(I7Story *story, I7PanelPane pane, gint tab);
+void i7_story_show_docpage(I7Story *story, gchar *file);
+
+/* Source pane, story-source.c */
+void on_panel_paste_code(I7Panel *panel, gchar *code, I7Story *story);
+void on_panel_jump_to_line(I7Panel *panel, guint line, I7Story *story);
+gboolean reindex_headings(GtkTextBuffer *buffer, I7Document *document);
+
+/* Errors pane, story-errors.c */
+void i7_story_add_debug_tabs(I7Document *document);
+void i7_story_remove_debug_tabs(I7Document *document);
+GtkSourceBuffer *create_inform6_source_buffer(void);
+
+/* Index pane, story-index.c */
+void i7_story_reload_index_tabs(I7Story *story, gboolean wait);
+
+/* Settings pane, story-settings.c */
+void on_z5_button_toggled(GtkToggleButton *togglebutton, I7Story *story);
+void on_z6_button_toggled(GtkToggleButton *togglebutton, I7Story *story);
+void on_z8_button_toggled(GtkToggleButton *togglebutton, I7Story *story);
+void on_glulx_button_toggled(GtkToggleButton *togglebutton, I7Story *story);
+void on_blorb_button_toggled(GtkToggleButton *togglebutton, I7Story *story);
+void i7_story_update_settings(I7Story *story);
+
+#endif /* _STORY_H_ */

@@ -18,33 +18,15 @@
 #ifndef COLOR_SCHEME_H
 #define COLOR_SCHEME_H
 
-#include <gnome.h>
+#include <glib.h>
 #include <gtksourceview/gtksourcebuffer.h>
-#include <gtksourceview/gtksourcelanguage.h>
+#include <gtksourceview/gtksourcestylescheme.h>
 
-/* All the different colors we use in the application */
-enum {
-    CLR_BACKGROUND = 0,
-    CLR_TEXT,
-    CLR_STRING,
-    CLR_STRING_MARKUP,
-    CLR_KEYWORD,
-    CLR_COMMENT,
-    CLR_ERROR,
-    CLR_HIGHLIGHT,
-    CLR_LOCKED,
-    CLR_UNLOCKED,
-    CLR_SKEIN_INPUT,
-    CLR_I6_CODE,
-    CLR_TRANS_CHANGED,
-    CLR_TRANS_UNCHANGED,
-    CLR_TRANS_INPUT,
-    CLR_TRANS_UNSET,
-    CLR_LAST = CLR_TRANS_UNSET
-};
-
+GSList *get_style_schemes_sorted(void);
+gboolean is_user_scheme(const gchar *scheme_id);
+const gchar *install_scheme(const gchar *fname);
+gboolean uninstall_scheme(const gchar *id);
 GtkSourceStyleScheme *get_style_scheme(void);
 void set_highlight_styles(GtkSourceBuffer *buffer);
-GdkColor get_scheme_color(int color);
 
 #endif

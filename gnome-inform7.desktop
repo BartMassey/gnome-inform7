@@ -1,9 +1,9 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=GNOME Inform 7
+Name=Inform 7
 Exec=gnome-inform7 %F
-Comment=Development environment for interactive fiction
+Comment=Write interactive fiction
 Icon=Inform.png
 Terminal=false
 Categories=Development;IDE;AdventureGame;Literature;GNOME;GTK

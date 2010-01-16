@@ -18,11 +18,10 @@
 #ifndef RTF_H
 #define RTF_H
 
-#include <gnome.h>
+#include <gtk/gtk.h>
 
 void gtk_text_buffer_set_rtf_text(GtkTextBuffer *buffer, const gchar *rtf_text);
 gchar *gtk_text_buffer_get_rtf_text(GtkTextBuffer *buffer,
-                                    const GtkTextIter *start,
-                                    const GtkTextIter *end);
+	const GtkTextIter *start, const GtkTextIter *end);
 
 #endif /* RTF_H */

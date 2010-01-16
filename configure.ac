@@ -5,13 +5,16 @@
 # Initialize autoconf
 # Args: (human-readable package name, package version, bug report address, 
 # tarballname)
-AC_INIT([GNOME Inform 7], [5Z71], [http://inform7.com/contribute/report], [gnome-inform7])
+AC_INIT([Inform 7], [5Z71], [http://inform7.com/contribute/report], [gnome-inform7])
 # Require Autoconf 2.60; I think the newest feature is AC_PROG_MKDIR_P...
 AC_PREREQ([2.60])
 # Sanity check to make sure we are running Autoconf from the right directory
 AC_CONFIG_SRCDIR(src/main.c)
 # Initialize automake; $(MKDIR_P) was introduced in 1.10
 AM_INIT_AUTOMAKE([1.10 -Wall])
+# Configure with --enable-silent-rules to cut down on clutter
+# Requires automake 1.11, but should just be ignored on 1.10
+AM_SILENT_RULES
 
 ### CHECK FOR PROPER NI EXECUTABLE #############################################
 
@@ -89,9 +92,9 @@ AM_CONDITIONAL([MANUALS_SECTIONS], [$TEST "x$manualtype" = xsections])
 
 # The user can specify the RPM release number in the environment (e.g. '1.fc10')
 AC_ARG_VAR([RPM_RELEASE], [Release number to build RPMs with [1]])
-AS_IF([test "x$RPM_RELEASE" = x], [RPM_RELEASE=1])
+AS_IF([$TEST "x$RPM_RELEASE" = x], [RPM_RELEASE=1])
 
-### DECLARE PROGRAMS ###########################################################
+### DECLARE PROGRAMS ##########################################################
 
 # Programs that Autoconf has built-in checks for
 AC_PROG_CC                        # C compiler
@@ -110,7 +113,7 @@ AC_PATH_PROG([ECHO], [echo])      # echo
 AC_PATH_PROG([CP], [cp])          # cp
 AC_PATH_PROG([DATE], [date])      # date
 # Other programs
-AM_GLIB_GNU_GETTEXT               # Use GLib gettext instead of standard
+AM_GNU_GETTEXT([external])        # Gettext, link to system libintl
 IT_PROG_INTLTOOL([0.35.0])        # Intltool
 PKG_PROG_PKG_CONFIG               # pkg_config
 AM_GCONF_SOURCE_2                 # GConf
@@ -118,60 +121,22 @@ AC_PATH_PROG([GCONFTOOL], [gconftool-2]) # GConf-Tool
 
 ### INTERNATIONALIZATION #######################################################
 
+AM_GNU_GETTEXT_VERSION([0.17])
 GETTEXT_PACKAGE=gnome-inform7
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [Gettext package.])
 
 ### CHECK FOR LIBRARIES ########################################################
 
-# Check whether to use GtkHTML 3.14 or 3.8
-PKG_CHECK_EXISTS([libgtkhtml-3.14], 
-	[GTK_HTML_MODULE=libgtkhtml-3.14], 
-	[GTK_HTML_MODULE=libgtkhtml-3.8])
-# Check for the correct UUID library header location
-# Prefer e2fsprogs, and switch to OSSP if that doesn't exist
-PKG_CHECK_EXISTS([uuid],
-	[AC_DEFINE([E2FS_UUID], [1], [Define if uuid header is from e2fsprogs])
-		UUID_MODULE=uuid],
-	[PKG_CHECK_EXISTS([ossp-uuid],
-		[AC_CHECK_HEADER([ossp/uuid.h],
-			[AC_DEFINE([OSSP_UUID], [1], 
-				[Define if the UUID header is not <uuid.h> but <ossp/uuid.h>])])
-		UUID_MODULE=ossp-uuid],
-		[AC_MSG_ERROR([Either OSSP UUID or e2fsprogs UUID required.])]
-	)]
-)	
-# Libraries for main program
-PKG_CHECK_MODULES([GNOMEINFORM7], [
-	glib-2.0 >= 2.4.0
-	gdk-2.0
-	gdk-pixbuf-2.0
-	gtk+-2.0 >= 2.8.0
-	pango
-	libgnome-2.0
-	libgnomeui-2.0
-	gconf-2.0
-	gnome-vfs-2.0
-	libbonobo-2.0
-	gtksourceview-2.0
-	gtkspell-2.0
-	libxml-2.0
-	$GTK_HTML_MODULE
-	$UUID_MODULE
+PKG_CHECK_MODULES(INFORM7, [
+	gdk-2.0 >= 2.2
+	glib-2.0 >= 2.16
+	gtk+-2.0 >= 2.12
+	gio-2.0 >= 2.16
+	gconf-2.0 >= 2.4
+	gtksourceview-2.0 >= 2.2
+	webkit-1.0 >= 1.0
 ])
-
-# Libraries for GtkTerp
-PKG_CHECK_MODULES([GTKTERP], [
-	gdk-2.0
-	gtk+-2.0 >= 2.8.0
-	freetype2 
-	sdl 
-	libpng 
-	dbus-glib-1
-])
-# SDL mixer, SDL sound, and libjpeg don't use pkg-config
-GTKTERP_LIBS="$GTKTERP_LIBS -lSDL_mixer -lSDL_sound -ljpeg"
-AC_SUBST(GTKTERP_LIBS)
 
 # Get current year for updating copyrights
 AC_SUBST(COPYRIGHT_YEAR, [`$DATE +%Y`])
@@ -185,12 +150,7 @@ AC_CONFIG_FILES([
 Makefile
 gnome-inform7.spec
 src/Makefile
-src/interface.c
-src/gtkterp/Makefile
-src/gtkterp/frotz/Makefile
-src/gtkterp/glulxe/Makefile
-src/gtkterp/garglk/Makefile
-src/gtkterp/git/Makefile
+src/aboutwindow.builder.xml
 src/inform6/Makefile
 src/inweb/Makefile
 src/inweb/Materials/inweb-configuration.txt

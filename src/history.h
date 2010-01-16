@@ -15,25 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
  
-#ifndef _HISTORY_H
-#define _HISTORY_H
+#ifndef HISTORY_H
+#define HISTORY_H
 
-#include "story.h"
+#include <glib.h>
+#include "panel.h"
 
-#ifndef LEFT
-# define LEFT 0
-#endif
-#ifndef RIGHT
-# define RIGHT 1
-#endif
+void history_free_queue(I7Panel *panel);
+void history_goto_current(I7Panel *panel);
+void history_push_pane(I7Panel *panel, I7PanelPane pane);
+void history_push_tab(I7Panel *panel, I7PanelPane pane, guint tab);
+void history_push_docpage(I7Panel *panel, const gchar *uri);
 
-void history_push_tab(Story *thestory, int side, int tab);
-void history_push_subtab(Story *thestory, int side, int tab, int subtab);
-void history_push_docpage(Story *thestory, int side, const gchar *page);
-void go_back(Story *thestory, int side);
-void go_forward(Story *thestory, int side);
-void history_block_handlers(Story *thestory, int side);
-void history_unblock_handlers(Story *thestory, int side);
-gchar *history_get_last_docpage(Story *thestory, int side);
-
-#endif /* _HISTORY_H */
+#endif /* HISTORY_H */

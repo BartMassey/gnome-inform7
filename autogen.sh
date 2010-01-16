@@ -9,10 +9,6 @@
 echo "Regenerating autotools files"
 autoreconf --install --symlink || exit 1
 
-### GLIB-GETTEXT ####################################################
-echo "Running glib-gettextize... Ignore non-fatal messages"
-glib-gettextize --force --copy || exit 1
-
 ### INTLTOOL ########################################################
 # Run after autopoint or glib-gettextize
 echo "Setting up intltool"
