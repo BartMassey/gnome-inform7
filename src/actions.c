@@ -675,19 +675,26 @@ void
 action_comment_out_selection(GtkAction *action, I7Document *document)
 {
 	GtkTextBuffer *buffer = GTK_TEXT_BUFFER(i7_document_get_buffer(document));
-	gtk_text_buffer_begin_user_action(buffer);
 	GtkTextIter start, end;
-	GtkTextMark *insert = gtk_text_buffer_get_insert(buffer); /* don't unref */
-	GtkTextMark *bound = gtk_text_buffer_get_selection_bound(buffer);
-	gtk_text_buffer_get_iter_at_mark(buffer, &start, insert);
-	gtk_text_buffer_get_iter_at_mark(buffer, &end, bound);
-	gtk_text_iter_order(&start, &end);
-	gtk_text_buffer_insert(buffer, &start, "[", -1);
-	gtk_text_buffer_get_iter_at_mark(buffer, &start, insert);
-	gtk_text_buffer_get_iter_at_mark(buffer, &end, bound);
-	gtk_text_iter_order(&start, &end);
-	gtk_text_buffer_insert(buffer, &end, "]", -1);
+	
+	if(!gtk_text_buffer_get_selection_bounds(buffer, &start, &end))
+		return;
+	gchar *text = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
+
+	gtk_text_buffer_begin_user_action(buffer);
+	gtk_text_buffer_delete(buffer, &start, &end);
+	gchar *newtext = g_strconcat("[", text, "]", NULL);
+	GtkTextMark *tempmark = gtk_text_buffer_create_mark(buffer, NULL, &end, TRUE);
+	gtk_text_buffer_insert(buffer, &end, newtext, -1);
 	gtk_text_buffer_end_user_action(buffer);
+
+	g_free(text);
+	g_free(newtext);
+
+	/* Select the text again, including [] */
+	gtk_text_buffer_get_iter_at_mark(buffer, &start, tempmark);
+	gtk_text_buffer_select_range(buffer, &start, &end);
+	gtk_text_buffer_delete_mark(buffer, tempmark);
 }
 
 void
