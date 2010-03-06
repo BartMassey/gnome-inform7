@@ -70,7 +70,6 @@ create_prefs_window(GtkBuilder *builder)
 	self->extensions_view = GTK_TREE_VIEW(load_object(builder, "extensions_view"));
 	self->extensions_add = GTK_WIDGET(load_object(builder, "extensions_add"));
 	self->extensions_remove = GTK_WIDGET(load_object(builder, "extensions_remove"));
-	self->intelligent_headings = GTK_WIDGET(load_object(builder, "intelligent_headings"));
 	self->auto_number = GTK_WIDGET(load_object(builder, "auto_number"));
 	self->clean_index_files = GTK_WIDGET(load_object(builder, "clean_index_files"));
 	self->schemes_list = GTK_LIST_STORE(load_object(builder, "schemes_list"));
@@ -460,12 +459,6 @@ void
 on_follow_symbols_toggled(GtkToggleButton *togglebutton, I7App *app)
 {
 	config_file_set_bool(PREFS_INTELLIGENCE, gtk_toggle_button_get_active(togglebutton));
-}
-
-void
-on_intelligent_headings_toggled(GtkToggleButton *togglebutton, I7App *app)
-{
-	config_file_set_bool(PREFS_INTELLIGENT_HEADINGS, gtk_toggle_button_get_active(togglebutton));
 }
 
 void

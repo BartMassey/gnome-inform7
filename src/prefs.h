@@ -35,7 +35,6 @@ typedef struct {
 	GtkTreeView *extensions_view;
 	GtkWidget *extensions_add;
 	GtkWidget *extensions_remove;
-	GtkWidget *intelligent_headings;
 	GtkWidget *auto_number;
 	GtkWidget *clean_index_files;
 	GtkListStore *schemes_list;

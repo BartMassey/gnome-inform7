@@ -231,16 +231,7 @@ on_config_intelligence_changed(GConfClient *client, guint id, GConfEntry *entry,
 	I7App *theapp = i7_app_get();
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle), newvalue);
 	/* make the other checkboxes dependent on this checkbox active or inactive*/
-	gtk_widget_set_sensitive(theapp->prefs->intelligent_headings, newvalue);
 	gtk_widget_set_sensitive(theapp->prefs->auto_number, newvalue);
-}
-
-static void
-on_config_intelligent_headings_changed(GConfClient *client, guint id, GConfEntry *entry, GtkWidget *toggle)
-{
-	gboolean newvalue = gconf_value_get_bool(gconf_entry_get_value(entry));
-	/* update application to reflect new value */
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle), newvalue);
 }
 
 static void
@@ -306,7 +297,6 @@ static struct KeyToMonitor keys_to_monitor[] = {
 	{ PREFS_SYNTAX_HIGHLIGHTING, "enable_highlighting", on_config_syntax_highlighting_changed },
 	{ PREFS_AUTO_INDENT, "auto_indent", on_config_generic_bool_changed },
 	{ PREFS_INTELLIGENCE, "follow_symbols", on_config_intelligence_changed },
-	{ PREFS_INTELLIGENT_HEADINGS, "intelligent_headings", on_config_intelligent_headings_changed },
 	{ PREFS_AUTO_NUMBER_SECTIONS, "auto_number", on_config_generic_bool_changed },
 	{ PREFS_AUTHOR_NAME, "author_name", on_config_author_name_changed },
 	{ PREFS_CLEAN_BUILD_FILES, "clean_build_files", on_config_clean_build_files_changed },
