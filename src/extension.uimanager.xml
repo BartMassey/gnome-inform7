@@ -59,11 +59,15 @@
 			<menuitem action="indent"/>
 			<menuitem action="unindent"/>
 			<menuitem action="comment_out_selection"/>
+			<!--<menuitem action="uncomment_selection"/>-->
 			<separator/>
 			<menuitem action="renumber_all_sections"/>
+			<!--<menuitem action="enable_elastic_tabs"/>-->
 		</menu>
 		<menu action="help_menu">
 			<menuitem action="report_bug"/>
+			<separator/>
+			<!--<menuitem action="visit_inform7_com"/>-->
 			<separator/>
 			<menuitem action="about"/>
 		</menu>

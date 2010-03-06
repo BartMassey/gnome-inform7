@@ -69,6 +69,7 @@ i7_app_init(I7App *self)
 		"quit", NULL,
 		"report_bug", "",
 		"about", "",
+		"visit_inform7_com", "",
 		NULL
 	};
 	add_actions(builder, &(priv->app_action_group), "app_actions", actions);

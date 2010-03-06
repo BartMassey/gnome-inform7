@@ -139,11 +139,13 @@ i7_document_init(I7Document *self)
 		"indent", "<ctrl>T",
 		"unindent", "<shift><ctrl>T",
 		"renumber_all_sections", "<shift><ctrl>N",
+		"enable_elastic_tabs", "", /* unimplemented */
 		NULL
 	};
 	const gchar *selection_actions[] = {
 		"scroll_selection", "<ctrl>J",
 		"comment_out_selection", "<ctrl>slash",
+		"uncomment_selection", "<shift><ctrl>slash", /* unimplemented */
 		NULL
 	};
 	const gchar *copy_actions[] = {

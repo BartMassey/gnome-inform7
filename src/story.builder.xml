@@ -3,12 +3,6 @@
   <!-- interface-requires gtk+ 2.12 -->
   <!-- interface-naming-policy project-wide -->
   <object class="GtkActionGroup" id="story_actions"/>
-  <object class="GtkAction" id="transcript_menu">
-    <property name="label">_Transcript</property>
-  </object>
-  <object class="GtkAction" id="build_menu">
-    <property name="label">_Build</property>
-  </object>
   <object class="GtkAction" id="show_pane_menu">
     <property name="label">Show _Tab</property>
   </object>
@@ -146,31 +140,28 @@
     <signal name="activate" handler="action_show_last_command_skein"/>
   </object>
   <object class="GtkAction" id="previous_changed_command">
-    <property name="label">_Previous Changed Command</property>
+    <property name="label">_Find Previous Changed Command</property>
     <property name="tooltip">Go to the previous changed command</property>
     <signal name="activate" handler="action_previous_changed_command"/>
   </object>
   <object class="GtkAction" id="next_changed_command">
-    <property name="label">_Next Changed Command</property>
+    <property name="label">Find _Next Changed Command</property>
     <property name="tooltip">Go to the next changed command</property>
     <signal name="activate" handler="action_next_changed_command"/>
   </object>
   <object class="GtkAction" id="previous_difference">
-    <property name="label">Pre_vious Difference</property>
+    <property name="label">Find Pre_vious Difference</property>
     <property name="tooltip">Go to the previous difference</property>
-    <property name="stock_id">gtk-go-up</property>
     <signal name="activate" handler="action_previous_difference"/>
   </object>
   <object class="GtkAction" id="next_difference">
-    <property name="label">Ne_xt Difference</property>
+    <property name="label">Find Ne_xt Difference</property>
     <property name="tooltip">Go to the next difference</property>
-    <property name="stock_id">gtk-go-down</property>
     <signal name="activate" handler="action_next_difference"/>
   </object>
   <object class="GtkAction" id="next_difference_skein">
-    <property name="label">Next _Difference in Skein</property>
+    <property name="label">Show Next _Difference in Skein</property>
     <property name="tooltip">Go to the next difference in the Skein</property>
-    <property name="stock_id">gtk-goto-bottom</property>
     <signal name="activate" handler="action_next_difference_skein"/>
   </object>
   <object class="GtkAction" id="refresh_index">
@@ -187,7 +178,8 @@
     <signal name="activate" handler="action_go"/>
   </object>
   <object class="GtkAction" id="replay">
-    <property name="label">_Replay</property>
+    <property name="label">_Replay Last Commands</property>
+    <property name="short_label">Replay</property>
     <property name="tooltip">Compile the story, and re-run to the previously active play point</property>
     <property name="stock_id">gtk-media-rewind</property>
     <signal name="activate" handler="action_replay"/>
@@ -199,7 +191,7 @@
     <signal name="activate" handler="action_stop"/>
   </object>
   <object class="GtkAction" id="play_all_blessed">
-    <property name="label">_Play All Blessed</property>
+    <property name="label">Re_play Commands Blessed in Transcript</property>
     <property name="tooltip">Play through all the blessed nodes in the entire Skein</property>
     <signal name="activate" handler="action_play_all_blessed"/>
   </object>
@@ -211,7 +203,7 @@
     <signal name="activate" handler="action_release"/>
   </object>
   <object class="GtkAction" id="save_debug_build">
-    <property name="label">Save _Debug Build...</property>
+    <property name="label">Release for _Testing...</property>
     <property name="tooltip">Compile the story with debugging features on and export it</property>
     <signal name="activate" handler="action_save_debug_build"/>
   </object>
@@ -230,5 +222,27 @@
     <property name="tooltip">Automatically underline misspelled words in the story</property>
     <property name="active">True</property>
     <signal name="toggled" handler="action_autocheck_spelling_toggle"/>
+  </object>
+  <object class="GtkAction" id="play_menu">
+    <property name="label">_Play</property>
+  </object>
+  <object class="GtkAction" id="replay_menu">
+    <property name="label">_Replay</property>
+  </object>
+  <object class="GtkAction" id="release_menu">
+    <property name="label">Re_lease</property>
+  </object>
+  <object class="GtkAction" id="test_me">
+    <property name="label">_Test Me</property>
+    <property name="tooltip">Compile the story, and run the "test me" command</property>
+  </object>
+  <object class="GtkAction" id="open_materials_folder">
+    <property name="label">_Open Materials Folder</property>
+    <property name="tooltip">Open this story's Materials folder in the file manager</property>
+    <property name="stock_id">gtk-directory</property>
+  </object>
+  <object class="GtkAction" id="export_ifiction_record">
+    <property name="label">_Export iFiction Record...</property>
+    <property name="tooltip">Save this story's iFiction metadata</property>
   </object>
 </interface>

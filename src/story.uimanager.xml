@@ -81,10 +81,22 @@
 			<menuitem action="indent"/>
 			<menuitem action="unindent"/>
 			<menuitem action="comment_out_selection"/>
+			<menuitem action="uncomment_selection"/>
 			<separator/>
 			<menuitem action="renumber_all_sections"/>
+			<menuitem action="enable_elastic_tabs"/>
 		</menu>
-		<menu action="transcript_menu">
+		<menu action="play_menu">
+			<menuitem action="go"/>
+			<menuitem action="test_me"/>
+			<menuitem action="stop"/>
+			<separator/>
+			<menuitem action="refresh_index"/>
+		</menu>
+		<menu action="replay_menu">
+			<menuitem action="replay"/>
+			<menuitem action="play_all_blessed"/>
+			<separator/>
 			<menuitem action="show_last_command"/>
 			<menuitem action="show_last_command_skein"/>
 			<separator/>
@@ -94,17 +106,13 @@
 			<menuitem action="next_difference"/>
 			<menuitem action="next_difference_skein"/>
 		</menu>
-		<menu action="build_menu">
-			<menuitem action="refresh_index"/>
-			<separator/>
-			<menuitem action="go"/>
-			<menuitem action="replay"/>
-			<menuitem action="stop"/>
-			<separator/>
-			<menuitem action="play_all_blessed"/>
-			<separator/>
+		<menu action="release_menu">
 			<menuitem action="release"/>
 			<menuitem action="save_debug_build"/>
+			<separator/>
+			<menuitem action="open_materials_folder"/>
+			<separator/>
+			<menuitem action="export_ifiction_record"/>
 		</menu>
 		<menu action="help_menu">
 			<menuitem action="help_contents"/>
@@ -113,6 +121,8 @@
 			<separator/>
 			<menuitem action="help_extensions"/>
 			<menuitem action="help_recipe_book"/>
+			<separator/>
+			<menuitem action="visit_inform7_com"/>
 			<separator/>
 			<menuitem action="about"/>
 		</menu>

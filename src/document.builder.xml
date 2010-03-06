@@ -404,7 +404,7 @@
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="find_close_button">
-                <property name="label" translatable="yes">gtk-close</property>
+                <property name="label">gtk-close</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -452,7 +452,7 @@
             </child>
             <child>
               <object class="GtkButton" id="find_button">
-                <property name="label" translatable="yes">gtk-find</property>
+                <property name="label">gtk-find</property>
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_focus">True</property>
@@ -509,9 +509,6 @@
       </row>
     </data>
   </object>
-  <object class="GtkTreeModelFilter" id="headings_filtermodel">
-    <property name="child_model">headings_store</property>
-  </object>
   <object class="GtkToggleAction" id="view_toolbar">
     <property name="label">Tool_bar</property>
     <property name="tooltip">Show or hide the toolbar in the current window</property>
@@ -527,6 +524,16 @@
   <object class="GtkImage" id="replace_icon">
     <property name="visible">True</property>
     <property name="stock">gtk-find-and-replace</property>
-    <property name="icon-size">4</property>
+  </object>
+  <object class="GtkTreeModelFilter" id="headings_filtermodel">
+    <property name="child_model">headings_store</property>
+  </object>
+  <object class="GtkAction" id="uncomment_selection">
+    <property name="label">_Uncomment Selection</property>
+    <property name="tooltip">Remove comment brackets from selected text</property>
+  </object>
+  <object class="GtkToggleAction" id="enable_elastic_tabs">
+    <property name="label">_Enable Elastic Tabs</property>
+    <property name="tooltip">Make tabs line up in the Story pane</property>
   </object>
 </interface>

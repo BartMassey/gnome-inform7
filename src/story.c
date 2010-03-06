@@ -523,8 +523,9 @@ i7_story_init(I7Story *self)
 	and can be removed once Glade supports adding actions and accelerators to an
 	action group. */
 	const gchar *actions[] = { 
-		"transcript_menu", "",
-		"build_menu", "",
+		"play_menu", "",
+		"replay_menu", "",
+		"release_menu", "",
 		"show_pane_menu", "",
 		"show_source", "<ctrl>F2",
 		"show_errors", "<ctrl>F3",
@@ -555,8 +556,8 @@ i7_story_init(I7Story *self)
 		"check_spelling", "<shift>F7",
 		"autocheck_spelling", "",
 		"set_language", "",
-		"show_last_command", "",
-		"show_last_command_skein", "",
+		"show_last_command", "<alt><ctrl>L",
+		"show_last_command_skein", "<shift><ctrl>L",
 		"previous_changed_command", "",
 		"next_changed_command", "",
 		"previous_difference", "",
@@ -564,11 +565,14 @@ i7_story_init(I7Story *self)
 		"next_difference_skein", "",
 		"refresh_index", "<ctrl>I",
 		"go", "<ctrl>R",
-		"replay", "<shift><ctrl>R",
+		"replay", "",
 		"stop", "<shift><ctrl>Q",
-		"play_all_blessed", "",
-		"release", "<alt><ctrl>R",
+		"play_all_blessed", "<shift><ctrl><alt>R",
+		"release", "<shift><ctrl>R",
 		"save_debug_build", "",
+		"test_me", "<alt><ctrl>R",
+		"open_materials_folder", "<alt><ctrl>M",
+		"export_ifiction_record", "",
 		NULL
 	};
 	add_actions(builder, &(priv->story_action_group), "story_actions", actions);

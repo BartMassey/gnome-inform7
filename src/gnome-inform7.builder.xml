@@ -74,6 +74,7 @@
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox2">
         <property name="visible">True</property>
+        <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child>
           <object class="GtkNotebook" id="prefs_notebook">
@@ -85,6 +86,7 @@
                 <property name="visible">True</property>
                 <property name="extension_events">cursor</property>
                 <property name="border_width">12</property>
+                <property name="orientation">vertical</property>
                 <property name="spacing">12</property>
                 <child>
                   <object class="GtkFrame" id="frame1">
@@ -230,6 +232,7 @@
                         <child>
                           <object class="GtkVBox" id="vbox9">
                             <property name="visible">True</property>
+                            <property name="orientation">vertical</property>
                             <property name="spacing">12</property>
                             <child>
                               <object class="GtkScrolledWindow" id="scrolledwindow17">
@@ -273,7 +276,7 @@
                                 <property name="layout_style">end</property>
                                 <child>
                                   <object class="GtkButton" id="style_add">
-                                    <property name="label" translatable="yes">gtk-add</property>
+                                    <property name="label">gtk-add</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
@@ -289,7 +292,7 @@
                                 </child>
                                 <child>
                                   <object class="GtkButton" id="style_remove">
-                                    <property name="label" translatable="yes">gtk-remove</property>
+                                    <property name="label">gtk-remove</property>
                                     <property name="visible">True</property>
                                     <property name="sensitive">False</property>
                                     <property name="can_focus">True</property>
@@ -339,6 +342,7 @@
                         <child>
                           <object class="GtkVBox" id="vbox6">
                             <property name="visible">True</property>
+                            <property name="orientation">vertical</property>
                             <child>
                               <object class="GtkHScale" id="tab_ruler">
                                 <property name="visible">True</property>
@@ -443,7 +447,6 @@
                   <object class="GtkImage" id="styles_icon">
                     <property name="visible">True</property>
                     <property name="stock">gtk-select-font</property>
-                    <property name="icon-size">4</property>
                   </object>
                   <packing>
                     <property name="position">0</property>
@@ -476,6 +479,7 @@
                     <child>
                       <object class="GtkVBox" id="vbox7">
                         <property name="visible">True</property>
+                        <property name="orientation">vertical</property>
                         <property name="spacing">12</property>
                         <child>
                           <object class="GtkScrolledWindow" id="scrolledwindow4">
@@ -554,7 +558,7 @@
                             <property name="layout_style">end</property>
                             <child>
                               <object class="GtkButton" id="extensions_add">
-                                <property name="label" translatable="yes">gtk-add</property>
+                                <property name="label">gtk-add</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -570,7 +574,7 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="extensions_remove">
-                                <property name="label" translatable="yes">gtk-remove</property>
+                                <property name="label">gtk-remove</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
@@ -641,6 +645,7 @@
                 <property name="visible">True</property>
                 <property name="tooltip_text" translatable="yes">Preferred author's name for new Inform 7 projects</property>
                 <property name="border_width">12</property>
+                <property name="orientation">vertical</property>
                 <property name="spacing">6</property>
                 <child>
                   <object class="GtkCheckButton" id="enable_highlighting">
@@ -783,7 +788,6 @@
                   <object class="GtkImage" id="intelligence_icon">
                     <property name="visible">True</property>
                     <property name="icon_name">dialog-information</property>
-                    <property name="icon-size">4</property>
                   </object>
                   <packing>
                     <property name="position">0</property>
@@ -808,6 +812,7 @@
               <object class="GtkVBox" id="vbox10">
                 <property name="visible">True</property>
                 <property name="border_width">12</property>
+                <property name="orientation">vertical</property>
                 <property name="spacing">12</property>
                 <child>
                   <object class="GtkFrame" id="frame6">
@@ -821,6 +826,7 @@
                         <child>
                           <object class="GtkVBox" id="vbox11">
                             <property name="visible">True</property>
+                            <property name="orientation">vertical</property>
                             <property name="spacing">6</property>
                             <child>
                               <object class="GtkCheckButton" id="clean_build_files">
@@ -883,6 +889,7 @@
                         <child>
                           <object class="GtkVBox" id="vbox12">
                             <property name="visible">True</property>
+                            <property name="orientation">vertical</property>
                             <property name="spacing">6</property>
                             <child>
                               <object class="GtkCheckButton" id="show_debug_tabs">
@@ -972,7 +979,7 @@
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="prefs_close">
-                <property name="label" translatable="yes">gtk-close</property>
+                <property name="label">gtk-close</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -1055,8 +1062,8 @@
   <object class="GtkRecentAction" id="open_recent">
     <property name="label">Open Recen_t</property>
     <property name="tooltip">Open a recently opened story</property>
-    <property name="limit">10</property>
     <property name="sort_type">mru</property>
+    <property name="limit">10</property>
     <signal name="item_activated" handler="action_open_recent"/>
   </object>
   <object class="GtkSourceBuffer" id="tab_buffer">
@@ -1076,5 +1083,9 @@ The Customs Wharf is a room. [change the description if the cask is open] "Amid 
     <property name="label">Report a _Bug</property>
     <property name="tooltip">Go to the bug report form on the Inform website</property>
     <signal name="activate" handler="action_report_bug"/>
+  </object>
+  <object class="GtkAction" id="visit_inform7_com">
+    <property name="label">_Visit Inform7.com</property>
+    <property name="tooltip">Go to the Inform 7 website in your web browser</property>
   </object>
 </interface>
