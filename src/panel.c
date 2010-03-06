@@ -479,7 +479,7 @@ on_navigation_requested(WebKitWebView *webview, WebKitWebFrame *frame, WebKitNet
 
 		/* If this is an index page, then all the image links need to be
 		 redirected. If this is not an index page, save ourself some trouble */
-		if(!strstr(filename, ".inform/Index/")) {
+		if(!strstr(filename, ".inform/Index/") || g_str_has_suffix(filename, ".inform/Index/")) {
 			g_free(filename);
 			g_free(scheme);
 			g_strfreev(uri_parts);
