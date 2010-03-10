@@ -128,7 +128,7 @@ AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [Gettext package.])
 
 ### CHECK FOR LIBRARIES ########################################################
 
-PKG_CHECK_MODULES(INFORM7, [
+PKG_CHECK_MODULES([INFORM7], [
 	gdk-2.0 >= 2.2
 	glib-2.0 >= 2.16
 	gtk+-2.0 >= 2.12
@@ -136,6 +136,12 @@ PKG_CHECK_MODULES(INFORM7, [
 	gconf-2.0 >= 2.4
 	gtksourceview-2.0 >= 2.2
 	webkit-1.0 >= 1.0
+])
+PKG_CHECK_MODULES([OSXCART], [
+	glib-2.0 >= 2.16
+	gdk-2.0
+	gdk-pixbuf-2.0 >= 2.6
+	gtk+-2.0 >= 2.10
 ])
 
 # Get current year for updating copyrights
@@ -156,6 +162,7 @@ src/inweb/Makefile
 src/inweb/Materials/inweb-configuration.txt
 src/cBlorb/Makefile
 src/ni/Makefile
+src/osxcart/Makefile
 po/Makefile.in
 data/Makefile
 data/licenses/Makefile
