@@ -35,6 +35,14 @@
 #include "rtf.h"
 #include "source-view.h"
 
+enum {
+	PROP_0,
+	PROP_STORY_FORMAT,
+	PROP_MAKE_BLORB,
+	PROP_NOBBLE_RNG,
+	PROP_ELASTIC_TABS
+};
+
 G_DEFINE_TYPE(I7Story, i7_story, I7_TYPE_DOCUMENT);
 
 /* SIGNAL HANDLERS */
@@ -139,6 +147,56 @@ on_facing_pages_set_focus_child(GtkContainer *container, GtkWidget *child, I7Sto
 		I7_STORY_PRIVATE(story)->last_focused = child;
 	/* Do not save the pointer if it is NULL: that means the focus left the
 	 widget */
+}
+
+/* OVERRIDES */
+
+static void
+i7_story_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
+{
+    I7Story *story = I7_STORY(object);
+   
+    switch(prop_id) 
+    {
+		case PROP_STORY_FORMAT:
+			i7_story_set_story_format(story, (I7StoryFormat)g_value_get_uint(value));
+			break;
+		case PROP_MAKE_BLORB:
+			i7_story_set_create_blorb(story, g_value_get_boolean(value));
+			break;
+		case PROP_NOBBLE_RNG:
+			i7_story_set_nobble_rng(story, g_value_get_boolean(value));
+			break;
+		case PROP_ELASTIC_TABS:
+			i7_story_set_elastic_tabs(story, g_value_get_boolean(value));
+			break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+    }
+}
+
+static void
+i7_story_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
+{
+	I7Story *story = I7_STORY(object);
+	
+    switch(prop_id)
+    {
+		case PROP_STORY_FORMAT:
+			g_value_set_uint(value, i7_story_get_story_format(story));
+			break;
+		case PROP_MAKE_BLORB:
+			g_value_set_boolean(value, i7_story_get_create_blorb(story));
+			break;
+		case PROP_NOBBLE_RNG:
+			g_value_set_boolean(value, i7_story_get_nobble_rng(story));
+			break;
+		case PROP_ELASTIC_TABS:
+			g_value_set_boolean(value, i7_story_get_elastic_tabs(story));
+			break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+    }
 }
 
 /* IMPLEMENTATIONS OF VIRTUAL FUNCTIONS */
@@ -291,43 +349,12 @@ i7_story_save_as(I7Document *document, gchar *directory)
 	
 	/* Save the project settings */
 	filename = g_build_filename(directory, "Settings.plist", NULL);
-	gchar *format_string = NULL;
-	g_strdup_printf(format_string, "%d", priv->story_format);
-	text = g_strconcat(
-	  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-	  "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" "
-		"\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
-	  "<plist version=\"1.0\">\n"
-	  "<dict>\n"
-	  "\t<key>IFCompilerOptions</key>\n"
-	  "\t<dict>\n"
-	  "\t\t<key>IFSettingNaturalInform</key>\n"
-	  "\t\t<true/>\n"
-	  "\t</dict>\n"
-	  "\t<key>IFLibrarySettings</key>\n"
-	  "\t<dict>\n"
-	  "\t\t<key>IFSettingLibraryToUse</key>\n"
-	  "\t\t<string>Natural</string>\n"
-	  "\t</dict>\n"
-	  "\t<key>IFOutputSettings</key>\n"
-	  "\t<dict>\n"
-	  "\t\t<key>IFSettingCreateBlorb</key>\n"
-	  "\t\t<", priv->make_blorb ? "true" : "false", "/>\n"
-	  "\t\t<key>IFSettingZCodeVersion</key>\n"
-	  "\t\t<integer>", format_string, "</integer>\n"
-	  "\t</dict>\n"
-	  "</dict>\n"
-	  "</plist>\n", NULL);
-	g_free(format_string);
-	if(!g_file_set_contents(filename, text, -1, &err)) {
-		error_dialog(GTK_WINDOW(document), err,
-		  _("Error saving file '%s': "), filename);
+	if(!plist_write(priv->settings, filename, &err)) {
+		error_dialog(GTK_WINDOW(document), err, _("Error saving file '%s': "), filename);
 		g_free(filename);
-		g_free(text);
 		return;
 	}
 	g_free(filename);
-	g_free(text);
 
 	/* Delete the build files from the project directory */
 	delete_build_files(I7_STORY(document));
@@ -691,14 +718,16 @@ i7_story_init(I7Story *self)
 	/* For some reason this needs to be triggered even if the buttons are set to invisible in Glade */
 	gtk_action_set_sensitive(I7_DOCUMENT(self)->previous_section, FALSE);
 	gtk_action_set_sensitive(I7_DOCUMENT(self)->next_section, FALSE);
-	
+
 	/* Add extra pages in "Errors" if the user has them turned on */
 	if(config_file_get_bool(PREFS_DEBUG_LOG_VISIBLE))
 		i7_story_add_debug_tabs(I7_DOCUMENT(self));
 
 	/* Do the default settings */
-	priv->story_format = I7_STORY_FORMAT_Z5;
-	priv->make_blorb = FALSE;
+	priv->settings = create_default_settings();
+	/* Connect the widgets on the Settings pane to the settings properties */
+	g_signal_connect(self, "notify::story-format", G_CALLBACK(on_notify_story_format), NULL);
+	g_signal_connect(self, "notify::create-blorb", G_CALLBACK(on_notify_create_blorb), NULL);
 	
 	/* Set font sizes, etc. */
 	i7_document_update_fonts(I7_DOCUMENT(self));
@@ -716,6 +745,7 @@ i7_story_finalize(GObject *self)
 static void
 i7_story_class_init(I7StoryClass *klass)
 {
+	/* Parent class overrides */
 	I7DocumentClass *document_class = I7_DOCUMENT_CLASS(klass);
 	document_class->extract_title = i7_story_extract_title;
 	document_class->set_contents_display = i7_story_set_contents_display;
@@ -730,16 +760,36 @@ i7_story_class_init(I7StoryClass *klass)
 	document_class->highlight_search = i7_story_highlight_search;
 	
 	GObjectClass *object_class = G_OBJECT_CLASS(klass);
+	object_class->set_property = i7_story_set_property;
+	object_class->get_property = i7_story_get_property;
 	object_class->finalize = i7_story_finalize;
-	
+
+	/* Properties */
+	g_object_class_install_property(object_class, PROP_STORY_FORMAT,
+	    g_param_spec_uint("story-format", "Story Format",
+		    "IFOutputSettings->IFSettingZCodeVersion", 5, 256, 8,
+		    G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+	g_object_class_install_property(object_class, PROP_MAKE_BLORB,
+	    g_param_spec_boolean("create-blorb", "Create Blorb file on release",
+		    "IFOutputSettings->IFSettingCreateBlorb", TRUE,
+		    G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+	g_object_class_install_property(object_class, PROP_NOBBLE_RNG,
+	    g_param_spec_boolean("nobble-rng", "Nobble RNG",
+		    "IFOutputSettings->IFSettingNobbleRNG", FALSE,
+		    G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+	g_object_class_install_property(object_class, PROP_ELASTIC_TABS,
+	    g_param_spec_boolean("elastic-tabs", "Elastic Tabs",
+		    "IFMiscSettings->IFSettingElasticTabs", FALSE,
+		    G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
+
+	/* Private data */
 	g_type_class_add_private(klass, sizeof(I7StoryPrivate));
 }
 
 /* PUBLIC FUNCTIONS */
 
 I7Story *
-i7_story_new(I7App *app, const gchar *filename, const gchar *title, 
-	const gchar *author)
+i7_story_new(I7App *app, const gchar *filename, const gchar *title, const gchar *author)
 {
 	/* Building all the WebkitWebViews can take more than a second */
 	i7_app_set_busy(app, TRUE);
@@ -890,38 +940,21 @@ i7_story_open(I7Story *story, const gchar *directory)
 	
 	/* Read the settings */
 	filename = g_build_filename(directory, "Settings.plist", NULL);
-	if(g_file_get_contents(filename, &text, NULL, &err)) {
-		gchar **lines = g_strsplit_set(text, "\n\r", -1);
-		g_free(text);
-		gchar **ptr;
-		for(ptr = lines; *ptr != NULL; ptr++) {
-			if(strstr(*ptr, "<key>IFSettingCreateBlorb</key>")) {
-				if(++ptr == NULL)
-					break;
-				if(strstr(*ptr, "<true/>"))
-					priv->make_blorb = TRUE;
-			} else if(strstr(*ptr, "<key>IFSettingZCodeVersion</key>")) {
-				if(++ptr == NULL)
-					break;
-				int version;
-				if(sscanf(*ptr, " <integer> %d </integer> ", &version) == 1
-					&& (version == I7_STORY_FORMAT_Z5 
-					|| version == I7_STORY_FORMAT_Z6 
-					|| version == I7_STORY_FORMAT_Z8 
-					|| version == I7_STORY_FORMAT_GLULX))
-					priv->story_format = version;
-			}
-		}
-		g_strfreev(lines);
-	} else
-		error_dialog(GTK_WINDOW(story), NULL, 
+	plist_object_free(priv->settings);
+	priv->settings = plist_read(filename, &err);
+	if(!priv->settings) {
+		priv->settings = create_default_settings();
+		error_dialog(GTK_WINDOW(story), err, 
 			_("Could not open the project's settings file, '%s'. "
 			"Using default settings."), filename);
-	g_free(filename);    
+	}
+	g_free(filename);
+	/* Update the GUI with the new settings */
+	on_notify_story_format(story);
+	on_notify_create_blorb(story);
 	
-	/* Load index tabs if they exist and update settings */
+	/* Load index tabs if they exist */
 	i7_story_reload_index_tabs(story, FALSE);
-	i7_story_update_settings(story);
 
 	GtkTextIter start;
 	GtkTextBuffer *buffer = GTK_TEXT_BUFFER(i7_document_get_buffer(I7_DOCUMENT(story)));

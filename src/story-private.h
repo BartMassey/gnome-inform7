@@ -27,6 +27,7 @@
 
 #include <glib.h>
 #include <gtk/gtk.h>
+#include "osxcart/plist.h"
 
 typedef struct {
 	/* Action Groups */
@@ -37,9 +38,8 @@ typedef struct {
 	GtkWidget *last_focused;
 	/* The user's notes */
     GtkTextBuffer *notes;
-	/* Various settings */
-    I7StoryFormat story_format;
-    gboolean make_blorb;
+	/* The Settings.plist object */
+	PlistObject *settings;
 } I7StoryPrivate;
 
 #define I7_STORY_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE((o), I7_TYPE_STORY, I7StoryPrivate))
