@@ -21,6 +21,8 @@
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
 #include <gtksourceview/gtksourceiter.h>
+#include "osxcart/plist.h"
+#include "osxcart/rtf.h"
 #include "story.h"
 #include "story-private.h"
 #include "app.h"
@@ -32,7 +34,6 @@
 #include "file.h"
 #include "lang.h"
 #include "panel.h"
-#include "rtf.h"
 #include "source-view.h"
 
 enum {
@@ -340,19 +341,14 @@ i7_story_save_as(I7Document *document, gchar *directory)
 	/* skein_save(thestory->theskein, directory);*/
 
 	/* Save the notes */
-	GtkTextIter start, end;
-	gtk_text_buffer_get_bounds(priv->notes, &start, &end);
-	text = gtk_text_buffer_get_rtf_text(priv->notes, &start, &end);
 	filename = g_build_filename(directory, "notes.rtf", NULL);
-	if(!g_file_set_contents(filename, text, -1, &err)) {
+	if(!rtf_text_buffer_export(priv->notes, filename, &err)) {
 		error_dialog(GTK_WINDOW(document), err, _("Error saving file '%s': "), filename);
 		g_free(filename);
-		g_free(text);
 		return;
 	}
 	gtk_text_buffer_set_modified(priv->notes, FALSE);
 	g_free(filename);
-	g_free(text);
 	
 	/* Save the project settings */
 	filename = g_build_filename(directory, "Settings.plist", NULL);
@@ -421,6 +417,7 @@ i7_story_update_fonts(I7Document *document)
 	g_idle_add((GSourceFunc)update_font_tabs, GTK_SOURCE_VIEW(story->panel[RIGHT]->source_tabs[I7_SOURCE_VIEW_TAB_SOURCE]));
 	g_idle_add((GSourceFunc)update_font_tabs, GTK_SOURCE_VIEW(story->panel[LEFT]->errors_tabs[I7_ERRORS_TAB_INFORM6]));
 	g_idle_add((GSourceFunc)update_font_tabs, GTK_SOURCE_VIEW(story->panel[RIGHT]->errors_tabs[I7_ERRORS_TAB_INFORM6]));
+	update_font(story->notes_view);
 }
 
 static void
@@ -909,6 +906,26 @@ i7_story_new_from_uri(I7App *app, const gchar *uri)
 	return story;
 }
 
+/* Internal function: if tag is an Osxcart font tag, add it to the list */
+static void
+find_font_tags(GtkTextTag *tag, GSList *fonttags)
+{
+	gchar *name;
+	g_object_get(tag, "name", &name, NULL);
+	if(g_str_has_prefix(name, "osxcart-rtf-font-") || g_str_has_prefix(name, "osxcart-rtf-fontsize-"))
+		fonttags = g_slist_prepend(fonttags, tag);
+	g_free(name);
+}
+
+static void
+remove_font_tags(GtkTextTag *tag, GtkTextBuffer *buffer)
+{
+	GtkTextIter start, end;
+	gtk_text_buffer_get_start_iter(buffer, &start);
+	gtk_text_buffer_get_end_iter(buffer, &end);
+	gtk_text_buffer_remove_tag(buffer, tag, &start, &end);
+}
+
 /* Read a project directory, loading all the appropriate files into story and 
 returning success */
 gboolean
@@ -943,17 +960,24 @@ i7_story_open(I7Story *story, const gchar *directory)
 
 	/* Read the notes */
 	filename = g_build_filename(directory, "notes.rtf", NULL);
-	if(!g_file_get_contents(filename, &text, NULL, NULL)) {
-		/* Don't fail if the file is unreadable; instead, just make some blank notes */
-		text = g_strdup(
-		  "{\\rtf1\\mac\\ansicpg10000\\cocoartf824\\cocoasubrtf410\n"
-		  "{\\fonttbl}\n"
-		  "{\\colortbl;\\red255\\green255\\blue255;}\n"
-		  "}");
+	if(!rtf_text_buffer_import(priv->notes, filename, NULL)) {
+		/* Don't fail if the file is unreadable, instead just make some blank notes */
+		gtk_text_buffer_set_text(priv->notes, "", -1);
 	}
 	g_free(filename);
-	gtk_text_buffer_set_rtf_text(priv->notes, text);
-	g_free(text);
+	/* Remove all the font tags, we don't do fonts in this editor */
+	GtkTextTagTable *tagtable = gtk_text_buffer_get_tag_table(priv->notes);
+	GSList *fonttags = NULL;
+	gtk_text_tag_table_foreach(tagtable, (GtkTextTagTableForeach)find_font_tags, fonttags);
+	g_slist_foreach(fonttags, (GFunc)remove_font_tags, priv->notes);
+	g_slist_free(fonttags);
+	PangoFontDescription *font = get_font_description();
+	GtkTextTag *tag = gtk_text_buffer_create_tag(priv->notes, NULL, "font-desc", font, NULL);
+	GtkTextIter start, end;
+	gtk_text_buffer_get_start_iter(priv->notes, &start);
+	gtk_text_buffer_get_end_iter(priv->notes, &end);
+	gtk_text_buffer_apply_tag(priv->notes, tag, &start, &end);
+	pango_font_description_free(font);
 	gtk_text_buffer_set_modified(priv->notes, FALSE);
 	
 	/* Read the settings */
@@ -974,7 +998,6 @@ i7_story_open(I7Story *story, const gchar *directory)
 	/* Load index tabs if they exist */
 	i7_story_reload_index_tabs(story, FALSE);
 
-	GtkTextIter start;
 	GtkTextBuffer *buffer = GTK_TEXT_BUFFER(i7_document_get_buffer(I7_DOCUMENT(story)));
 	gtk_text_buffer_get_start_iter(buffer, &start);
 	gtk_text_buffer_place_cursor(buffer, &start);
