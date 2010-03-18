@@ -119,6 +119,19 @@
         </schema>
         
         <schema>
+        	<key>/schemas/apps/gnome-inform7/IDESettings/NotepadDefault</key>
+        	<applyto>/apps/gnome-inform7/IDESettings/NotepadDefault</applyto>
+        	<owner>gnome-inform7</owner>
+        	<type>bool</type>
+        	<default>0</default>
+        	<locale name="C">
+        		<short>Show the notepad</short>
+        		<long>Default setting for showing the notepad when opening a new
+        		window.</long>
+        	</locale>
+        </schema>
+        
+        <schema>
             <key>/schemas/apps/gnome-inform7/EditorSettings/FontSet</key>
             <applyto>/apps/gnome-inform7/EditorSettings/FontSet</applyto>
             <owner>gnome-inform7</owner>
@@ -330,6 +343,56 @@
                 <long>Height, in pixels, for newly-created extension windows.
                 </long>
             </locale>
+        </schema>
+        
+        <schema>
+        	<key>/schemas/apps/gnome-inform7/WindowSettings/NotepadPosX</key>
+        	<applyto>/apps/gnome-inform7/WindowSettings/NotepadPosX</key>
+        	<owner>gnome-inform7</owner>
+        	<type>int</type>
+        	<default>0</default>
+        	<locale name="C">
+        		<short>Default horizontal position of notepad window</short>
+        		<long>Horizontal position, in pixels, at which the notepad
+        		window will be placed when it is shown.</long>
+        	</locale>
+        </schema>
+        
+        <schema>
+        	<key>/schemas/apps/gnome-inform7/WindowSettings/NotepadPosY</key>
+        	<applyto>/apps/gnome-inform7/WindowSettings/NotepadPosY</key>
+        	<owner>gnome-inform7</owner>
+        	<type>int</type>
+        	<default>0</default>
+        	<locale name="C">
+        		<short>Default vertical position of notepad window</short>
+        		<long>Vertical position, in pixels, at which the notepad
+        		window will be placed when it is shown.</long>
+        	</locale>
+        </schema>
+        
+        <schema>
+        	<key>/schemas/apps/gnome-inform7/WindowSettings/NotepadWidth</key>
+        	<applyto>/apps/gnome-inform7/WindowSettings/NotepadWidth</key>
+        	<owner>gnome-inform7</owner>
+        	<type>int</type>
+        	<default>300</default>
+        	<locale name="C">
+        		<short>Default width of notepad window</short>
+        		<long>Width, in pixels, of the notepad window.</long>
+        	</locale>
+        </schema>
+        
+        <schema>
+        	<key>/schemas/apps/gnome-inform7/WindowSettings/NotepadHeight</key>
+        	<applyto>/apps/gnome-inform7/WindowSettings/NotepadHeight</key>
+        	<owner>gnome-inform7</owner>
+        	<type>int</type>
+        	<default>300</default>
+        	<locale name="C">
+        		<short>Default height of notepad window</short>
+        		<long>Height, in pixels, of the notepad window.</long>
+        	</locale>
         </schema>
         
         <schema>

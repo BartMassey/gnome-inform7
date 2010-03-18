@@ -471,6 +471,17 @@ action_view_statusbar_toggled(GtkToggleAction *action, I7Document *document)
 }
 
 void
+action_view_notepad_toggled(GtkToggleAction *action, I7Story *story)
+{
+	gboolean show = gtk_toggle_action_get_active(action);
+	if(show)
+		gtk_widget_show(story->notes_window);
+	else
+		gtk_widget_hide(story->notes_window);
+	config_file_set_bool(PREFS_NOTEPAD_VISIBLE, show);
+}
+
+void
 action_show_source(GtkAction *action, I7Story *story)
 {
 	i7_story_show_tab(story, I7_PANE_SOURCE, I7_SOURCE_VIEW_TAB_SOURCE);

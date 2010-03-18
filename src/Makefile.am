@@ -21,6 +21,7 @@ gnome_inform7_SOURCES = \
 	html.c html.h \
 	lang.c lang.h \
 	newdialog.c newdialog.h \
+	notepad.c \
 	panel.c panel.h panel-private.h \
 	prefs.c prefs.h \
 	rtf.c rtf.h \
@@ -28,7 +29,7 @@ gnome_inform7_SOURCES = \
 	story.c story.h story-private.h \
 	story-source.c story-errors.c story-index.c story-settings.c \
 	welcomedialog.c welcomedialog.h \
-	main.c
+	main.c 
 gnome_inform7_CPPFLAGS = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_LIBEXEC_DIR=\""$(pkglibexecdir)"\" \

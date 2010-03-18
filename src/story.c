@@ -60,11 +60,18 @@ on_heading_depth_value_changed(GtkRange *range, I7Story *story)
 static void
 save_storywindow_size(I7Story *story)
 {
-    gint w, h;
+    gint w, h, x, y;
     gtk_window_get_size(GTK_WINDOW(story), &w, &h);
     config_file_set_int(PREFS_APP_WINDOW_WIDTH, w);
     config_file_set_int(PREFS_APP_WINDOW_HEIGHT, h);
     config_file_set_int(PREFS_SLIDER_POSITION, gtk_paned_get_position(GTK_PANED(story->facing_pages)));
+	/* Also save the notepad window */
+	gtk_window_get_size(GTK_WINDOW(story->notes_window), &w, &h);
+	gtk_window_get_position(GTK_WINDOW(story->notes_window), &x, &y);
+	config_file_set_int(PREFS_NOTEPAD_WIDTH, w);
+	config_file_set_int(PREFS_NOTEPAD_HEIGHT, h);
+	config_file_set_int(PREFS_NOTEPAD_X, x);
+	config_file_set_int(PREFS_NOTEPAD_Y, y);
 }
 
 static gboolean
@@ -554,6 +561,7 @@ i7_story_init(I7Story *self)
 		"replay_menu", "",
 		"release_menu", "",
 		"show_pane_menu", "",
+		"view_notepad", "",
 		"show_source", "<ctrl>F2",
 		"show_errors", "<ctrl>F3",
 		"show_index", "<ctrl>F4",
@@ -623,6 +631,8 @@ i7_story_init(I7Story *self)
 	
 	/* Save public pointers to other widgets */
 	self->facing_pages = GTK_WIDGET(load_object(builder, "facing_pages"));
+	self->notes_window = GTK_WIDGET(load_object(builder, "notes_window"));
+	self->notes_view = GTK_WIDGET(load_object(builder, "notes_view"));
 	
 	/* Set up the signals to do the menu hints in the statusbar */
 	i7_document_attach_menu_hints(I7_DOCUMENT(self), GTK_MENU_BAR(menu));
@@ -652,6 +662,14 @@ i7_story_init(I7Story *self)
 	priv->notes = gtk_text_buffer_new(NULL);
 	priv->last_focused = GTK_WIDGET(self->panel[LEFT]);
 
+	/* Set up the Notes window */
+	gtk_text_view_set_buffer(GTK_TEXT_VIEW(self->notes_view), priv->notes);
+	gtk_window_set_keep_above(GTK_WINDOW(self->notes_window), TRUE);
+	gtk_window_resize(GTK_WINDOW(self->notes_window), config_file_get_int(PREFS_NOTEPAD_WIDTH), config_file_get_int(PREFS_NOTEPAD_HEIGHT));
+	gtk_window_move(GTK_WINDOW(self->notes_window), config_file_get_int(PREFS_NOTEPAD_X), config_file_get_int(PREFS_NOTEPAD_Y));
+	/* Toggling the action will show the window if appropriate */
+	gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(gtk_action_group_get_action(priv->story_action_group, "view_notepad")), config_file_get_bool(PREFS_NOTEPAD_VISIBLE));
+	
 	/* Set up the Natural Inform highlighting */
 	GtkSourceBuffer *buffer = i7_document_get_buffer(I7_DOCUMENT(self));
 	set_buffer_language(buffer, "inform7");

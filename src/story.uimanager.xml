@@ -47,6 +47,7 @@
 		<menu action="view_menu">
 			<menuitem action="view_toolbar"/>
 			<menuitem action="view_statusbar"/>
+			<menuitem action="view_notepad"/>
 			<separator/>
 			<menu action="show_pane_menu">
 				<menuitem action="show_source"/>

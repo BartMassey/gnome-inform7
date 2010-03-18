@@ -55,6 +55,8 @@ typedef struct {
 	I7Document parent_instance;
 
 	GtkWidget *facing_pages;
+	GtkWidget *notes_window;
+	GtkWidget *notes_view;
 	I7Panel *panel[I7_STORY_NUM_PANELS];
 } I7Story;
 
