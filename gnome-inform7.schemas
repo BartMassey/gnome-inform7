@@ -347,7 +347,7 @@
         
         <schema>
         	<key>/schemas/apps/gnome-inform7/WindowSettings/NotepadPosX</key>
-        	<applyto>/apps/gnome-inform7/WindowSettings/NotepadPosX</key>
+        	<applyto>/apps/gnome-inform7/WindowSettings/NotepadPosX</applyto>
         	<owner>gnome-inform7</owner>
         	<type>int</type>
         	<default>0</default>
@@ -360,7 +360,7 @@
         
         <schema>
         	<key>/schemas/apps/gnome-inform7/WindowSettings/NotepadPosY</key>
-        	<applyto>/apps/gnome-inform7/WindowSettings/NotepadPosY</key>
+        	<applyto>/apps/gnome-inform7/WindowSettings/NotepadPosY</applyto>
         	<owner>gnome-inform7</owner>
         	<type>int</type>
         	<default>0</default>
@@ -373,7 +373,7 @@
         
         <schema>
         	<key>/schemas/apps/gnome-inform7/WindowSettings/NotepadWidth</key>
-        	<applyto>/apps/gnome-inform7/WindowSettings/NotepadWidth</key>
+        	<applyto>/apps/gnome-inform7/WindowSettings/NotepadWidth</applyto>
         	<owner>gnome-inform7</owner>
         	<type>int</type>
         	<default>300</default>
@@ -385,7 +385,7 @@
         
         <schema>
         	<key>/schemas/apps/gnome-inform7/WindowSettings/NotepadHeight</key>
-        	<applyto>/apps/gnome-inform7/WindowSettings/NotepadHeight</key>
+        	<applyto>/apps/gnome-inform7/WindowSettings/NotepadHeight</applyto>
         	<owner>gnome-inform7</owner>
         	<type>int</type>
         	<default>300</default>
