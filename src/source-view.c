@@ -5,7 +5,7 @@
 #include "source-view.h"
 #include "builder.h"
 
-#define CONTENTS_FALLBACK_BG_COLOR "ivory"
+#define CONTENTS_FALLBACK_BG_COLOR "#FFFFBF"
 #define CONTENTS_FALLBACK_FG_COLOR "black"
 
 /* TYPE SYSTEM */
@@ -39,12 +39,10 @@ i7_source_view_init(I7SourceView *self)
 	GdkColor bg, fg;
 	/* Look up the colors in the theme; if they aren't specified, use defaults */
 	GtkStyle *style = gtk_rc_get_style(GTK_WIDGET(self->headings));
-	if(!gtk_style_lookup_color(style, "info_fg_color", &fg))
+	if(!gtk_style_lookup_color(style, "text_color", &fg))
 		gdk_color_parse(CONTENTS_FALLBACK_FG_COLOR, &fg);
 	if(!gtk_style_lookup_color(style, "info_bg_color", &bg))
 		gdk_color_parse(CONTENTS_FALLBACK_BG_COLOR, &bg);
-	gtk_widget_modify_text(self->headings, GTK_STATE_NORMAL, &fg);
-	gtk_widget_modify_text(self->message, GTK_STATE_NORMAL, &fg);
 	gtk_widget_modify_base(self->headings, GTK_STATE_NORMAL, &bg);
 	gtk_widget_modify_base(self->message, GTK_STATE_NORMAL, &bg);
 

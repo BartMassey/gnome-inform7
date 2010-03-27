@@ -7,8 +7,8 @@
 #include "document.h"
 #include "document-private.h"
 
-#define FINDBAR_NOT_FOUND_FALLBACK_BG_COLOR "tomato"
-#define FINDBAR_NOT_FOUND_FALLBACK_FG_COLOR "white"
+#define FINDBAR_NOT_FOUND_FALLBACK_BG_COLOR "#F03838"
+#define FINDBAR_NOT_FOUND_FALLBACK_FG_COLOR "black"
 
 /* THE "SEARCH ENGINE" */
 
@@ -221,7 +221,7 @@ i7_document_set_quicksearch_not_found(I7Document *document, gboolean not_found)
 		GdkColor bg, fg;
 		/* Look up the colors in the theme, otherwise use fallback colors */
 		GtkStyle *style = gtk_rc_get_style(document->findbar_entry);
-		if(!gtk_style_lookup_color(style, "error_fg_color", &fg))
+		if(!gtk_style_lookup_color(style, "text_color", &fg))
 			gdk_color_parse(FINDBAR_NOT_FOUND_FALLBACK_FG_COLOR, &fg);
 		if(!gtk_style_lookup_color(style, "error_bg_color", &bg))
 			gdk_color_parse(FINDBAR_NOT_FOUND_FALLBACK_BG_COLOR, &bg);
