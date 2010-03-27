@@ -80,8 +80,10 @@ on_storywindow_delete_event(GtkWidget *window, GdkEvent *event)
 {
     if(!i7_document_verify_save(I7_DOCUMENT(window)))
 		return TRUE; /* Interrupt the signal if the user cancelled */
-
+	
 	save_storywindow_size(I7_STORY(window));
+
+	gtk_widget_destroy(I7_STORY(window)->notes_window);
 	/*stop_project(self);*/
 	if(i7_document_get_filename(I7_DOCUMENT(window)))
 	    delete_build_files(I7_STORY(window));
