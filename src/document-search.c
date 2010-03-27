@@ -7,8 +7,8 @@
 #include "document.h"
 #include "document-private.h"
 
-#define FINDBAR_NOT_FOUND_BG "tomato"
-#define FINDBAR_NOT_FOUND_FG "white"
+#define FINDBAR_NOT_FOUND_FALLBACK_BG_COLOR "tomato"
+#define FINDBAR_NOT_FOUND_FALLBACK_FG_COLOR "white"
 
 /* THE "SEARCH ENGINE" */
 
@@ -219,8 +219,12 @@ i7_document_set_quicksearch_not_found(I7Document *document, gboolean not_found)
 {
 	if(not_found) {
 		GdkColor bg, fg;
-		gdk_color_parse(FINDBAR_NOT_FOUND_BG, &bg);
-		gdk_color_parse(FINDBAR_NOT_FOUND_FG, &fg);
+		/* Look up the colors in the theme, otherwise use fallback colors */
+		GtkStyle *style = gtk_rc_get_style(document->findbar_entry);
+		if(!gtk_style_lookup_color(style, "error_fg_color", &fg))
+			gdk_color_parse(FINDBAR_NOT_FOUND_FALLBACK_FG_COLOR, &fg);
+		if(!gtk_style_lookup_color(style, "error_bg_color", &bg))
+			gdk_color_parse(FINDBAR_NOT_FOUND_FALLBACK_BG_COLOR, &bg);
 		gtk_widget_modify_base(document->findbar_entry, GTK_STATE_NORMAL, &bg);
 		gtk_widget_modify_text(document->findbar_entry, GTK_STATE_NORMAL, &fg);
 		i7_document_flash_status_message(document, _("Phrase not found"), SEARCH_OPERATIONS);
