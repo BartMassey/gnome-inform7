@@ -29,27 +29,3 @@ on_notes_window_delete_event(GtkWidget *window, GdkEvent *event, I7Story *story)
 	gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(gtk_action_group_get_action(priv->story_action_group, "view_notepad")), FALSE);
 	return TRUE; /* Block event */
 }
-
-void
-on_bold_clicked(GtkToolButton *button, I7Story *story)
-{
-	
-}
-
-void
-on_italic_clicked(GtkToolButton *button, I7Story *story)
-{
-
-}
-
-void
-on_underline_clicked(GtkToolButton *button, I7Story *story)
-{
-
-}
-
-void
-on_strikethrough_clicked(GtkToolButton *button, I7Story *story)
-{
-
-}

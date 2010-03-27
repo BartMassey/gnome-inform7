@@ -906,26 +906,6 @@ i7_story_new_from_uri(I7App *app, const gchar *uri)
 	return story;
 }
 
-/* Internal function: if tag is an Osxcart font tag, add it to the list */
-static void
-find_font_tags(GtkTextTag *tag, GSList *fonttags)
-{
-	gchar *name;
-	g_object_get(tag, "name", &name, NULL);
-	if(g_str_has_prefix(name, "osxcart-rtf-font-") || g_str_has_prefix(name, "osxcart-rtf-fontsize-"))
-		fonttags = g_slist_prepend(fonttags, tag);
-	g_free(name);
-}
-
-static void
-remove_font_tags(GtkTextTag *tag, GtkTextBuffer *buffer)
-{
-	GtkTextIter start, end;
-	gtk_text_buffer_get_start_iter(buffer, &start);
-	gtk_text_buffer_get_end_iter(buffer, &end);
-	gtk_text_buffer_remove_tag(buffer, tag, &start, &end);
-}
-
 /* Read a project directory, loading all the appropriate files into story and 
 returning success */
 gboolean
@@ -965,19 +945,10 @@ i7_story_open(I7Story *story, const gchar *directory)
 		gtk_text_buffer_set_text(priv->notes, "", -1);
 	}
 	g_free(filename);
-	/* Remove all the font tags, we don't do fonts in this editor */
-	GtkTextTagTable *tagtable = gtk_text_buffer_get_tag_table(priv->notes);
-	GSList *fonttags = NULL;
-	gtk_text_tag_table_foreach(tagtable, (GtkTextTagTableForeach)find_font_tags, fonttags);
-	g_slist_foreach(fonttags, (GFunc)remove_font_tags, priv->notes);
-	g_slist_free(fonttags);
-	PangoFontDescription *font = get_font_description();
-	GtkTextTag *tag = gtk_text_buffer_create_tag(priv->notes, NULL, "font-desc", font, NULL);
+	/* Remove all the formatting tags, we don't do formatting in this editor */
 	GtkTextIter start, end;
-	gtk_text_buffer_get_start_iter(priv->notes, &start);
-	gtk_text_buffer_get_end_iter(priv->notes, &end);
-	gtk_text_buffer_apply_tag(priv->notes, tag, &start, &end);
-	pango_font_description_free(font);
+	gtk_text_buffer_get_bounds(priv->notes, &start, &end);
+	gtk_text_buffer_remove_all_tags(priv->notes, &start, &end);
 	gtk_text_buffer_set_modified(priv->notes, FALSE);
 	
 	/* Read the settings */
