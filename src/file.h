@@ -27,5 +27,6 @@ gchar *read_source_file(const gchar *filename);
 void set_source_text(GtkSourceBuffer *buffer, gchar *text);
 gchar *get_filename_from_save_dialog(const gchar *default_filename);
 void delete_build_files(I7Story *story);
+gchar *get_case_insensitive_extension(const gchar *path);
 
 #endif

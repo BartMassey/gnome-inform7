@@ -116,3 +116,21 @@ i7_source_view_set_contents_display(I7SourceView *self, I7ContentsDisplay displa
 			gtk_widget_show(messagewin);
 	}
 }
+
+void 
+i7_source_view_jump_to_line(I7SourceView *self, guint line)
+{
+	GtkTextView *view = GTK_TEXT_VIEW(self->source);
+	GtkTextBuffer *buffer = gtk_text_view_get_buffer(view);
+	GtkTextIter cursor, line_end;
+
+	gtk_text_buffer_get_iter_at_line(buffer, &cursor, line - 1); 
+	/* line is counted from 0 */
+	line_end = cursor;
+	if(!gtk_text_iter_ends_line(&line_end))
+		/* if already at end, this will push it to the end of the NEXT line */
+		gtk_text_iter_forward_to_line_end(&line_end);
+	gtk_text_buffer_select_range(buffer, &cursor, &line_end);
+	gtk_text_view_scroll_to_mark(view, gtk_text_buffer_get_insert(buffer), 0.25, FALSE, 0.0, 0.0);
+	gtk_widget_grab_focus(GTK_WIDGET(view));
+}

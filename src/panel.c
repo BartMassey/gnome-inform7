@@ -31,6 +31,8 @@
 #include "builder.h"
 #include "configfile.h"
 #include "error.h"
+#include "extension.h"
+#include "file.h"
 #include "history.h"
 #include "html.h"
 
@@ -608,8 +610,32 @@ on_navigation_requested(WebKitWebView *webview, WebKitWebFrame *frame, WebKitNet
 		
 	} else if(strcmp(scheme, "source") == 0) {
 		guint line;
-		if(sscanf(uri, "source:story.ni#line%u", &line))
-			g_signal_emit_by_name(panel, "jump-to-line", line);
+		gchar *file = g_strdup(uri + strlen("source:"));
+		gchar *ptr = strrchr(file, '#');
+		gchar *anchor = g_strdup(ptr);
+		*ptr = 0;
+
+		/* If it links to the source file, just jump to the line */
+		if(strcmp(file, "story.ni") == 0) {
+			if(sscanf(anchor, "#line%u", &line))
+				g_signal_emit_by_name(panel, "jump-to-line", line);
+		} else {
+			/* Else it's a link to an extension, open it in a new window */
+			gchar *path = get_case_insensitive_extension(file);
+			/* Check if we need to open the extension read-only */
+			gchar *userpath = i7_app_get_extension_path(i7_app_get(), NULL, NULL);
+			gboolean readonly = !strstr(path, userpath);
+			g_free(userpath);
+			
+			I7Extension *ext = i7_extension_new_from_file(i7_app_get(), file, readonly); 
+            if(ext != NULL) { 
+                if(sscanf(anchor, "#line%u", &line)) 
+                    i7_source_view_jump_to_line(ext->sourceview, line);
+            } 
+			g_free(path);
+		}
+		g_free(file);
+		g_free(anchor);
 		
 	} else
 		g_warning(_("Unrecognized protocol: %s\n"), scheme);

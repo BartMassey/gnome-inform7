@@ -124,21 +124,9 @@ on_panel_paste_code(I7Panel *panel, gchar *code, I7Story *story)
 void
 on_panel_jump_to_line(I7Panel *panel, guint line, I7Story *story)
 {
-	GtkTextBuffer *buffer = GTK_TEXT_BUFFER(i7_document_get_buffer(I7_DOCUMENT(story)));
-	GtkTextIter cursor, line_end;
 	int side = i7_story_choose_panel(story, I7_PANE_SOURCE);
-	GtkTextView *view = GTK_TEXT_VIEW(story->panel[side]->source_tabs[I7_SOURCE_VIEW_TAB_SOURCE]);
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(story->panel[side]->notebook), I7_PANE_SOURCE);
-	
-	gtk_text_buffer_get_iter_at_line(buffer, &cursor, line - 1); 
-	/* line is counted from 0 */
-	line_end = cursor;
-	if(!gtk_text_iter_ends_line(&line_end))
-		/* if already at end, this will push it to the end of the NEXT line */
-		gtk_text_iter_forward_to_line_end(&line_end);
-	gtk_text_buffer_select_range(buffer, &cursor, &line_end);
-	gtk_text_view_scroll_to_mark(view, gtk_text_buffer_get_insert(buffer), 0.25, FALSE, 0.0, 0.0);
-	gtk_widget_grab_focus(GTK_WIDGET(view));
+	i7_source_view_jump_to_line(story->panel[side]->sourceview, line);
 }
 
 /* Reindex the section headings */
