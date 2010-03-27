@@ -282,7 +282,7 @@ static void
 i7_document_refresh_title(I7Document *document)
 {
 	I7_DOCUMENT_USE_PRIVATE(document, priv);
-	gchar *documentname = i7_document_get_display_filename(document);
+	gchar *documentname = i7_document_get_display_name(document);
 	
 	if(priv->modified)
 	{
@@ -295,7 +295,7 @@ i7_document_refresh_title(I7Document *document)
 }
 
 void
-i7_document_set_filename(I7Document *document, const gchar *filename)
+i7_document_set_path(I7Document *document, const gchar *filename)
 {
 	I7_DOCUMENT_USE_PRIVATE(document, priv);
     if(priv->filename)
@@ -304,16 +304,20 @@ i7_document_set_filename(I7Document *document, const gchar *filename)
     i7_document_refresh_title(document);
 }
 
+/* Returns a newly-allocated string containing the full path to this document */
 gchar *
-i7_document_get_filename(const I7Document *document)
+i7_document_get_path(const I7Document *document)
 {
 	return g_strdup(I7_DOCUMENT_PRIVATE(document)->filename);
 }
 
+/* Returns a newly-allocated string containing the filename of this document
+ without the full path, converted to UTF-8, suitable for display in a window 
+ titlebar */
 gchar *
-i7_document_get_display_filename(I7Document *document)
+i7_document_get_display_name(I7Document *document)
 {
-	return g_path_get_basename(I7_DOCUMENT_PRIVATE(document)->filename);
+	return g_filename_display_basename(I7_DOCUMENT_PRIVATE(document)->filename);
 }
 
 GtkSourceBuffer *
@@ -463,7 +467,7 @@ i7_document_verify_save(I7Document *document)
 	if(!i7_document_get_modified(document))
 		return TRUE;
 	
-	gchar *filename = i7_document_get_display_filename(document);
+	gchar *filename = i7_document_get_display_name(document);
 	GtkWidget *save_changes_dialog = gtk_message_dialog_new_with_markup(GTK_WINDOW(document), GTK_DIALOG_DESTROY_WITH_PARENT,
 		GTK_MESSAGE_WARNING, GTK_BUTTONS_NONE,
 		_("<b><big>Save changes to '%s' before closing?</big></b>"), filename);
@@ -490,7 +494,7 @@ void
 i7_document_close(I7Document *document)
 {
 	if(i7_document_get_modified(document)) {
-		gchar *filename = i7_document_get_display_filename(document);
+		gchar *filename = i7_document_get_display_name(document);
 		GtkWidget *save_changes_dialog = gtk_message_dialog_new_with_markup(GTK_WINDOW(document), GTK_DIALOG_DESTROY_WITH_PARENT,
 			GTK_MESSAGE_WARNING, GTK_BUTTONS_NONE,
 			_("<b><big>Save changes to '%s' before closing?</big></b>"),

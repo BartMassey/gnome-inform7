@@ -228,7 +228,7 @@ i7_app_remove_document(I7App *app, I7Document *document)
 static gint
 document_compare_name(const I7Document *document, const gchar *filename)
 {
-	gchar *name = i7_document_get_filename(document);
+	gchar *name = i7_document_get_path(document);
 	gint retval = strcmp(name, filename);
 	g_free(name);
 	return retval;

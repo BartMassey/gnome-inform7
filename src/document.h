@@ -116,9 +116,9 @@ typedef enum {
 
 GType i7_document_get_type(void) G_GNUC_CONST;
 void i7_document_add_menus_and_findbar(I7Document *document);
-gchar *i7_document_get_filename(const I7Document *document);
-gchar *i7_document_get_display_filename(I7Document *document);
-void i7_document_set_filename(I7Document *document, const gchar *filename);
+gchar *i7_document_get_path(const I7Document *document);
+gchar *i7_document_get_display_name(I7Document *document);
+void i7_document_set_path(I7Document *document, const gchar *filename);
 GtkSourceBuffer *i7_document_get_buffer(I7Document *document);
 GtkTextView *i7_document_get_default_view(I7Document *document);
 void i7_document_set_source_text(I7Document *document, gchar *text);

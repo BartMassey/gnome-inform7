@@ -185,7 +185,7 @@ delete_build_files(I7Story *story)
     if(config_file_get_bool(PREFS_CLEAN_BUILD_FILES)) {
 		i7_document_display_status_message(I7_DOCUMENT(story), _("Cleaning out build files..."), FILE_OPERATIONS);
 		
-		gchar *storyname = i7_document_get_filename(I7_DOCUMENT(story));
+		gchar *storyname = i7_document_get_path(I7_DOCUMENT(story));
 		
         delete_from_project_dir(story, storyname, NULL, "Metadata.iFiction");
         delete_from_project_dir(story, storyname, NULL, "Release.blurb");

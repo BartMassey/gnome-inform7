@@ -33,7 +33,7 @@ static gchar *index_names[] = {
 static void
 load_index_file(I7Story *story, int counter)
 {
-	gchar *name = i7_document_get_filename(I7_DOCUMENT(story));
+	gchar *name = i7_document_get_path(I7_DOCUMENT(story));
 	gchar *filename = g_build_filename(name, "Index", index_names[counter], NULL);
 	g_free(name);
 	if(g_file_test(filename, G_FILE_TEST_EXISTS)) {

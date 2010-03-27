@@ -130,7 +130,7 @@ action_save_as(GtkAction *action, I7Document *document)
 {
 	gchar *filename = get_filename_from_save_dialog(NULL);
 	if(filename) {
-		i7_document_set_filename(document, filename);
+		i7_document_set_path(document, filename);
 		/* This hack is convenient so that if you save a built-in (read-only)
 		extension to another file name, it's not read-only anymore */
 		if(I7_IS_EXTENSION(document))
@@ -153,7 +153,7 @@ action_save_copy(GtkAction *action, I7Document *document)
 void
 action_revert(GtkAction *action, I7Document *document)
 {
-	gchar *filename = i7_document_get_filename(document);
+	gchar *filename = i7_document_get_path(document);
 	if(!(filename && g_file_test(filename, G_FILE_TEST_EXISTS)
 		&& g_file_test(filename, G_FILE_TEST_IS_DIR)))
 		return; /* No saved version to revert to */        

@@ -155,14 +155,14 @@ i7_extension_save(I7Document *document)
 		return FALSE;
 	}
 	
-	gchar *filename = i7_document_get_filename(document);
+	gchar *filename = i7_document_get_path(document);
 	if(filename && g_file_test(filename, G_FILE_TEST_EXISTS) && !g_file_test(filename, G_FILE_TEST_IS_DIR))
 		i7_document_save_as(document, filename);
 	else {
 		gchar *newname = get_filename_from_save_dialog(filename);
 		if(!newname)
 			return FALSE;
-		i7_document_set_filename(document, newname);
+		i7_document_set_path(document, newname);
 		i7_document_save_as(document, newname);
 		g_free(newname);
 	}
@@ -458,7 +458,7 @@ i7_extension_new(I7App *app, const gchar *filename, const gchar *title, const gc
 {
 	I7Extension *extension = I7_EXTENSION(g_object_new(I7_TYPE_EXTENSION, NULL));
 
-	i7_document_set_filename(I7_DOCUMENT(extension), filename);
+	i7_document_set_path(I7_DOCUMENT(extension), filename);
 	
     gchar *text = g_strconcat(title, " by ", author, " begins here.\n\n", title, " ends here.\n", NULL);
 	i7_document_set_source_text(I7_DOCUMENT(extension), text);
@@ -522,7 +522,7 @@ i7_extension_new_from_uri(I7App *app, const gchar *uri, gboolean readonly)
 gboolean
 i7_extension_open(I7Extension *extension, const gchar *filename, gboolean readonly) 
 {
-	i7_document_set_filename(I7_DOCUMENT(extension), filename);
+	i7_document_set_path(I7_DOCUMENT(extension), filename);
 
 	/* If it was a built-in extension, set it read-only */
 	i7_extension_set_read_only(extension, readonly);

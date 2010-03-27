@@ -85,7 +85,7 @@ on_storywindow_delete_event(GtkWidget *window, GdkEvent *event)
 
 	gtk_widget_destroy(I7_STORY(window)->notes_window);
 	/*stop_project(self);*/
-	if(i7_document_get_filename(I7_DOCUMENT(window)))
+	if(i7_document_get_path(I7_DOCUMENT(window)))
 	    delete_build_files(I7_STORY(window));
 
 	return FALSE;
@@ -233,7 +233,7 @@ location */
 static gboolean
 i7_story_save(I7Document *document)
 {
-	gchar *filename = i7_document_get_filename(document);
+	gchar *filename = i7_document_get_path(document);
 	if(filename && g_file_test(filename, G_FILE_TEST_EXISTS)
 		&& g_file_test(filename, G_FILE_TEST_IS_DIR))
 		i7_document_save_as(document, filename);
@@ -241,7 +241,7 @@ i7_story_save(I7Document *document)
 		gchar *newname = get_filename_from_save_dialog(filename);
 		if(!newname)
 			return FALSE;
-		i7_document_set_filename(document, newname);
+		i7_document_set_path(document, newname);
 		i7_document_save_as(document, newname);
 		g_free(newname);
 	}
@@ -802,7 +802,7 @@ i7_story_new(I7App *app, const gchar *filename, const gchar *title, const gchar 
 	I7Story *story = I7_STORY(g_object_new(I7_TYPE_STORY, NULL));
 	i7_app_set_busy(app, FALSE);
 
-	i7_document_set_filename(I7_DOCUMENT(story), filename);
+	i7_document_set_path(I7_DOCUMENT(story), filename);
 	
     gchar *text = g_strconcat("\"", title, "\" by \"", author, "\"\n", NULL);
 	i7_document_set_source_text(I7_DOCUMENT(story), text);
@@ -907,7 +907,7 @@ i7_story_open(I7Story *story, const gchar *directory)
 
 	gchar *source_dir = g_build_filename(directory, "Source", NULL);    
 
-	i7_document_set_filename(I7_DOCUMENT(story), directory);
+	i7_document_set_path(I7_DOCUMENT(story), directory);
 
 	/* Read the source */
 	gchar *filename = g_build_filename(source_dir, "story.ni", NULL);
