@@ -525,15 +525,17 @@
     <property name="visible">True</property>
     <property name="stock">gtk-find-and-replace</property>
   </object>
-  <object class="GtkTreeModelFilter" id="headings_filtermodel">
-    <property name="child_model">headings_store</property>
-  </object>
   <object class="GtkAction" id="uncomment_selection">
     <property name="label">_Uncomment Selection</property>
     <property name="tooltip">Remove comment brackets from selected text</property>
+    <signal name="activate" handler="action_uncomment_selection"/>
   </object>
   <object class="GtkToggleAction" id="enable_elastic_tabs">
     <property name="label">_Enable Elastic Tabs</property>
     <property name="tooltip">Make tabs line up in the Story pane</property>
+    <signal name="toggled" handler="action_enable_elastic_tabs_toggled"/>
+  </object>
+  <object class="GtkTreeModelFilter" id="headings_filtermodel">
+    <property name="child_model">headings_store</property>
   </object>
 </interface>

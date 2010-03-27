@@ -709,6 +709,12 @@ action_comment_out_selection(GtkAction *action, I7Document *document)
 }
 
 void
+action_uncomment_selection(GtkAction *action, I7Document *document)
+{
+
+}
+
+void
 action_renumber_all_sections(GtkAction *action, I7Document *document)
 {
 	GtkTextIter pos, end;
@@ -778,6 +784,48 @@ action_renumber_all_sections(GtkAction *action, I7Document *document)
 }
 
 void
+action_enable_elastic_tabs_toggled(GtkToggleAction *action, I7Document *document)
+{
+
+}
+
+void
+action_go(GtkAction *action, I7Story *story)
+{
+	
+}
+
+void
+action_test_me(GtkAction *action, I7Story *story)
+{
+
+}
+
+void
+action_stop(GtkAction *action, I7Story *story)
+{
+	
+}
+
+void
+action_refresh_index(GtkAction *action, I7Story *story)
+{
+	
+}
+
+void
+action_replay(GtkAction *action, I7Story *story)
+{
+	
+}
+
+void
+action_play_all_blessed(GtkAction *action, I7Story *story)
+{
+	
+}
+
+void
 action_show_last_command(GtkAction *action, I7Story *story)
 {
 	
@@ -820,36 +868,6 @@ action_next_difference_skein(GtkAction *action, I7Story *story)
 }
 
 void
-action_refresh_index(GtkAction *action, I7Story *story)
-{
-	
-}
-
-void
-action_go(GtkAction *action, I7Story *story)
-{
-	
-}
-
-void
-action_replay(GtkAction *action, I7Story *story)
-{
-	
-}
-
-void
-action_stop(GtkAction *action, I7Story *story)
-{
-	
-}
-
-void
-action_play_all_blessed(GtkAction *action, I7Story *story)
-{
-	
-}
-
-void
 action_release(GtkAction *action, I7Story *story)
 {
 	
@@ -859,6 +877,18 @@ void
 action_save_debug_build(GtkAction *action, I7Story *story)
 {
 	
+}
+
+void
+action_open_materials_folder(GtkAction *action, I7Story *story)
+{
+
+}
+
+void
+action_export_ifiction_record(GtkAction *action, I7Story *story)
+{
+
 }
 
 void

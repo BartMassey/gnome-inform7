@@ -235,15 +235,18 @@
   <object class="GtkAction" id="test_me">
     <property name="label">_Test Me</property>
     <property name="tooltip">Compile the story, and run the "test me" command</property>
+    <signal name="activate" handler="action_test_me"/>
   </object>
   <object class="GtkAction" id="open_materials_folder">
     <property name="label">_Open Materials Folder</property>
     <property name="tooltip">Open this story's Materials folder in the file manager</property>
     <property name="stock_id">gtk-directory</property>
+    <signal name="activate" handler="action_open_materials_folder"/>
   </object>
   <object class="GtkAction" id="export_ifiction_record">
     <property name="label">_Export iFiction Record...</property>
     <property name="tooltip">Save this story's iFiction metadata</property>
+    <signal name="activate" handler="action_export_ifiction_record"/>
   </object>
   <object class="GtkWindow" id="notes_window">
     <property name="title" translatable="yes">Notepad</property>
