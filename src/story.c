@@ -393,18 +393,8 @@ i7_story_update_tabs(I7Document *document)
 	if(!I7_IS_STORY(document))
 		return;
 	I7Story *story = I7_STORY(document);
-	g_idle_add((GSourceFunc)update_tabs, GTK_SOURCE_VIEW(story->panel[LEFT]->source_tabs[I7_SOURCE_VIEW_TAB_SOURCE]));
-	g_idle_add((GSourceFunc)update_tabs, GTK_SOURCE_VIEW(story->panel[RIGHT]->source_tabs[I7_SOURCE_VIEW_TAB_SOURCE]));
-	g_idle_add((GSourceFunc)update_tabs, GTK_SOURCE_VIEW(story->panel[LEFT]->errors_tabs[I7_ERRORS_TAB_INFORM6]));
-	g_idle_add((GSourceFunc)update_tabs, GTK_SOURCE_VIEW(story->panel[RIGHT]->errors_tabs[I7_ERRORS_TAB_INFORM6]));
-}
-
-static gboolean
-update_font_tabs(GtkSourceView *view)
-{
-	update_font(GTK_WIDGET(view));
-    update_tabs(view);
-	return FALSE; /* one-shot idle function */
+	i7_panel_update_tabs(story->panel[LEFT]);
+	i7_panel_update_tabs(story->panel[RIGHT]);
 }
 
 /* Update the fonts in this main window, but not the
@@ -415,13 +405,12 @@ i7_story_update_fonts(I7Document *document)
 	if(!I7_IS_STORY(document))
 		return;
 	I7Story *story = I7_STORY(document);
-    g_idle_add((GSourceFunc)update_font_tabs, GTK_SOURCE_VIEW(story->panel[LEFT]->source_tabs[I7_SOURCE_VIEW_TAB_SOURCE]));
-	g_idle_add((GSourceFunc)update_font_tabs, GTK_SOURCE_VIEW(story->panel[RIGHT]->source_tabs[I7_SOURCE_VIEW_TAB_SOURCE]));
-	g_idle_add((GSourceFunc)update_font_tabs, GTK_SOURCE_VIEW(story->panel[LEFT]->errors_tabs[I7_ERRORS_TAB_INFORM6]));
-	g_idle_add((GSourceFunc)update_font_tabs, GTK_SOURCE_VIEW(story->panel[RIGHT]->errors_tabs[I7_ERRORS_TAB_INFORM6]));
+	i7_panel_update_fonts(story->panel[LEFT]);
+	i7_panel_update_fonts(story->panel[RIGHT]);
 	update_font(story->notes_view);
 }
 
+/* Update only the font sizes in this main window */
 static void
 i7_story_update_font_sizes(I7Document *document)
 {

@@ -696,6 +696,37 @@ i7_panel_goto_docpage(I7Panel *self, const gchar *file)
 	html_load_file(WEBKIT_WEB_VIEW(self->tabs[I7_PANE_DOCUMENTATION]), file);
 }
 
+void
+i7_panel_update_tabs(I7Panel *self)
+{
+	g_idle_add((GSourceFunc)update_tabs, GTK_SOURCE_VIEW(self->source_tabs[I7_SOURCE_VIEW_TAB_SOURCE]));
+	g_idle_add((GSourceFunc)update_tabs, GTK_SOURCE_VIEW(self->errors_tabs[I7_ERRORS_TAB_INFORM6]));
+}
+
+static gboolean
+update_font_tabs(GtkSourceView *view)
+{
+	update_font(GTK_WIDGET(view));
+    update_tabs(view);
+	return FALSE; /* one-shot idle function */
+}
+
+/* Update the fonts of the widgets in this pane */
+void
+i7_panel_update_fonts(I7Panel *self)
+{
+	g_idle_add((GSourceFunc)update_font_tabs, GTK_SOURCE_VIEW(self->source_tabs[I7_SOURCE_VIEW_TAB_SOURCE]));
+	g_idle_add((GSourceFunc)update_font_tabs, GTK_SOURCE_VIEW(self->errors_tabs[I7_ERRORS_TAB_INFORM6]));
+
+	WebKitWebSettings *settings = I7_PANEL_PRIVATE(self)->websettings;
+	gchar *font = get_font_family();
+	PangoFontDescription *fontdesc = pango_font_description_from_string(font);
+	g_object_set(G_OBJECT(settings),
+	    "default-font-family", pango_font_description_get_family(fontdesc),
+	    NULL);
+	pango_font_description_free(fontdesc);
+}
+
 /* Update the font sizes of WebViews in this pane */
 void 
 i7_panel_update_font_sizes(I7Panel *self)
