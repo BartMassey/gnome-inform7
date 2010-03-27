@@ -559,7 +559,6 @@
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="hscrollbar_policy">automatic</property>
-        <property name="vscrollbar_policy">automatic</property>
         <child>
           <object class="WebkitWebView" id="documentation">
             <property name="visible">True</property>
