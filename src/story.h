@@ -70,6 +70,7 @@ I7StoryPanel i7_story_choose_panel(I7Story *story, I7PanelPane newtab);
 void i7_story_show_pane(I7Story *story, I7PanelPane pane);
 void i7_story_show_tab(I7Story *story, I7PanelPane pane, gint tab);
 void i7_story_show_docpage(I7Story *story, gchar *file);
+gchar *i7_story_get_materials_path(I7Story *story);
 
 /* Source pane, story-source.c */
 void on_panel_paste_code(I7Panel *panel, gchar *code, I7Story *story);

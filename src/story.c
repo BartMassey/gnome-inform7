@@ -1013,3 +1013,25 @@ i7_story_show_docpage(I7Story *story, gchar *file)
 	i7_panel_goto_docpage(story->panel[side], file);
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(story->panel[side]->notebook), I7_PANE_DOCUMENTATION);
 }
+
+/* Work out the location of the Materials folder, adapted from OS X source */
+gchar *
+i7_story_get_materials_path(I7Story *story)
+{
+	gchar *projectpath = i7_document_get_path(I7_DOCUMENT(story));
+	gchar *base = g_path_get_basename(projectpath);
+	g_assert(g_str_has_suffix(base, ".inform"));
+	gchar *projectname = g_strndup(base, strlen(base) - 7); /* lose extension */
+	g_free(base);
+
+	gchar *materialsname = g_strconcat(projectname, " Materials", NULL);
+	gchar *materialsdir = g_path_get_dirname(projectpath);
+	gchar *materialspath = g_build_filename(materialsdir, materialsname, NULL);
+
+	g_free(projectpath);
+	g_free(projectname);
+	g_free(materialsname);
+	g_free(materialsdir);
+
+	return materialspath;
+}
