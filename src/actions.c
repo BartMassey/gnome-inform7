@@ -22,6 +22,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
 
+#include <errno.h>
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
@@ -882,7 +883,52 @@ action_save_debug_build(GtkAction *action, I7Story *story)
 void
 action_open_materials_folder(GtkAction *action, I7Story *story)
 {
+	GError *error = NULL;
+	gchar *uri;
+	gchar *materialspath = i7_story_get_materials_path(story);
 
+	/* Prompt the user to create the folder if it doesn't exist */
+	if(!g_file_test(materialspath, G_FILE_TEST_EXISTS)) {
+		GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(story),
+		    GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_QUESTION,
+		    GTK_BUTTONS_OK_CANCEL, _("Could not find Materials folder"));
+		gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
+		    _("At the moment, this project has no Materials folder - a "
+			"convenient place to put figures, sounds, manuals, hints or other "
+			"matter to be packaged up with a release.\n\nWould you like to "
+			"create one?"));
+		gint response = gtk_dialog_run(GTK_DIALOG(dialog));
+		gtk_widget_destroy(dialog);
+		if(response == GTK_RESPONSE_OK) {
+			if(g_mkdir_with_parents(materialspath, 0777) == -1) {
+				error_dialog(GTK_WINDOW(story), NULL, _("Error creating Materials folder: %s"), g_strerror(errno));
+				goto finally;
+			}
+		} else
+			goto finally;
+	}
+
+	if(!g_file_test(materialspath, G_FILE_TEST_IS_DIR)) {
+		/* Odd; the Materials folder is a file. We open the containing path so
+		 the user can see this and correct it if they like. */
+		gchar *materialsdir = g_path_get_dirname(materialspath);
+		uri = g_filename_to_uri(materialsdir, NULL, &error);
+		g_free(materialsdir);
+	} else {
+		uri = g_filename_to_uri(materialspath, NULL, &error);
+	}
+
+	if(!uri) {
+		error_dialog(GTK_WINDOW(story), error, _("Error converting '%s' to URI: "), materialspath);
+		goto finally;
+	}
+	/* SUCKY DEBIAN replace with gtk_show_uri() */
+	if(!g_app_info_launch_default_for_uri(uri, NULL, &error))
+		error_dialog(GTK_WINDOW(story), error, _("Error opening external viewer for %s: "), uri);
+
+	g_free(uri);
+finally:
+	g_free(materialspath);
 }
 
 void

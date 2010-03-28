@@ -566,6 +566,7 @@ i7_story_init(I7Story *self)
 		"show_rules", "<ctrl>5",
 		"show_scenes", "<ctrl>6",
 		"show_world", "<ctrl>7",
+		"open_materials_folder", "<alt><ctrl>M",
 		"help_contents", "F1", 
 		"help_license", "",
 		"help_extensions", "",
@@ -594,7 +595,6 @@ i7_story_init(I7Story *self)
 		"release", "<shift><ctrl>R",
 		"save_debug_build", "",
 		"test_me", "<alt><ctrl>R",
-		"open_materials_folder", "<alt><ctrl>M",
 		"export_ifiction_record", "",
 		NULL
 	};

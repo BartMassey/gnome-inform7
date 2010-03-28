@@ -605,7 +605,6 @@ on_navigation_requested(WebKitWebView *webview, WebKitWebFrame *frame, WebKitNet
 		if(!g_app_info_launch_default_for_uri(uri, NULL, &error)) {
 			/* SUCKY DEBIAN replace with gtk_show_uri() */
 			error_dialog(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(panel))), error, _("Error opening external viewer for %s: "), uri);
-			g_error_free(error);
 		}
 		
 	} else if(strcmp(scheme, "source") == 0) {
