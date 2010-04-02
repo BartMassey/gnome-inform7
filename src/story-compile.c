@@ -19,36 +19,9 @@
 #  include <config.h>
 #endif
 
-#include <gnome.h>
-#include <glib/gstdio.h>
-#include <glib/gi18n.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
-
-#ifdef OSSP_UUID
-#  include <ossp/uuid.h> /* For systems with OSSP uuid */
-#else
-#  ifdef E2FS_UUID
-#    include <uuid/uuid.h> /* If no OSSP uuid, use e2fsprogs uuid */
-#  else
-#    include <uuid.h> /* Otherwise, it is OSSP uuid for Fedora 5 and earlier */
-#    define OSSP_UUID
-#  endif
-#endif
-
-#include "support.h"
-
-#include "appwindow.h"
-#include "compile.h"
-#include "configfile.h"
-#include "datafile.h"
-#include "error.h"
-#include "html.h"
-#include "spawn.h"
-#include "story.h"
-#include "tabgame.h"
-#include "tabindex.h"
 
 #define PROBLEMS_FILE "Build", "Problems.html"
 
@@ -66,31 +39,6 @@ static void finish_refresh_index(Story *thestory);
 static void finish_save_debug_build(Story *thestory);
 static void finish_run(Story *thestory);
 static void finish_release(Story *thestory);
-    
-/* Start the compiler running the census of extensions. If wait is TRUE, it will
-not do it in the background. */
-void
-run_census(gboolean wait) 
-{
-    /* Build the command line */
-    gchar **commandline = g_new(gchar *, 5);
-    commandline[0] = get_binary_path("ni");
-    commandline[1] = g_strdup("-rules");
-    commandline[2] = get_datafile_path("Extensions");
-    commandline[3] = g_strdup("-census");
-    commandline[4] = NULL;
-    
-    if(wait)
-        g_spawn_sync(g_get_home_dir(), commandline, NULL, G_SPAWN_SEARCH_PATH
-          | G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL,
-          NULL, NULL, NULL, NULL, NULL, NULL);
-    else
-        g_spawn_async(g_get_home_dir(), commandline, NULL, G_SPAWN_SEARCH_PATH
-          | G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL,
-          NULL, NULL, NULL, NULL);
-    
-    g_strfreev(commandline);
-}
 
 /* Start the compiling process */
 void
