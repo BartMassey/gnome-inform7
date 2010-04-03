@@ -44,9 +44,10 @@ I7PrefsWidgets *create_prefs_window(GtkBuilder *builder);
 void populate_schemes_list(GtkListStore *list);
 
 typedef enum {
-	I7_PREFS_STYLES,
+	I7_PREFS_AUTHOR,
+	I7_PREFS_EDITING,
+	I7_PREFS_FORMATTING,
 	I7_PREFS_EXTENSIONS,
-	I7_PREFS_INTELLIGENCE,
 	I7_PREFS_ADVANCED
 } I7PrefsTabs;
 

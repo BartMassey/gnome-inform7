@@ -261,6 +261,15 @@ on_config_debug_log_visible_changed(GConfClient *client, guint id, GConfEntry *e
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle), newvalue);
 	i7_app_foreach_document(i7_app_get(), newvalue? i7_story_add_debug_tabs : i7_story_remove_debug_tabs);
 }
+
+static void
+on_config_use_git_changed(GConfClient *client, guint id, GConfEntry *entry, GtkComboBox *box)
+{
+	gboolean newvalue = gconf_value_get_bool(gconf_entry_get_value(entry));
+	/* update application to reflect new value */
+	gtk_combo_box_set_active(box, newvalue? 1 : 0);
+}
+
 #if 0
 static gboolean
 update_skein_spacing(GtkWidget *window)
@@ -301,7 +310,8 @@ static struct KeyToMonitor keys_to_monitor[] = {
 	{ PREFS_AUTHOR_NAME, "author_name", on_config_author_name_changed },
 	{ PREFS_CLEAN_BUILD_FILES, "clean_build_files", on_config_clean_build_files_changed },
 	{ PREFS_CLEAN_INDEX_FILES, "clean_index_files", on_config_generic_bool_changed },
-	{ PREFS_DEBUG_LOG_VISIBLE, "show_debug_tabs", on_config_debug_log_visible_changed }/*,
+	{ PREFS_DEBUG_LOG_VISIBLE, "show_debug_tabs", on_config_debug_log_visible_changed },
+	{ PREFS_USE_GIT, "glulx_combo", on_config_use_git_changed }/*,
 	{ PREFS_HORIZONTAL_SPACING, NULL, on_config_skein_spacing_changed },
 	{ PREFS_VERTICAL_SPACING, NULL, on_config_skein_spacing_changed }*/
 };

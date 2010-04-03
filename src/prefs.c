@@ -486,6 +486,12 @@ on_clean_index_files_toggled(GtkToggleButton *togglebutton, I7App *app)
 }
 
 void
+on_glulx_combo_changed(GtkComboBox *box, I7App *app)
+{
+	config_file_set_bool(PREFS_USE_GIT, gtk_combo_box_get_active(box) == 1);
+}
+
+void
 on_show_debug_tabs_toggled(GtkToggleButton *togglebutton, I7App *app)
 {
 	config_file_set_bool(PREFS_DEBUG_LOG_VISIBLE, gtk_toggle_button_get_active(togglebutton));

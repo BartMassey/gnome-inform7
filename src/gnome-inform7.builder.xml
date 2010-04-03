@@ -62,6 +62,20 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkListStore" id="glulx_terps_model">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Glulxe (default)</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">git</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkDialog" id="prefs_dialog">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Inform Preferences</property>
@@ -922,6 +936,62 @@
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkFrame" id="frame8">
+                    <property name="visible">True</property>
+                    <property name="label_xalign">0</property>
+                    <property name="shadow_type">none</property>
+                    <child>
+                      <object class="GtkAlignment" id="alignment1">
+                        <property name="visible">True</property>
+                        <property name="left_padding">12</property>
+                        <child>
+                          <object class="GtkHBox" id="hbox8">
+                            <property name="visible">True</property>
+                            <property name="spacing">12</property>
+                            <child>
+                              <object class="GtkLabel" id="label4">
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes">Glulx interpreter:</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBox" id="glulx_combo">
+                                <property name="visible">True</property>
+                                <property name="model">glulx_terps_model</property>
+                                <signal name="changed" handler="on_glulx_combo_changed"/>
+                                <child>
+                                  <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                                  <attributes>
+                                    <attribute name="text">0</attribute>
+                                  </attributes>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child type="label">
+                      <object class="GtkLabel" id="label3">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">&lt;b&gt;Interpreters&lt;/b&gt;</property>
+                        <property name="use_markup">True</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkFrame" id="frame7">
                     <property name="visible">True</property>
                     <property name="label_xalign">0</property>
@@ -976,7 +1046,7 @@
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="position">1</property>
+                    <property name="position">2</property>
                   </packing>
                 </child>
               </object>
@@ -1106,8 +1176,8 @@
   <object class="GtkRecentAction" id="open_recent">
     <property name="label">Open Recen_t</property>
     <property name="tooltip">Open a recently opened story</property>
-    <property name="sort_type">mru</property>
     <property name="limit">10</property>
+    <property name="sort_type">mru</property>
     <signal name="item_activated" handler="action_open_recent"/>
   </object>
   <object class="GtkSourceBuffer" id="tab_buffer">

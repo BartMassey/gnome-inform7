@@ -40,6 +40,7 @@
 #define PREFS_TOOLBAR_VISIBLE       PREFS_IDE_PATH "ToolbarDefault"
 #define PREFS_STATUSBAR_VISIBLE     PREFS_IDE_PATH "StatusbarDefault"
 #define PREFS_NOTEPAD_VISIBLE       PREFS_IDE_PATH "NotepadDefault"
+#define PREFS_USE_GIT               PREFS_IDE_PATH "UseGit"
 
 #define PREFS_FONT_SET		PREFS_EDITOR_PATH "FontSet"
 #define PREFS_CUSTOM_FONT	PREFS_EDITOR_PATH "CustomFont"
