@@ -275,8 +275,9 @@ finish_ni_compiler(GPid pid, gint status, CompilerData *data)
 
     /* Decide what to do next */
 	if(data->refresh_only) {
-		(priv->compile_finished_callback)(data->story, priv->compile_finished_callback_data);
+		I7Story *story = data->story;
 		finish_compiling(TRUE, data);
+		(priv->compile_finished_callback)(story, priv->compile_finished_callback_data);
 		return;
 	}
 
@@ -425,8 +426,9 @@ finish_i6_compiler(GPid pid, gint status, CompilerData *data)
     
     /* Decide what to do next */
 	if(!data->build_for_release) {
-		(priv->compile_finished_callback)(data->story, priv->compile_finished_callback_data);
+		I7Story *story = data->story;
 		finish_compiling(TRUE, data);
+		(priv->compile_finished_callback)(story, priv->compile_finished_callback_data);
 		return;
 	}
 
@@ -503,9 +505,9 @@ finish_cblorb_compiler(GPid pid, gint status, CompilerData *data)
     }
     
     /* Decide what to do next */
-	(priv->compile_finished_callback)(data->story, priv->compile_finished_callback_data);
-    finish_compiling(TRUE, data);
-	
+	I7Story *story = data->story;
+	finish_compiling(TRUE, data);
+	(priv->compile_finished_callback)(story, priv->compile_finished_callback_data);
 }
 
 /* Clean up the compiling stuff and notify the user that compiling has finished.
