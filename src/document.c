@@ -145,7 +145,7 @@ i7_document_init(I7Document *self)
 	const gchar *selection_actions[] = {
 		"scroll_selection", "<ctrl>J",
 		"comment_out_selection", "<ctrl>slash",
-		"uncomment_selection", "<ctrl><shift>slash", /* FIXME doesn't work?! */
+		"uncomment_selection", "<ctrl>question", /* Ctrl-Shift-/ doesn't work, Gnome bug #614146 */
 		NULL
 	};
 	const gchar *copy_actions[] = {
