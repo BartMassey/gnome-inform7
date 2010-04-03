@@ -33,6 +33,8 @@ struct _I7ExtensionPrivate
 {
 	/* Built-in extension or not */
 	gboolean readonly;
+	/* View with elastic tabstops (not saved) */
+	gboolean elastic;
 };
 
 #define I7_EXTENSION_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE((o), I7_TYPE_EXTENSION, I7ExtensionPrivate))
@@ -360,6 +362,14 @@ i7_extension_check_spelling(I7Document *document)
 	i7_source_view_check_spelling(I7_EXTENSION(document)->sourceview);
 }
 
+static void
+i7_extension_set_elastic_tabs(I7Document *document, gboolean elastic)
+{
+	I7_EXTENSION_USE_PRIVATE(document, priv);
+	priv->elastic = elastic;
+	i7_source_view_set_elastic_tabs(I7_EXTENSION(document)->sourceview, elastic);
+}
+
 /* TYPE SYSTEM */
 
 static void
@@ -430,9 +440,11 @@ i7_extension_init(I7Extension *self)
 	/* Set font sizes, etc. */
 	i7_document_update_fonts(I7_DOCUMENT(self));
 
-	/* Set spell checking */
+	/* Set spell checking and elastic tabstops */
 	gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(I7_DOCUMENT(self)->autocheck_spelling), config_file_get_bool(PREFS_SPELL_CHECK_DEFAULT));
 	i7_document_set_spellcheck(I7_DOCUMENT(self), config_file_get_bool(PREFS_SPELL_CHECK_DEFAULT));
+	priv->elastic = config_file_get_bool(PREFS_ELASTIC_TABS_DEFAULT);
+	gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(I7_DOCUMENT(self)->enable_elastic_tabs), priv->elastic);
 
 	/* Create a callback for the delete event */
 	g_signal_connect(self, "delete-event", G_CALLBACK(on_extensionwindow_delete_event), NULL);
@@ -461,6 +473,7 @@ i7_extension_class_init(I7ExtensionClass *klass)
 	document_class->highlight_search = i7_extension_highlight_search;
 	document_class->set_spellcheck = i7_extension_set_spellcheck;
 	document_class->check_spelling = i7_extension_check_spelling;
+	document_class->set_elastic_tabs = i7_extension_set_elastic_tabs;
 
 	GObjectClass *object_class = G_OBJECT_CLASS(klass);
 	object_class->finalize = i7_extension_finalize;

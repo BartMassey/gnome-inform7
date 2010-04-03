@@ -14,6 +14,7 @@ gnome_inform7_SOURCES = \
 	configfile.c configfile.h \
 	document.c document.h document-private.h \
 	document-search.c \
+	elastic.c elastic.h \
 	error.c error.h \
 	extension.c extension.h \
 	file.c file.h \

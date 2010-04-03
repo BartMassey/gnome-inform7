@@ -5,6 +5,7 @@
 #include <gtkspell/gtkspell.h>
 #include "source-view.h"
 #include "builder.h"
+#include "elastic.h"
 #include "error.h"
 
 #define CONTENTS_FALLBACK_BG_COLOR "#FFFFBF"
@@ -183,4 +184,14 @@ i7_source_view_check_spelling(I7SourceView *self)
 	I7_SOURCE_VIEW_USE_PRIVATE(self, priv);
 	if(priv->spell)
 		gtkspell_recheck_all(priv->spell);
+}
+
+void
+i7_source_view_set_elastic_tabs(I7SourceView *self, gboolean elastic)
+{
+	if(elastic) {
+		elastic_setup(gtk_text_view_get_buffer(GTK_TEXT_VIEW(self->source)), GTK_TEXT_VIEW(self->source));
+		elastic_refresh(gtk_text_view_get_buffer(GTK_TEXT_VIEW(self->source)), GTK_TEXT_VIEW(self->source));
+	} else
+		elastic_remove(GTK_SOURCE_BUFFER(gtk_text_view_get_buffer(GTK_TEXT_VIEW(self->source))));
 }

@@ -177,6 +177,15 @@ on_notify_nobble_rng(I7Story *story)
 	/* The callbacks ensure that we don't have to manually set the other ones */
 }
 
+void
+on_notify_elastic_tabs(I7Story *story)
+{
+	gboolean value = i7_story_get_elastic_tabs(story);
+	gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(I7_DOCUMENT(story)->enable_elastic_tabs), value);
+	i7_source_view_set_elastic_tabs(story->panel[LEFT]->sourceview, value);
+	i7_source_view_set_elastic_tabs(story->panel[RIGHT]->sourceview, value);
+}
+
 /* These 'get' functions provide for a default value even though we initialize a
  dictionary with all the required keys; it may be that another port of Inform 7
  doesn't write all the keys */

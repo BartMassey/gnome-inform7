@@ -27,6 +27,7 @@
 #include "app.h"
 #include "builder.h"
 #include "configfile.h"
+#include "elastic.h"
 #include "error.h"
 #include "file.h"
 
@@ -141,7 +142,7 @@ i7_document_init(I7Document *self)
 		"indent", "<ctrl>T",
 		"unindent", "<shift><ctrl>T",
 		"renumber_all_sections", "<shift><ctrl>N",
-		"enable_elastic_tabs", "", /* unimplemented */
+		"enable_elastic_tabs", "", 
 		NULL
 	};
 	const gchar *selection_actions[] = {
@@ -194,6 +195,7 @@ i7_document_init(I7Document *self)
 	LOAD_ACTION(priv->document_action_group, next_section);
 	LOAD_ACTION(priv->document_action_group, autocheck_spelling);
 	LOAD_ACTION(priv->document_action_group, check_spelling);
+	LOAD_ACTION(priv->document_action_group, enable_elastic_tabs);
 	gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(gtk_action_group_get_action(priv->document_action_group, "view_statusbar")), config_file_get_bool(PREFS_STATUSBAR_VISIBLE));
 	gtk_container_add(GTK_CONTAINER(self), self->box);
 
@@ -244,6 +246,7 @@ i7_document_class_init(I7DocumentClass *klass)
 	klass->highlight_search = NULL;
 	klass->set_spellcheck = NULL;
 	klass->check_spelling = NULL;
+	klass->set_elastic_tabs = NULL;
 	
 	GObjectClass *object_class = G_OBJECT_CLASS(klass);
 	object_class->finalize = i7_document_finalize;
@@ -556,6 +559,14 @@ i7_document_update_source_highlight(I7Document *document)
 {
 	I7_DOCUMENT_USE_PRIVATE(document, priv);
     gtk_source_buffer_set_highlight_syntax(priv->buffer, config_file_get_bool(PREFS_SYNTAX_HIGHLIGHTING));
+}
+
+/* Recalculate the document's elastic tabs */
+void
+i7_document_refresh_elastic_tabs(I7Document *document)
+{
+	I7_DOCUMENT_USE_PRIVATE(document, priv);
+	elastic_refresh(GTK_TEXT_BUFFER(priv->buffer), i7_document_get_default_view(document));
 }
 
 void
@@ -1042,3 +1053,11 @@ i7_document_check_spelling(I7Document *document)
 {
 	I7_DOCUMENT_GET_CLASS(document)->check_spelling(document);
 }
+
+void
+i7_document_set_elastic_tabs(I7Document *document, gboolean elastic)
+{
+	gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(document->enable_elastic_tabs), elastic);
+	I7_DOCUMENT_GET_CLASS(document)->set_elastic_tabs(document, elastic);
+}
+

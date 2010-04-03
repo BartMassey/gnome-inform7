@@ -428,8 +428,7 @@ action_search(GtkAction *action, I7Document *document)
 void
 action_check_spelling(GtkAction *action, I7Document *document)
 {
-	
-	//i7_document_check_spelling(document);
+	i7_document_check_spelling(document);
 }
 
 void
@@ -824,7 +823,10 @@ action_renumber_all_sections(GtkAction *action, I7Document *document)
 void
 action_enable_elastic_tabs_toggled(GtkToggleAction *action, I7Document *document)
 {
-
+	gboolean value = gtk_toggle_action_get_active(action);
+	/* Use this value as the default for new windows */
+	config_file_set_bool(PREFS_ELASTIC_TABS_DEFAULT, value);
+	i7_document_set_elastic_tabs(document, value);
 }
 
 void

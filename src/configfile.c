@@ -270,6 +270,19 @@ on_config_use_git_changed(GConfClient *client, guint id, GConfEntry *entry, GtkC
 	gtk_combo_box_set_active(box, newvalue? 1 : 0);
 }
 
+static void
+on_config_elastic_tabs_padding_changed(GConfClient *client, guint id, GConfEntry *entry)
+{
+	int newvalue = gconf_value_get_int(gconf_entry_get_value(entry));
+	/* validate new value */
+	if(newvalue < 0) {
+		set_key_to_default(client, entry);
+		return;
+	}
+	/* update application to reflect new value */
+	i7_app_foreach_document(i7_app_get(), i7_document_refresh_elastic_tabs);
+}
+
 #if 0
 static gboolean
 update_skein_spacing(GtkWidget *window)
@@ -311,7 +324,8 @@ static struct KeyToMonitor keys_to_monitor[] = {
 	{ PREFS_CLEAN_BUILD_FILES, "clean_build_files", on_config_clean_build_files_changed },
 	{ PREFS_CLEAN_INDEX_FILES, "clean_index_files", on_config_generic_bool_changed },
 	{ PREFS_DEBUG_LOG_VISIBLE, "show_debug_tabs", on_config_debug_log_visible_changed },
-	{ PREFS_USE_GIT, "glulx_combo", on_config_use_git_changed }/*,
+	{ PREFS_USE_GIT, "glulx_combo", on_config_use_git_changed },
+	{ PREFS_ELASTIC_TABS_PADDING, NULL, on_config_elastic_tabs_padding_changed }/*,
 	{ PREFS_HORIZONTAL_SPACING, NULL, on_config_skein_spacing_changed },
 	{ PREFS_VERTICAL_SPACING, NULL, on_config_skein_spacing_changed }*/
 };

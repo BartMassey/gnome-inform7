@@ -100,6 +100,7 @@ void on_nobble_rng_button_toggled(GtkToggleButton *togglebutton, I7Story *story)
 void on_notify_story_format(I7Story *story);
 void on_notify_create_blorb(I7Story *story);
 void on_notify_nobble_rng(I7Story *story);
+void on_notify_elastic_tabs(I7Story *story);
 I7StoryFormat i7_story_get_story_format(I7Story *story);
 void i7_story_set_story_format(I7Story *story, I7StoryFormat format);
 gboolean i7_story_get_create_blorb(I7Story *story);

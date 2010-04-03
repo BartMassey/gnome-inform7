@@ -23,7 +23,6 @@
 
 #include "configfile.h"
 #include "story.h"
-#include "support.h"
 
 typedef struct
 {
@@ -57,16 +56,19 @@ get_text_width(GtkTextView *view, GtkTextIter *start, GtkTextIter *end)
 static int 
 calc_tab_width(GtkTextView *view, int text_width_in_tab)
 {
+	int tab_width_in_spaces = config_file_get_int(PREFS_TAB_WIDTH);
+	if(tab_width_in_spaces < 1)
+		tab_width_in_spaces = DEFAULT_TAB_WIDTH;
+	
 	int tab_width_minimum;
 	PangoLayout *space = gtk_widget_create_pango_layout(GTK_WIDGET(view), " ");
     pango_layout_get_pixel_size(space, &tab_width_minimum, NULL);
     g_object_unref(space);
-	tab_width_minimum *= config_file_get_int("EditorSettings", "TabWidth");
+	tab_width_minimum *= tab_width_in_spaces;
 	
 	if (text_width_in_tab < tab_width_minimum)
 		text_width_in_tab = tab_width_minimum;
-	return text_width_in_tab + 
-		config_file_get_int("EditorSettings", "ElasticTabPadding");
+	return text_width_in_tab + config_file_get_int(PREFS_ELASTIC_TABS_PADDING);
 }
 
 static gboolean 
@@ -80,8 +82,7 @@ change_line(GtkTextIter *location, direction which_dir)
 
 /* returns the max number of tabs found, and sets location to the first line it finds with no tabs in */
 static int 
-get_block_boundary(GtkTextBuffer *textbuffer, GtkTextIter *location, 
-				   direction which_dir)
+get_block_boundary(GtkTextBuffer *textbuffer, GtkTextIter *location, direction which_dir)
 {
 	int max_tabs = 0;
 	gboolean orig_line = TRUE;
@@ -112,8 +113,7 @@ get_block_boundary(GtkTextBuffer *textbuffer, GtkTextIter *location,
 
 /* returns the max number of tabs found between the start and end iters */
 static int 
-get_nof_tabs_between(GtkTextBuffer *textbuffer, GtkTextIter *start, 
-					 GtkTextIter *end)
+get_nof_tabs_between(GtkTextBuffer *textbuffer, GtkTextIter *start, GtkTextIter *end)
 {
 	GtkTextIter current_pos = *start;
 	int max_tabs = 0;
@@ -139,8 +139,7 @@ get_nof_tabs_between(GtkTextBuffer *textbuffer, GtkTextIter *start,
 }
 
 static void 
-stretch_tabstops(GtkTextBuffer *textbuffer, GtkTextView *view, 
-				 int block_start_linenum, int block_nof_lines, int max_tabs)
+stretch_tabstops(GtkTextBuffer *textbuffer, GtkTextView *view, int block_start_linenum, int block_nof_lines, int max_tabs)
 {
 	int l, t;
 	et_line lines[block_nof_lines];
@@ -174,8 +173,7 @@ stretch_tabstops(GtkTextBuffer *textbuffer, GtkTextView *view,
 			}
 			else if (current_char == '\t') {
 				if (cell_empty == FALSE)
-					text_width_in_tab = 
-						get_text_width(view, &cell_start, &current_pos);
+					text_width_in_tab = get_text_width(view, &cell_start, &current_pos);
 				grid[l][current_tab_num].ends_in_tab = TRUE;
 				grid[l][current_tab_num].text_width_pix = 
 					calc_tab_width(view, text_width_in_tab);
@@ -234,14 +232,12 @@ stretch_tabstops(GtkTextBuffer *textbuffer, GtkTextView *view,
 			}
 		}
 
-		GtkTextTag *tag = gtk_text_buffer_create_tag(textbuffer, NULL, "tabs",
-													 tab_array, NULL);
+		GtkTextTag *tag = gtk_text_buffer_create_tag(textbuffer, NULL, "tabs", tab_array, NULL);
 	
 		/* Apply word_wrap tag to whole buffer */
 		/* gtk_text_buffer_get_bounds(textbuffer, &start, &end);*/
 	
-		gtk_text_buffer_get_iter_at_line(textbuffer, &line_start, 
-										 current_line_num);
+		gtk_text_buffer_get_iter_at_line(textbuffer, &line_start, current_line_num);
 	
 		line_end = line_start;
 	
@@ -262,14 +258,10 @@ elastictabstops_onmodify(GtkTextBuffer *textbuffer, GtkTextIter *start,
 	GtkTextIter block_start_iter = *start;
 	GtkTextIter block_end_iter = *end;
 
-	int max_tabs_between = 
-		get_nof_tabs_between(textbuffer, &block_start_iter, &block_end_iter);
-	int max_tabs_backwards = 
-		get_block_boundary(textbuffer, &block_start_iter, BACKWARDS);
-	int max_tabs_forwards = 
-		get_block_boundary(textbuffer, &block_end_iter, FORWARDS);
-	int max_tabs = 
-		MAX(MAX(max_tabs_between, max_tabs_backwards), max_tabs_forwards);
+	int max_tabs_between = get_nof_tabs_between(textbuffer, &block_start_iter, &block_end_iter);
+	int max_tabs_backwards = get_block_boundary(textbuffer, &block_start_iter, BACKWARDS);
+	int max_tabs_forwards = get_block_boundary(textbuffer, &block_end_iter, FORWARDS);
+	int max_tabs = MAX(MAX(max_tabs_between, max_tabs_backwards), max_tabs_forwards);
 
 	int block_start_linenum = gtk_text_iter_get_line(&block_start_iter);
 	int block_end_linenum = gtk_text_iter_get_line(&block_end_iter);
@@ -329,24 +321,22 @@ elastic_remove(GtkSourceBuffer *buffer)
 		gtk_text_buffer_remove_tag(textbuffer, iter->data, &start, &end);
 	
 	g_slist_free(tabtags);
+
+	g_signal_handlers_disconnect_by_func(buffer, elastic_insert_text, NULL);
+	g_signal_handlers_disconnect_by_func(buffer, elastic_delete_range, NULL);
 }
 
 void 
 elastic_refresh(GtkTextBuffer *textbuffer, GtkTextView *view)
 {
-	if(!config_file_get_bool("EditorSettings", "ElasticTabstops"))
-		return;
 	GtkTextIter start, end;
 	gtk_text_buffer_get_bounds(textbuffer, &start, &end);
 	elastictabstops_onmodify(textbuffer, &start, &end, view);
 }
 
 gboolean 
-elastic_insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location,
-					gchar *text, gint len, GtkTextView *view)
+elastic_insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar *text, gint len, GtkTextView *view)
 {
-	if(!config_file_get_bool("EditorSettings", "ElasticTabstops"))
-		return FALSE;
 	GtkTextIter start, end;
 	start = end = *location;
 	gtk_text_iter_backward_chars(&start, len);
@@ -355,19 +345,14 @@ elastic_insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location,
 }
 
 gboolean 
-elastic_delete_range(GtkTextBuffer *textbuffer, GtkTextIter *start, 
-					 GtkTextIter *end, GtkTextView *view)
+elastic_delete_range(GtkTextBuffer *textbuffer, GtkTextIter *start, GtkTextIter *end, GtkTextView *view)
 {
-	if(!config_file_get_bool("EditorSettings", "ElasticTabstops"))
-		return FALSE;
 	elastictabstops_onmodify(textbuffer, start, end, view);
 	return FALSE;
 }
 
-void elastic_setup(GtkTextBuffer *textbuffer, GtkTextView *view)
+void elastic_setup(GtkTextBuffer *buffer, GtkTextView *view)
 {
-	g_signal_connect(textbuffer, "insert-text", G_CALLBACK(elastic_insert_text),
-					 view);
-	g_signal_connect(textbuffer, "delete-range",
-					 G_CALLBACK(elastic_delete_range), view);
+	g_signal_connect_after(buffer, "insert-text", G_CALLBACK(elastic_insert_text), view);
+	g_signal_connect_after(buffer, "delete-range", G_CALLBACK(elastic_delete_range), view);
 }

@@ -39,7 +39,7 @@
 			<separator/>
 			<menuitem action="check_spelling"/>
 			<menuitem action="autocheck_spelling"/>
-			<separator/>-->
+			<separator/>
 			<menuitem action="preferences"/>
 		</menu>
 		<menu action="view_menu">
@@ -61,7 +61,7 @@
 			<menuitem action="uncomment_selection"/>
 			<separator/>
 			<menuitem action="renumber_all_sections"/>
-			<!--<menuitem action="enable_elastic_tabs"/>-->
+			<menuitem action="enable_elastic_tabs"/>
 		</menu>
 		<menu action="help_menu">
 			<menuitem action="report_bug"/>
