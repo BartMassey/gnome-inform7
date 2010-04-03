@@ -47,6 +47,8 @@ typedef struct {
 	void (*update_font_sizes)();
 	void (*expand_headings_view)();
 	gboolean (*highlight_search)();
+	void (*set_spellcheck)();
+	void (*check_spelling)();
 } I7DocumentClass;
 
 typedef struct {
@@ -80,6 +82,8 @@ typedef struct {
 	GtkAction *entire_source;
 	GtkAction *previous_section;
 	GtkAction *next_section;
+	GtkAction *autocheck_spelling;
+	GtkAction *check_spelling;
 } I7Document;
 
 typedef enum  {
@@ -162,6 +166,10 @@ void i7_document_display_progress_message(I7Document *document, const gchar *mes
 void i7_document_clear_progress(I7Document *document);
 
 void i7_document_attach_menu_hints(I7Document *document, GtkMenuBar *menu);
+
+void i7_document_set_spellcheck(I7Document *document, gboolean spellcheck);
+void i7_document_set_spellcheck_language(I7Document *document, const gchar *language);
+void i7_document_check_spelling(I7Document *document);
 
 /* Search, document-search.c */
 gboolean i7_document_highlight_quicksearch(I7Document *document, const gchar *text, gboolean forward);

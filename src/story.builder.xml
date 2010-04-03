@@ -118,17 +118,6 @@
     <property name="tooltip">Search through the entire project, including the documentation</property>
     <signal name="activate" handler="action_search"/>
   </object>
-  <object class="GtkAction" id="check_spelling">
-    <property name="label">C_heck Spelling...</property>
-    <property name="tooltip">Check the current story for incorrect spelling</property>
-    <property name="stock_id">gtk-spell-check</property>
-    <signal name="activate" handler="action_check_spelling"/>
-  </object>
-  <object class="GtkAction" id="set_language">
-    <property name="label">Set _Language...</property>
-    <property name="tooltip">Set the language of the current story</property>
-    <signal name="activate" handler="action_set_language"/>
-  </object>
   <object class="GtkAction" id="show_last_command">
     <property name="label">Show _Last Command</property>
     <property name="tooltip">Show the last command</property>
@@ -216,12 +205,6 @@
     <child>
       <placeholder/>
     </child>
-  </object>
-  <object class="GtkToggleAction" id="autocheck_spelling">
-    <property name="label">Aut_ocheck Spelling</property>
-    <property name="tooltip">Automatically underline misspelled words in the story</property>
-    <property name="active">True</property>
-    <signal name="toggled" handler="action_autocheck_spelling_toggle"/>
   </object>
   <object class="GtkAction" id="play_menu">
     <property name="label">_Play</property>

@@ -52,5 +52,7 @@ GType i7_source_view_get_type() G_GNUC_CONST;
 GtkWidget *i7_source_view_new();
 void i7_source_view_set_contents_display(I7SourceView *self, I7ContentsDisplay display);
 void i7_source_view_jump_to_line(I7SourceView *self, guint line);
+void i7_source_view_set_spellcheck(I7SourceView *self, gboolean spellcheck);
+void i7_source_view_check_spelling(I7SourceView *self);
 
 #endif /* _SOURCE_VIEW_H_ */

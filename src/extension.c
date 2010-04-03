@@ -348,6 +348,18 @@ i7_extension_highlight_search(I7Document *document, const gchar *text, gboolean 
 	return TRUE;
 }
 
+static void
+i7_extension_set_spellcheck(I7Document *document, gboolean spellcheck)
+{
+	i7_source_view_set_spellcheck(I7_EXTENSION(document)->sourceview, spellcheck);
+}
+
+static void
+i7_extension_check_spelling(I7Document *document)
+{
+	i7_source_view_check_spelling(I7_EXTENSION(document)->sourceview);
+}
+
 /* TYPE SYSTEM */
 
 static void
@@ -418,6 +430,9 @@ i7_extension_init(I7Extension *self)
 	/* Set font sizes, etc. */
 	i7_document_update_fonts(I7_DOCUMENT(self));
 
+	/* Set spell checking */
+	gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(I7_DOCUMENT(self)->autocheck_spelling), config_file_get_bool(PREFS_SPELL_CHECK_DEFAULT));
+	i7_document_set_spellcheck(I7_DOCUMENT(self), config_file_get_bool(PREFS_SPELL_CHECK_DEFAULT));
 
 	/* Create a callback for the delete event */
 	g_signal_connect(self, "delete-event", G_CALLBACK(on_extensionwindow_delete_event), NULL);
@@ -444,6 +459,8 @@ i7_extension_class_init(I7ExtensionClass *klass)
 	document_class->update_font_sizes = i7_extension_update_font_sizes;
 	document_class->expand_headings_view = i7_extension_expand_headings_view;
 	document_class->highlight_search = i7_extension_highlight_search;
+	document_class->set_spellcheck = i7_extension_set_spellcheck;
+	document_class->check_spelling = i7_extension_check_spelling;
 
 	GObjectClass *object_class = G_OBJECT_CLASS(klass);
 	object_class->finalize = i7_extension_finalize;

@@ -538,4 +538,19 @@
   <object class="GtkTreeModelFilter" id="headings_filtermodel">
     <property name="child_model">headings_store</property>
   </object>
+  <object class="GtkAction" id="check_spelling">
+    <property name="label">Rec_heck Document</property>
+    <property name="short_label">Rec_heck Document</property>
+    <property name="tooltip">Recheck the current story for incorrect spelling</property>
+    <property name="stock_id">gtk-spell-check</property>
+    <signal name="activate" handler="action_check_spelling"/>
+  </object>
+  <object class="GtkActionGroup" id="spelling_actions"/>
+  <object class="GtkToggleAction" id="autocheck_spelling">
+    <property name="label">Aut_ocheck Spelling</property>
+    <property name="short_label">Aut_ocheck Spelling</property>
+    <property name="tooltip">Automatically underline misspelled words in the story</property>
+    <property name="active">True</property>
+    <signal name="toggled" handler="action_autocheck_spelling_toggle"/>
+  </object>
 </interface>

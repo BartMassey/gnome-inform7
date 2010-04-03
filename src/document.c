@@ -126,7 +126,9 @@ i7_document_init(I7Document *self)
 		"find", NULL,
 		"find_next", "<ctrl>G",
 		"find_previous", "<shift><ctrl>G",
-		"replace", "<ctrl>H", 
+		"replace", "<ctrl>H",
+		"check_spelling", "<shift>F7",
+		"autocheck_spelling", "",
 		"view_toolbar", "",
 		"view_statusbar", "",
 		"show_headings", "<shift><ctrl>H",
@@ -190,6 +192,8 @@ i7_document_init(I7Document *self)
 	LOAD_ACTION(priv->document_action_group, entire_source);
 	LOAD_ACTION(priv->document_action_group, previous_section);
 	LOAD_ACTION(priv->document_action_group, next_section);
+	LOAD_ACTION(priv->document_action_group, autocheck_spelling);
+	LOAD_ACTION(priv->document_action_group, check_spelling);
 	gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(gtk_action_group_get_action(priv->document_action_group, "view_statusbar")), config_file_get_bool(PREFS_STATUSBAR_VISIBLE));
 	gtk_container_add(GTK_CONTAINER(self), self->box);
 
@@ -238,6 +242,8 @@ i7_document_class_init(I7DocumentClass *klass)
 	klass->update_font_sizes = NULL;
 	klass->expand_headings_view = NULL;
 	klass->highlight_search = NULL;
+	klass->set_spellcheck = NULL;
+	klass->check_spelling = NULL;
 	
 	GObjectClass *object_class = G_OBJECT_CLASS(klass);
 	object_class->finalize = i7_document_finalize;
@@ -1023,4 +1029,16 @@ void
 i7_document_attach_menu_hints(I7Document *document, GtkMenuBar *menu)
 {
 	gtk_container_foreach(GTK_CONTAINER(menu), attach_menu_hints, GTK_STATUSBAR(document->statusbar));
+}
+
+void 
+i7_document_set_spellcheck(I7Document *document, gboolean spellcheck)
+{
+	I7_DOCUMENT_GET_CLASS(document)->set_spellcheck(document, spellcheck);
+}
+
+void 
+i7_document_check_spelling(I7Document *document)
+{
+	I7_DOCUMENT_GET_CLASS(document)->check_spelling(document);
 }

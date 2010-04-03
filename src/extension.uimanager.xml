@@ -37,9 +37,8 @@
 			<menuitem action="scroll_selection"/>
 			<!--<menuitem action="search"/>-->
 			<separator/>
-			<!--<menuitem action="check_spelling"/>
+			<menuitem action="check_spelling"/>
 			<menuitem action="autocheck_spelling"/>
-			<menuitem action="set_language"/>
 			<separator/>-->
 			<menuitem action="preferences"/>
 		</menu>
@@ -59,7 +58,7 @@
 			<menuitem action="indent"/>
 			<menuitem action="unindent"/>
 			<menuitem action="comment_out_selection"/>
-			<!--<menuitem action="uncomment_selection"/>-->
+			<menuitem action="uncomment_selection"/>
 			<separator/>
 			<menuitem action="renumber_all_sections"/>
 			<!--<menuitem action="enable_elastic_tabs"/>-->

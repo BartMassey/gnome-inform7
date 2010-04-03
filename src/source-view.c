@@ -2,13 +2,25 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
+#include <gtkspell/gtkspell.h>
 #include "source-view.h"
 #include "builder.h"
+#include "error.h"
 
 #define CONTENTS_FALLBACK_BG_COLOR "#FFFFBF"
 #define CONTENTS_FALLBACK_FG_COLOR "black"
 
 /* TYPE SYSTEM */
+
+typedef struct _I7SourceViewPrivate I7SourceViewPrivate;
+struct _I7SourceViewPrivate
+{
+	/* Spell checker */
+	GtkSpell *spell;
+};
+
+#define I7_SOURCE_VIEW_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE((o), I7_TYPE_SOURCE_VIEW, I7SourceViewPrivate))
+#define I7_SOURCE_VIEW_USE_PRIVATE(o,n) I7SourceViewPrivate *n = I7_SOURCE_VIEW_PRIVATE(o)
 
 static GtkFrameClass *parent_class = NULL;
 G_DEFINE_TYPE(I7SourceView, i7_source_view, GTK_TYPE_FRAME);
@@ -16,6 +28,11 @@ G_DEFINE_TYPE(I7SourceView, i7_source_view, GTK_TYPE_FRAME);
 static void
 i7_source_view_init(I7SourceView *self)
 {
+	I7_SOURCE_VIEW_USE_PRIVATE(self, priv);
+
+	/* Set private data */
+	priv->spell = NULL;
+	
 	/* Build the interface */
 	GtkBuilder *builder = create_new_builder("source.builder.xml", self);
 
@@ -68,6 +85,8 @@ i7_source_view_class_init(I7SourceViewClass *klass)
 	object_class->finalize = i7_source_view_finalize;
 	
 	parent_class = g_type_class_peek_parent(klass);
+
+	g_type_class_add_private(klass, sizeof(I7SourceViewPrivate));
 }
 
 /* SIGNAL HANDLERS */
@@ -139,4 +158,29 @@ i7_source_view_jump_to_line(I7SourceView *self, guint line)
 	gtk_text_buffer_select_range(buffer, &cursor, &line_end);
 	gtk_text_view_scroll_to_mark(view, gtk_text_buffer_get_insert(buffer), 0.25, FALSE, 0.0, 0.0);
 	gtk_widget_grab_focus(GTK_WIDGET(view));
+}
+
+void
+i7_source_view_set_spellcheck(I7SourceView *self, gboolean spellcheck)
+{
+	I7_SOURCE_VIEW_USE_PRIVATE(self, priv);
+
+	if(spellcheck) {
+		GError *error = NULL;
+		if(!(priv->spell = gtkspell_new_attach(GTK_TEXT_VIEW(self->source), NULL, &error)))
+	    	error_dialog(NULL, error, _("Error initializing spell checking: "));
+	} else {
+		if(priv->spell) {
+			gtkspell_detach(priv->spell);
+			priv->spell = NULL;
+		}
+	}
+}
+
+void
+i7_source_view_check_spelling(I7SourceView *self)
+{
+	I7_SOURCE_VIEW_USE_PRIVATE(self, priv);
+	if(priv->spell)
+		gtkspell_recheck_all(priv->spell);
 }

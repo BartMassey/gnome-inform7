@@ -530,6 +530,20 @@ i7_story_highlight_search(I7Document *document, const gchar *text, gboolean forw
 	return TRUE;
 }
 
+static void
+i7_story_set_spellcheck(I7Document *document, gboolean spellcheck)
+{
+	i7_source_view_set_spellcheck(I7_STORY(document)->panel[LEFT]->sourceview, spellcheck);
+	i7_source_view_set_spellcheck(I7_STORY(document)->panel[RIGHT]->sourceview, spellcheck);
+}
+
+static void
+i7_story_check_spelling(I7Document *document)
+{
+	i7_source_view_check_spelling(I7_STORY(document)->panel[LEFT]->sourceview);
+	i7_source_view_check_spelling(I7_STORY(document)->panel[RIGHT]->sourceview);
+}
+
 /* TYPE SYSTEM */
 
 static void
@@ -585,9 +599,6 @@ i7_story_init(I7Story *self)
 	const gchar *unimplemented[] = {
 		"import_into_skein", "",
 		"search", "<shift><ctrl>F",
-		"check_spelling", "<shift>F7",
-		"autocheck_spelling", "",
-		"set_language", "",
 		"show_last_command", "<alt><ctrl>L",
 		"show_last_command_skein", "<shift><ctrl>L",
 		"previous_changed_command", "",
@@ -744,6 +755,10 @@ i7_story_init(I7Story *self)
 	
 	/* Set font sizes, etc. */
 	i7_document_update_fonts(I7_DOCUMENT(self));
+
+	/* Set spell checking */
+	gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(I7_DOCUMENT(self)->autocheck_spelling), config_file_get_bool(PREFS_SPELL_CHECK_DEFAULT));
+	i7_document_set_spellcheck(I7_DOCUMENT(self), config_file_get_bool(PREFS_SPELL_CHECK_DEFAULT));
 	
 	/* Create a callback for the delete event */
 	g_signal_connect(self, "delete-event", G_CALLBACK(on_storywindow_delete_event), NULL);
@@ -774,6 +789,8 @@ i7_story_class_init(I7StoryClass *klass)
 	document_class->update_font_sizes = i7_story_update_font_sizes;
 	document_class->expand_headings_view = i7_story_expand_headings_view;
 	document_class->highlight_search = i7_story_highlight_search;
+	document_class->set_spellcheck = i7_story_set_spellcheck;
+	document_class->check_spelling = i7_story_check_spelling;
 	
 	GObjectClass *object_class = G_OBJECT_CLASS(klass);
 	object_class->set_property = i7_story_set_property;

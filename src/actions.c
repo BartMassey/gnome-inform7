@@ -429,18 +429,17 @@ void
 action_check_spelling(GtkAction *action, I7Document *document)
 {
 	
+	//i7_document_check_spelling(document);
 }
 
 void
 action_autocheck_spelling_toggle(GtkToggleAction *action, I7Document *document)
 {
-	
-}
-
-void
-action_set_language(GtkAction *action, I7Document *document)
-{
-	
+	gboolean value = gtk_toggle_action_get_active(action);
+	/* Use this value as the default for new windows */
+	config_file_set_bool(PREFS_SPELL_CHECK_DEFAULT, value);
+	gtk_action_set_sensitive(document->check_spelling, value);
+	i7_document_set_spellcheck(document, value);
 }
 
 void
