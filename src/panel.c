@@ -223,6 +223,7 @@ i7_panel_init(I7Panel *self)
 	self->z6 = GTK_WIDGET(load_object(builder, "z6"));
 	self->glulx = GTK_WIDGET(load_object(builder, "glulx"));
 	self->blorb = GTK_WIDGET(load_object(builder, "blorb"));
+	self->nobble_rng = GTK_WIDGET(load_object(builder, "nobble_rng"));
 	self->debugging_scrolledwindow = GTK_WIDGET(load_object(builder, "debugging_scrolledwindow"));
 	self->inform6_scrolledwindow = GTK_WIDGET(load_object(builder, "inform6_scrolledwindow"));
 

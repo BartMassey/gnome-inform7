@@ -77,6 +77,7 @@ typedef struct {
 	GtkWidget *z6;
 	GtkWidget *glulx;
 	GtkWidget *blorb;
+	GtkWidget *nobble_rng;
 	GtkWidget *debugging_scrolledwindow;
 	GtkWidget *inform6_scrolledwindow;
 	GtkWidget *tabs[I7_PANEL_NUM_PANES];

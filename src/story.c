@@ -690,6 +690,7 @@ i7_story_init(I7Story *self)
 		g_signal_connect(panel->z6, "toggled", G_CALLBACK(on_z6_button_toggled), self);
 		g_signal_connect(panel->glulx, "toggled", G_CALLBACK(on_glulx_button_toggled), self);
 		g_signal_connect(panel->blorb, "toggled", G_CALLBACK(on_blorb_button_toggled), self);
+		g_signal_connect(panel->nobble_rng, "toggled", G_CALLBACK(on_nobble_rng_button_toggled), self);
 		g_signal_connect(panel->tabs[I7_PANE_SOURCE], "switch-page", G_CALLBACK(on_source_notebook_switch_page), self);
 		g_signal_connect(panel->source_tabs[I7_SOURCE_VIEW_TAB_CONTENTS], "row-activated", G_CALLBACK(on_headings_row_activated), self);
 		g_signal_connect(panel, "select-view", G_CALLBACK(on_panel_select_view), self);
@@ -737,6 +738,7 @@ i7_story_init(I7Story *self)
 	/* Connect the widgets on the Settings pane to the settings properties */
 	g_signal_connect(self, "notify::story-format", G_CALLBACK(on_notify_story_format), NULL);
 	g_signal_connect(self, "notify::create-blorb", G_CALLBACK(on_notify_create_blorb), NULL);
+	g_signal_connect(self, "notify::nobble-rng", G_CALLBACK(on_notify_nobble_rng), NULL);
 	
 	/* Set font sizes, etc. */
 	i7_document_update_fonts(I7_DOCUMENT(self));
@@ -959,6 +961,7 @@ i7_story_open(I7Story *story, const gchar *directory)
 	/* Update the GUI with the new settings */
 	on_notify_story_format(story);
 	on_notify_create_blorb(story);
+	on_notify_nobble_rng(story);
 	
 	/* Load index tabs if they exist */
 	i7_story_reload_index_tabs(story, FALSE);
