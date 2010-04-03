@@ -47,6 +47,8 @@ typedef struct {
 	/* Compiling */
 	CompileActionFunc compile_finished_callback;
 	gpointer compile_finished_callback_data;
+	gchar *copyblorbto;
+	gchar *compiler_output;
 	/* Skein / running */
 	gboolean test_me;
 } I7StoryPrivate;

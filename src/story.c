@@ -651,6 +651,8 @@ i7_story_init(I7Story *self)
 	priv->last_focused = GTK_WIDGET(self->panel[LEFT]);
 	priv->compile_finished_callback = NULL;
 	priv->compile_finished_callback_data = NULL;
+	priv->copyblorbto = NULL;
+	priv->compiler_output = NULL;
 	priv->test_me = FALSE;
 
 	/* Set up the Notes window */
@@ -750,6 +752,9 @@ i7_story_init(I7Story *self)
 static void
 i7_story_finalize(GObject *self)
 {
+	I7_STORY_USE_PRIVATE(self, priv);
+	g_free(priv->copyblorbto);
+	g_free(priv->compiler_output);
 	G_OBJECT_CLASS(i7_story_parent_class)->finalize(self);
 }
 

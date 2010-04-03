@@ -926,14 +926,14 @@ action_next_difference_skein(GtkAction *action, I7Story *story)
 void
 action_release(GtkAction *action, I7Story *story)
 {
-	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_save_compiler_output, NULL);
+	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_save_compiler_output, _("Save the game for release"));
 	i7_story_compile(story, TRUE, FALSE);
 }
 
 void
 action_save_debug_build(GtkAction *action, I7Story *story)
 {
-	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_save_compiler_output, NULL);
+	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_save_compiler_output, _("Save debug build"));
 	i7_story_compile(story, FALSE, FALSE);
 }
 

@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <gtk/gtk.h>
 #include <glib/gi18n.h>
+#include <glib/gstdio.h>
 #include <webkit/webkit.h>
 
 #ifdef HAVE_CONFIG_H
@@ -76,8 +77,14 @@ i7_story_set_compile_finished_action(I7Story *story, CompileActionFunc callback,
 void
 i7_story_compile(I7Story *story, gboolean release, gboolean refresh)
 {
+	I7_STORY_USE_PRIVATE(story, priv);
+	
 	i7_document_save(I7_DOCUMENT(story));
 	i7_story_stop_running_game(story);
+	g_free(priv->copyblorbto);
+	priv->copyblorbto = NULL;
+	g_free(priv->compiler_output);
+	priv->compiler_output = NULL;
 	
 	/* Set up the compiler */
 	CompilerData *data = g_slice_new0(CompilerData);
@@ -444,12 +451,14 @@ prepare_cblorb_compiler(CompilerData *data)
 }
 
 static void
-parse_cblorb_output(gchar **copyblorbto, gchar *text)
+parse_cblorb_output(I7Story *story, gchar *text)
 {
+	I7_STORY_USE_PRIVATE(story, priv);
 	gchar *ptr = strstr(text, "Copy blorb to: [[");
-	if(ptr && copyblorbto) {
-		*copyblorbto = g_strdup(ptr + 17);
-		*(strstr(*copyblorbto, "]]")) = '\0';
+	if(ptr) {
+		g_free(priv->copyblorbto);
+		priv->copyblorbto = g_strdup(ptr + 17);
+		*(strstr(priv->copyblorbto, "]]")) = '\0';
 	}
 }
 
@@ -460,18 +469,15 @@ start_cblorb_compiler(CompilerData *data)
 	I7_STORY_USE_PRIVATE(data->story, priv);
 	
     /* Build the command line */
-	gchar *outfile = g_strconcat("output.", 
-	    i7_story_get_story_format(data->story) == I7_STORY_FORMAT_GLULX? "g" : "z", "blorb", NULL);
     gchar **commandline = g_new(gchar *, 5);
     commandline[0] = i7_app_get_binary_path(i7_app_get(), "cBlorb");
 	commandline[1] = g_strdup("-unix");
     commandline[2] = g_strdup("Release.blurb");
-	commandline[3] = g_build_filename("Build", outfile, NULL);
+	commandline[3] = g_strdup(data->output_file);
     commandline[4] = NULL;
-	g_free(outfile);
 	
     GPid child_pid = run_command_hook(data->input_file, commandline, 
-	    priv->progress, (IOHookFunc *)parse_cblorb_output, priv->compile_finished_callback_data, TRUE, FALSE);
+	    priv->progress, (IOHookFunc *)parse_cblorb_output, data->story, TRUE, FALSE);
     /* set up a watch for the exit status */
     g_child_watch_add(child_pid, (GChildWatchFunc)finish_cblorb_compiler, data);
     
@@ -515,6 +521,8 @@ finish_cblorb_compiler(GPid pid, gint status, CompilerData *data)
 static void 
 finish_compiling(gboolean success, CompilerData *data) 
 {
+	I7_STORY_USE_PRIVATE(data->story, priv);
+	
     /* Display status message */
 	i7_document_remove_status_message(I7_DOCUMENT(data->story), COMPILE_OPERATIONS);
     i7_document_flash_status_message(I7_DOCUMENT(data->story), 
@@ -524,9 +532,11 @@ finish_compiling(gboolean success, CompilerData *data)
     /* Switch the Errors tab to the Problems page */
     i7_story_show_tab(data->story, I7_PANE_ERRORS, I7_ERRORS_TAB_PROBLEMS);
 
+	/* Store the compiler output filename */
+	priv->compiler_output = data->output_file;
+	
 	/* Free the compiler data object */
 	g_free(data->input_file);
-	g_free(data->output_file);
 	g_free(data->directory);
 	g_slice_free(CompilerData, data);
 	
@@ -539,11 +549,9 @@ finish_compiling(gboolean success, CompilerData *data)
 void
 i7_story_save_ifiction(I7Story *story)
 {
-#if 0
-	finish_common(thestory);
-
 	/* Work out where the file should be */
-	gchar *ifiction_path = g_build_filename(thestory->filename, "Metadata.iFiction", NULL);
+	gchar *path = i7_document_get_path(I7_DOCUMENT(story));
+	gchar *ifiction_path = g_build_filename(path, "Metadata.iFiction", NULL);
 
 	/* Prompt user to save iFiction file if it exists */
 	if(g_file_test(ifiction_path, G_FILE_TEST_EXISTS))
@@ -554,25 +562,23 @@ i7_story_save_ifiction(I7Story *story)
 		gtk_file_filter_add_pattern(filter, "*.iFiction");
 
 		/* Make up a default file name */        
-		gchar *name = g_path_get_basename(thestory->filename);
-		gchar *pos = strchr(name, '.');
-		*pos = '\0';
+		gchar *name = i7_document_get_display_name(I7_DOCUMENT(story));
+		*(strrchr(name, '.')) = '\0';
 		gchar *filename = g_strconcat(name, ".iFiction", NULL);    
 		g_free(name);
 
 		/* Create a file chooser */
 		GtkWidget *dialog = gtk_file_chooser_dialog_new(_("Save iFiction record"),
-		  GTK_WINDOW(thestory->window), GTK_FILE_CHOOSER_ACTION_SAVE,
-		  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-		  GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
-		  NULL);
-		gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog),
-		  TRUE);
+		    GTK_WINDOW(story), GTK_FILE_CHOOSER_ACTION_SAVE,
+		    GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		    GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+		    NULL);
+		gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
 		gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), filename);
 		g_free(filename);
-		gchar *path = g_path_get_dirname(thestory->filename);
-		gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), path);
-		g_free(path);
+		gchar *directory = g_path_get_dirname(path);
+		gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), directory);
+		g_free(directory);
 		gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
 
 		/* Copy the finished file to the chosen location */
@@ -584,133 +590,36 @@ i7_story_save_ifiction(I7Story *story)
 			GError *error = NULL;
 		    if(!g_file_get_contents(ifiction_path, &text, NULL, &error) 
 			  || !g_file_set_contents(filename, text, -1, &error)) {
-		        error_dialog(GTK_WINDOW(thestory->window), error, 
+		        error_dialog(GTK_WINDOW(story), error, 
 				  _("Error copying iFiction record to '%s': "), filename);
-		        g_free(filename);
-		        gtk_widget_destroy(dialog);
-		        return;
 		    }
 		    g_free(filename);
 		}
-
 		gtk_widget_destroy(dialog);
 	}
 	else
-		error_dialog(GTK_WINDOW(thestory->window), NULL, 
+		error_dialog(GTK_WINDOW(story), NULL, 
 		    _("The compiler failed to create an iFiction record; check the "
 			"errors page to see why."));
 
+	g_free(path);
 	g_free(ifiction_path);
-    
-	/* Refresh the index and documentation tabs */
-	reload_index_tabs(thestory, FALSE);
-	html_refresh(GTK_HTML(lookup_widget(thestory->window, "docs_l")));
-	html_refresh(GTK_HTML(lookup_widget(thestory->window, "docs_r")));
-#endif
 }
-
-#if 0
-/* Finish up the user's Save Debug Build command */
-static void 
-finish_save_debug_build(Story *thestory) 
-{
-    finish_common(thestory);
-    
-    /* Switch to the Errors tab */
-    int right = choose_notebook(thestory->window, TAB_ERRORS);
-    gtk_notebook_set_current_page(get_notebook(thestory->window, right),
-      TAB_ERRORS);
-    
-    /* Make a file filter */
-    GtkFileFilter *filter = gtk_file_filter_new();
-    gtk_file_filter_set_name(filter, _("Game files (.z?,.ulx)"));
-    gtk_file_filter_add_pattern(filter, "*.ulx");
-    gtk_file_filter_add_pattern(filter, "*.z?");
-    
-    /* Get the appropriate file name extension */        
-    gchar *ext = g_strdup(get_story_extension(thestory));
-    /* Append it to the file name */
-    gchar *name = g_path_get_basename(thestory->filename);
-    gchar *pos = strchr(name, '.');
-    *pos = '\0';
-    gchar *filename = g_strconcat(name, ".", ext, NULL);    
-    g_free(name);
-    
-    /* Create a file chooser */
-    GtkWidget *dialog = gtk_file_chooser_dialog_new(_("Save debug build"),
-      GTK_WINDOW(thestory->window), GTK_FILE_CHOOSER_ACTION_SAVE,
-      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
-      NULL);
-    gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog),
-      TRUE);
-    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), filename);
-    g_free(filename);
-    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
-    
-    /* Copy the finished file to the chosen location */
-    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-        filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-        gchar *oldfile_base = g_strconcat("output.", ext, NULL);
-        gchar *oldfile = g_build_filename(thestory->filename, "Build",
-          oldfile_base, NULL);
-        g_free(oldfile_base);
-        
-        if(g_rename(oldfile, filename)) {
-            error_dialog(NULL, NULL, _("Error copying file '%s' to '%s': "),
-              oldfile, filename);
-            g_free(filename);
-            g_free(oldfile);
-            g_free(ext);
-            gtk_widget_destroy(dialog);
-            return;
-        }
-
-        g_free(filename);
-        g_free(oldfile);
-    }
-    
-    g_free(ext);
-    gtk_widget_destroy(dialog);
-    
-    /* Refresh the index and documentation tabs */
-    reload_index_tabs(thestory, FALSE);
-    html_refresh(GTK_HTML(lookup_widget(thestory->window, "docs_l")));
-    html_refresh(GTK_HTML(lookup_widget(thestory->window, "docs_r")));
-}
-#endif
 
 /* Finish up the user's Release command by choosing a location to store the
 project */
 void 
-i7_story_save_compiler_output(I7Story *story) 
+i7_story_save_compiler_output(I7Story *story, const gchar *dialog_title) 
 {
-#if 0
-    finish_common(thestory);
-    
-    /* Switch to the Errors tab */
-    int right = choose_notebook(thestory->window, TAB_ERRORS);
-    gtk_notebook_set_current_page(get_notebook(thestory->window, right),
-      TAB_ERRORS);
-
-	/* Get the appropriate file name extension */
-	gchar *ext = g_strdup(thestory->make_blorb?
-	  (thestory->story_format == FORMAT_GLULX? 
-	   "gblorb" : "zblorb") : get_story_extension(thestory));
+	I7_STORY_USE_PRIVATE(story, priv);
 	
 	gchar *filename = NULL;
-	if(thestory->copyblorbto == NULL) {
+	if(priv->copyblorbto == NULL) {
 		/* ask the user for a release file name if cBlorb didn't provide one */
-		
-		/* Append the extension to the file name */
-		gchar *name = g_path_get_basename(thestory->filename);
-		*(strchr(name, '.')) = '\0';
-		gchar *curfilename = g_strconcat(name, ".", ext, NULL);    
-		g_free(name);
 		
 		/* Create a file chooser */
 		GtkFileFilter *filter = gtk_file_filter_new();
-		if(thestory->story_format == FORMAT_GLULX) {
+		if(i7_story_get_story_format(story) == I7_STORY_FORMAT_GLULX) {
 			gtk_file_filter_set_name(filter, _("Glulx games (.ulx,.gblorb)"));
 			gtk_file_filter_add_pattern(filter, "*.ulx");
 			gtk_file_filter_add_pattern(filter, "*.gblorb");
@@ -719,16 +628,20 @@ i7_story_save_compiler_output(I7Story *story)
 			gtk_file_filter_add_pattern(filter, "*.z?");
 			gtk_file_filter_add_pattern(filter, "*.zblorb");
 		}
-		GtkWidget *dialog = gtk_file_chooser_dialog_new(
-		  _("Save the game for release"),
-		  GTK_WINDOW(thestory->window), GTK_FILE_CHOOSER_ACTION_SAVE,
-		  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-		  GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
-		  NULL);
-		gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog),
-		  TRUE);
-		gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), curfilename);
+		GtkWidget *dialog = gtk_file_chooser_dialog_new(dialog_title,
+		    GTK_WINDOW(story), GTK_FILE_CHOOSER_ACTION_SAVE,
+		    GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		    GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+		    NULL);
+		gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
+		gchar *curfilename = g_path_get_basename(priv->compiler_output);
+		gchar *title = i7_document_get_display_name(I7_DOCUMENT(story));
+		*(strrchr(title, '.')) = '\0';
+		gchar *suggestname = g_strconcat(title, strrchr(curfilename, '.'), NULL);
+		g_free(title);
 		g_free(curfilename);
+		gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), suggestname);
+		g_free(suggestname);
 		gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
     
 		if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
@@ -736,56 +649,35 @@ i7_story_save_compiler_output(I7Story *story)
 		
 		gtk_widget_destroy(dialog);
 	} else {
-		filename = g_strdup(thestory->copyblorbto);
+		filename = g_strdup(priv->copyblorbto);
 	}
 	
 	if(filename) {
     	/* Copy the finished file to the release location */
-    
-        /* Determine the name of the compiler output file */
-        gchar *oldfile, *temp;
-		temp = g_strconcat("output.", ext, NULL);
-        oldfile = g_build_filename(thestory->filename, "Build", temp, NULL);
-		g_free(temp);
 		
 		/* try to copy the file */
-        if(g_rename(oldfile, filename)) {
+        if(g_rename(priv->compiler_output, filename)) {
             if(errno == EXDEV) { 
                 /* Can't rename across devices, so physically copy the file */
                 gchar *contents;
                 gsize length;
                 GError *err = NULL;
-                if(!g_file_get_contents(oldfile, &contents, &length, &err)
+                if(!g_file_get_contents(priv->compiler_output, &contents, &length, &err)
                    || !g_file_set_contents(filename, contents, length, &err)) {
-                    error_dialog(NULL, err, 
+                    error_dialog(GTK_WINDOW(story), err, 
                       /* TRANSLATORS: Error copying OLDFILE to NEWFILE */
-                      _("Error copying file '%s' to '%s': "),
-                      oldfile, filename);
-                    g_free(filename);
-                    g_free(oldfile);
-                    g_free(ext);
-                    return;
+                      _("Error copying file '%s' to '%s': "), priv->compiler_output, filename);
+                    goto finally;
                 }
             } else {
-                error_dialog(NULL, NULL, 
+                error_dialog(GTK_WINDOW(story), NULL, 
                   /* TRANSLATORS: Error copying OLDFILE to NEWFILE: ERROR_MESSAGE */
-                  _("Error copying file '%s' to '%s': %s"),
-                  oldfile, filename, g_strerror(errno));
-                g_free(filename);
-                g_free(oldfile);
-                g_free(ext);
-                return;
+                  _("Error copying file '%s' to '%s': %s"), priv->compiler_output, filename, g_strerror(errno));
+                goto finally;
             }
         }
-        g_free(oldfile);
     }
 	
+finally:
 	g_free(filename);
-	g_free(ext);
-	
-    /* Refresh the index and documentation tabs */
-    reload_index_tabs(thestory, FALSE);
-    html_refresh(GTK_HTML(lookup_widget(thestory->window, "docs_l")));
-    html_refresh(GTK_HTML(lookup_widget(thestory->window, "docs_r")));
-#endif
 }

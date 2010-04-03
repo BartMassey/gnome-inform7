@@ -112,7 +112,7 @@ void i7_story_set_elastic_tabs(I7Story *story, gboolean elastic_tabs);
 /* Compiling, story-compile.c */
 void i7_story_set_compile_finished_action(I7Story *story, CompileActionFunc callback, gpointer data);
 void i7_story_compile(I7Story *story, gboolean release, gboolean refresh);
-void i7_story_save_compiler_output(I7Story *story);
+void i7_story_save_compiler_output(I7Story *story, const gchar *dialog_title);
 void i7_story_save_ifiction(I7Story *story);
 
 /* Game pane, story-game.c */
