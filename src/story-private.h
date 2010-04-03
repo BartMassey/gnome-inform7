@@ -27,6 +27,7 @@
 
 #include <glib.h>
 #include <gtk/gtk.h>
+#include "story.h"
 #include "osxcart/plist.h"
 
 typedef struct {
@@ -36,10 +37,18 @@ typedef struct {
 	GtkActionGroup *unimplemented_action_group;
 	/* Widget with last input focus */
 	GtkWidget *last_focused;
-	/* The user's notes */
+	/* Other text buffers */
     GtkTextBuffer *notes;
+	GtkTextBuffer *progress;
+	GtkTextBuffer *debug_log;
+	GtkSourceBuffer *i6_source;
 	/* The Settings.plist object */
 	PlistObject *settings;
+	/* Compiling */
+	CompileActionFunc compile_finished_callback;
+	gpointer compile_finished_callback_data;
+	/* Skein / running */
+	gboolean test_me;
 } I7StoryPrivate;
 
 #define I7_STORY_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE((o), I7_TYPE_STORY, I7StoryPrivate))

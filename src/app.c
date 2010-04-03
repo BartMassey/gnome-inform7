@@ -116,7 +116,7 @@ i7_app_init(I7App *self)
 	I7AppRegexInfo regex_info[] = {
 		{ "^(?P<level>volume|book|part|chapter|section)\\s+(?P<secnum>.*?)(\\s+-\\s+(?P<sectitle>.*))?$", TRUE },
 		{ "\\[=0x([0-9A-F]{4})=\\]", FALSE },
-		{ "src=(\"?)inform:/(.*?\\.png)\\1(\\s|>)", FALSE },
+		{ "src=(['\"]?)inform:/(.*?\\.png)\\1(\\s|>)", FALSE },
 		{ "^\\s*(version\\s.+\\sof\\s+)?(the\\s+)?(?P<title>.+)\\s+by\\s+(?P<author>.+)\\s+begins?\\s+here\\.?\\s*\\n", TRUE }
 	};
 	int i;
@@ -773,6 +773,34 @@ i7_app_check_datafile(I7App *app, const gchar *filename)
 	gboolean retval = g_file_test(path, G_FILE_TEST_EXISTS);
 	g_free(path);
 	return retval;
+}
+
+/* Varargs variant of check_datafile. Must end with NULL. */
+gboolean
+i7_app_check_datafile_va(I7App *app, const gchar *path1, ...) 
+{
+    va_list ap;
+    
+    int num_args = 0;
+    va_start(ap, path1);
+    do
+        num_args++;
+    while(va_arg(ap, gchar *) != NULL);
+    va_end(ap);
+    
+    gchar **args = g_new(gchar *, num_args + 2);
+    args[0] = g_strdup(I7_APP_PRIVATE(app)->datadir);
+    args[1] = g_strdup(path1);
+    int i;
+    va_start(ap, path1);
+    for(i = 2; i < num_args + 2; i++)
+        args[i] = g_strdup(va_arg(ap, gchar *));
+    va_end(ap);
+    
+    gchar *path = g_build_filenamev(args);
+	gboolean retval = g_file_test(path, G_FILE_TEST_EXISTS);
+    g_strfreev(args);
+    return retval;
 }
 
 /* Returns the path to filename in the application pixmap directory. */

@@ -82,6 +82,7 @@ gchar *i7_app_get_extension_path(I7App *app, const gchar *author, const gchar *e
 gchar *i7_app_get_datafile_path(I7App *app, const gchar *filename);
 gchar *i7_app_get_datafile_path_va(I7App *app, const gchar *path1, ...);
 gboolean i7_app_check_datafile(I7App *app, const gchar *filename);
+gboolean i7_app_check_datafile_va(I7App *app, const gchar *path1, ...); 
 gchar *i7_app_get_pixmap_path(I7App *app, const gchar *filename);
 gchar *i7_app_get_binary_path(I7App *app, const gchar *filename);
 

@@ -14,7 +14,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
+#include <gtk/gtk.h>
+#include "story.h"
+#include "story-private.h"
+
+void
+i7_story_run_compiler_output(I7Story *story)
+{
+}
+
+void
+i7_story_run_compiler_output_and_replay(I7Story *story)
+{
+}
+
+void
+i7_story_run_compiler_output_and_entire_skein(I7Story *story)
+{
+}
+
+void
+i7_story_stop_running_game(I7Story *story)
+{
+}
+
+#if 0
 #include <gnome.h>
 #include <ctype.h>
 #include <sys/types.h>
@@ -186,3 +211,4 @@ game_is_running(Story *thestory)
       gtk_terp_get_running(GTK_TERP(lookup_widget(thestory->window,"game_r")))||
       gtk_terp_get_running(GTK_TERP(lookup_widget(thestory->window,"game_l")));
 }
+#endif

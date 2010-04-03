@@ -156,8 +156,10 @@ void i7_document_show_entire_source(I7Document *document);
 void i7_document_display_status_message(I7Document *document, const gchar *message, const gchar *context);
 void i7_document_remove_status_message(I7Document *document, const gchar *context);
 void i7_document_flash_status_message(I7Document *document, const gchar *message, const gchar *context);
-void i7_document_display_status_busy(I7Document *document);
-void i7_document_display_status_percentage(I7Document *document, gdouble fraction);
+void i7_document_display_progress_busy(I7Document *document);
+void i7_document_display_progress_percentage(I7Document *document, gdouble fraction);
+void i7_document_display_progress_message(I7Document *document, const gchar *message);
+void i7_document_clear_progress(I7Document *document);
 
 void i7_document_attach_menu_hints(I7Document *document, GtkMenuBar *menu);
 

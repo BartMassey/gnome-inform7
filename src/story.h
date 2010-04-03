@@ -18,6 +18,7 @@
 #ifndef _STORY_H_
 #define _STORY_H_
 
+#include <stdarg.h>
 #include <glib-object.h>
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -60,6 +61,8 @@ typedef struct {
 	I7Panel *panel[I7_STORY_NUM_PANELS];
 } I7Story;
 
+typedef void (*CompileActionFunc)(I7Story *, gpointer);
+
 GType i7_story_get_type(void) G_GNUC_CONST;
 I7Story *i7_story_new(I7App *app, const gchar *filename, const gchar *title, const gchar *author);
 I7Story *i7_story_new_from_file(I7App *app, const gchar *filename);
@@ -71,6 +74,7 @@ void i7_story_show_pane(I7Story *story, I7PanelPane pane);
 void i7_story_show_tab(I7Story *story, I7PanelPane pane, gint tab);
 void i7_story_show_docpage(I7Story *story, gchar *file);
 gchar *i7_story_get_materials_path(I7Story *story);
+const gchar *i7_story_get_extension(I7Story *story);
 
 /* Source pane, story-source.c */
 void on_panel_paste_code(I7Panel *panel, gchar *code, I7Story *story);
@@ -102,5 +106,17 @@ gboolean i7_story_get_nobble_rng(I7Story *story);
 void i7_story_set_nobble_rng(I7Story *story, gboolean nobble_rng);
 gboolean i7_story_get_elastic_tabs(I7Story *story);
 void i7_story_set_elastic_tabs(I7Story *story, gboolean elastic_tabs);
+
+/* Compiling, story-compile.c */
+void i7_story_set_compile_finished_action(I7Story *story, CompileActionFunc callback, gpointer data);
+void i7_story_compile(I7Story *story, gboolean release, gboolean refresh);
+void i7_story_save_compiler_output(I7Story *story);
+void i7_story_save_ifiction(I7Story *story);
+
+/* Game pane, story-game.c */
+void i7_story_run_compiler_output(I7Story *story);
+void i7_story_run_compiler_output_and_replay(I7Story *story);
+void i7_story_run_compiler_output_and_entire_skein(I7Story *story);
+void i7_story_stop_running_game(I7Story *story);
 
 #endif /* _STORY_H_ */

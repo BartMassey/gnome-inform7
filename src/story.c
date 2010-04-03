@@ -550,6 +550,14 @@ i7_story_init(I7Story *self)
 		"release_menu", "",
 		"show_pane_menu", "",
 		"view_notepad", "",
+		"refresh_index", "<ctrl>I",
+		"go", "<ctrl>R",
+		"replay", "",
+		"stop", "<shift><ctrl>Q",
+		"release", "<shift><ctrl>R",
+		"save_debug_build", "",
+		"test_me", "<alt><ctrl>R",
+		"export_ifiction_record", "",
 		"show_source", "<ctrl>F2",
 		"show_errors", "<ctrl>F3",
 		"show_index", "<ctrl>F4",
@@ -587,15 +595,7 @@ i7_story_init(I7Story *self)
 		"previous_difference", "",
 		"next_difference", "",
 		"next_difference_skein", "",
-		"refresh_index", "<ctrl>I",
-		"go", "<ctrl>R",
-		"replay", "",
-		"stop", "<shift><ctrl>Q",
 		"play_all_blessed", "<shift><ctrl><alt>R",
-		"release", "<shift><ctrl>R",
-		"save_debug_build", "",
-		"test_me", "<alt><ctrl>R",
-		"export_ifiction_record", "",
 		NULL
 	};
 	add_actions(builder, &(priv->story_action_group), "story_actions", actions);
@@ -649,6 +649,9 @@ i7_story_init(I7Story *self)
 	/* Create the private properties */
 	priv->notes = gtk_text_buffer_new(NULL);
 	priv->last_focused = GTK_WIDGET(self->panel[LEFT]);
+	priv->compile_finished_callback = NULL;
+	priv->compile_finished_callback_data = NULL;
+	priv->test_me = FALSE;
 
 	/* Set up the Notes window */
 	gtk_text_view_set_buffer(GTK_TEXT_VIEW(self->notes_view), priv->notes);
@@ -664,9 +667,9 @@ i7_story_init(I7Story *self)
 	set_highlight_styles(buffer);
 
 	/* Create a text buffer for the Progress, Debugging and I6 text views */
-	GtkTextBuffer *progress_buffer = gtk_text_buffer_new(NULL);
-	GtkTextBuffer *debug_buffer = gtk_text_buffer_new(NULL);
-	GtkSourceBuffer *i6buffer = create_inform6_source_buffer();
+	priv->progress = gtk_text_buffer_new(NULL);
+	priv->debug_log = gtk_text_buffer_new(NULL);
+	priv->i6_source = create_inform6_source_buffer();
 
 	/* Create a monospace font description for the Errors/Progress views */
 	gchar *family = config_file_get_string(DESKTOP_PREFS_MONOSPACE_FONT);
@@ -697,9 +700,9 @@ i7_story_init(I7Story *self)
 		/* Connect various models to various views */
 		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->source_tabs[I7_SOURCE_VIEW_TAB_SOURCE]), GTK_TEXT_BUFFER(buffer));
 		gtk_tree_view_set_model(GTK_TREE_VIEW(panel->source_tabs[I7_SOURCE_VIEW_TAB_CONTENTS]), i7_document_get_headings(I7_DOCUMENT(self)));
-		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_PROGRESS]), progress_buffer);
-		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_DEBUGGING]), debug_buffer);
-		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_INFORM6]), GTK_TEXT_BUFFER(i6buffer));
+		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_PROGRESS]), priv->progress);
+		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_DEBUGGING]), priv->debug_log);
+		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_INFORM6]), GTK_TEXT_BUFFER(priv->i6_source));
 
 		/* Set the Errors/Progress to a monospace font */
 		gtk_widget_modify_font(GTK_WIDGET(panel->errors_tabs[I7_ERRORS_TAB_PROGRESS]), font);
@@ -713,10 +716,10 @@ i7_story_init(I7Story *self)
 	/* Now the buffers and models are owned by the views, so dereference them */
 	g_object_unref(buffer);
 	g_object_unref(i7_document_get_headings(I7_DOCUMENT(self)));
-	/* g_object_unref(priv->notes); */
-	g_object_unref(progress_buffer);
-	g_object_unref(debug_buffer);
-	g_object_unref(i6buffer);
+	g_object_unref(priv->notes);
+	g_object_unref(priv->progress);
+	g_object_unref(priv->debug_log);
+	g_object_unref(priv->i6_source);
 	
 	/* Set up the Previous Section and Next Section actions to synch with the buttons */
 	g_signal_connect(I7_DOCUMENT(self)->previous_section, "notify::sensitive", G_CALLBACK(on_previous_action_notify_sensitive), self);
@@ -1034,4 +1037,23 @@ i7_story_get_materials_path(I7Story *story)
 	g_free(materialsdir);
 
 	return materialspath;
+}
+
+/* Return the extension of the output file of this story. 
+ Do not free return value. */
+const gchar *
+i7_story_get_extension(I7Story *story)
+{
+    switch(i7_story_get_story_format(story)) {
+        case I7_STORY_FORMAT_Z5:
+            return "z5";
+        case I7_STORY_FORMAT_Z6:
+            return "z6";
+        case I7_STORY_FORMAT_Z8:
+            return "z8";
+        case I7_STORY_FORMAT_GLULX:
+            return "ulx";
+    }
+	g_assert_not_reached();
+    return "error";
 }

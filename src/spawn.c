@@ -15,7 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <gnome.h>
+#include <string.h>
+#include <gtk/gtk.h>
+#include <glib/gi18n.h>
 
 #include "error.h"
 #include "spawn.h"

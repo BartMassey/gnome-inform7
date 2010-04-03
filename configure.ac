@@ -128,6 +128,17 @@ AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [Gettext package.])
 
 ### CHECK FOR LIBRARIES ########################################################
 
+# Decide which UUID library to use
+# Prefer e2fsprogs, and switch to OSSP if that doesn't exist
+PKG_CHECK_EXISTS([uuid],
+	[AC_DEFINE([E2FS_UUID], [1], [Define if uuid header is from e2fsprogs])
+		UUID_MODULE=uuid],
+	[PKG_CHECK_EXISTS([ossp-uuid],
+		[UUID_MODULE=ossp-uuid],
+		[AC_MSG_ERROR([Either OSSP UUID or e2fsprogs UUID required.])]
+	)]
+)
+
 PKG_CHECK_MODULES([INFORM7], [
 	gdk-2.0 >= 2.2
 	glib-2.0 >= 2.16
@@ -136,6 +147,7 @@ PKG_CHECK_MODULES([INFORM7], [
 	gconf-2.0 >= 2.4
 	gtksourceview-2.0 >= 2.2
 	webkit-1.0 >= 1.0
+	$UUID_MODULE
 ])
 PKG_CHECK_MODULES([OSXCART], [
 	glib-2.0 >= 2.16

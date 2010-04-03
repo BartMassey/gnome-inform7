@@ -237,11 +237,11 @@ on_begin_print(GtkPrintOperation *print, GtkPrintContext *context,
 	
 	i7_document_display_status_message(document, _("Paginating..."), PRINT_OPERATIONS);
 	while(!gtk_source_print_compositor_paginate(compositor, context)) {
-		i7_document_display_status_percentage(document, gtk_source_print_compositor_get_pagination_progress(compositor));
+		i7_document_display_progress_percentage(document, gtk_source_print_compositor_get_pagination_progress(compositor));
 		while(gtk_events_pending())
 			gtk_main_iteration();
 	}
-	i7_document_display_status_percentage(document, 0.0);
+	i7_document_display_progress_percentage(document, 0.0);
 	i7_document_remove_status_message(document, PRINT_OPERATIONS);
 	
 	gtk_print_operation_set_n_pages(print, gtk_source_print_compositor_get_n_pages(compositor));
@@ -831,13 +831,19 @@ action_enable_elastic_tabs_toggled(GtkToggleAction *action, I7Document *document
 void
 action_go(GtkAction *action, I7Story *story)
 {
-	
+	/* TODO: i7_story_reset_skein(story); */
+	/* TODO: i7_story_set_test_me(story, FALSE); */
+	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_run_compiler_output, NULL);
+	i7_story_compile(story, FALSE, FALSE);
 }
 
 void
 action_test_me(GtkAction *action, I7Story *story)
 {
-
+	/* TODO: i7_story_reset_skein(story); */
+	/* TODO: i7_story_set_test_me(story, TRUE); */
+	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_run_compiler_output, NULL);
+	i7_story_compile(story, FALSE, FALSE);
 }
 
 void
@@ -849,19 +855,22 @@ action_stop(GtkAction *action, I7Story *story)
 void
 action_refresh_index(GtkAction *action, I7Story *story)
 {
-	
+	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_reload_index_tabs, GINT_TO_POINTER(0));
+	i7_story_compile(story, FALSE, TRUE);
 }
 
 void
 action_replay(GtkAction *action, I7Story *story)
 {
-	
+	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_run_compiler_output_and_replay, NULL);
+	i7_story_compile(story, FALSE, FALSE);
 }
 
 void
 action_play_all_blessed(GtkAction *action, I7Story *story)
 {
-	
+	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_run_compiler_output_and_entire_skein, NULL);
+	i7_story_compile(story, FALSE, FALSE);
 }
 
 void
@@ -909,13 +918,15 @@ action_next_difference_skein(GtkAction *action, I7Story *story)
 void
 action_release(GtkAction *action, I7Story *story)
 {
-	
+	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_save_compiler_output, NULL);
+	i7_story_compile(story, TRUE, FALSE);
 }
 
 void
 action_save_debug_build(GtkAction *action, I7Story *story)
 {
-	
+	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_save_compiler_output, NULL);
+	i7_story_compile(story, FALSE, FALSE);
 }
 
 void
@@ -972,7 +983,8 @@ finally:
 void
 action_export_ifiction_record(GtkAction *action, I7Story *story)
 {
-
+	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_save_ifiction, NULL);
+	i7_story_compile(story, FALSE, FALSE);
 }
 
 void

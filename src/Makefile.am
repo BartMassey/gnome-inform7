@@ -26,9 +26,10 @@ gnome_inform7_SOURCES = \
 	prefs.c prefs.h \
 	rtf.c rtf.h \
 	source-view.c source-view.h \
+	spawn.c spawn.h \
 	story.c story.h story-private.h \
 	story-source.c story-errors.c story-index.c story-settings.c \
-	story-compile.c \
+	story-compile.c story-game.c \
 	welcomedialog.c welcomedialog.h \
 	main.c 
 gnome_inform7_CPPFLAGS = \

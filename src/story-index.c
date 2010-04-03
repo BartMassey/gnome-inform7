@@ -57,13 +57,13 @@ check_and_load_idle(I7Story *story)
 	counter++; /* next time, load the next tab */
 	if(counter == I7_INDEX_NUM_TABS) {
 		counter = 0; /* next time, load the first tab */
-		i7_document_display_status_percentage(I7_DOCUMENT(story), 0.0);
+		i7_document_display_progress_percentage(I7_DOCUMENT(story), 0.0);
 		i7_document_remove_status_message(I7_DOCUMENT(story), INDEX_TABS);
 		return FALSE; /* quit the cycle */
 	}
 		
 	/* Update the status bar */
-	i7_document_display_status_percentage(I7_DOCUMENT(story), (gdouble)counter / (gdouble)I7_INDEX_NUM_TABS);
+	i7_document_display_progress_percentage(I7_DOCUMENT(story), (gdouble)counter / (gdouble)I7_INDEX_NUM_TABS);
 	i7_document_display_status_message(I7_DOCUMENT(story), _("Reloading index..."), INDEX_TABS);
 
 	return TRUE; /* make sure there is a next time */

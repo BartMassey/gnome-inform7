@@ -404,7 +404,7 @@ replace_images(const GMatchInfo *match, GString *result, gchar *data_uri)
 {
 	gchar *filename = g_match_info_fetch(match, 2);
 	gchar *delimiter = g_match_info_fetch(match, 3);
-
+	
 	/* These are the only files used in the Index pages */
 	if(strcmp(filename, "Reveal.png") == 0
 		|| strcmp(filename, "help.png") == 0
@@ -418,7 +418,10 @@ replace_images(const GMatchInfo *match, GString *result, gchar *data_uri)
 	if(g_str_has_prefix(filename, "doc_images")
 	    || strcmp(filename, "Beneath.png") == 0
 		|| g_str_has_prefix(filename, "map_icons")
-		|| g_str_has_prefix(filename, "scene_icons")) 
+		|| g_str_has_prefix(filename, "scene_icons")
+		|| strstr(filename, "succeeded")
+		|| strstr(filename, "failed")
+		|| strstr(filename, "crash"))
 	{
 		g_string_append_printf(result, "src=\"%s/Documentation/%s\"%s", data_uri, filename, delimiter);
 		g_free(filename);
@@ -479,9 +482,9 @@ on_navigation_requested(WebKitWebView *webview, WebKitWebFrame *frame, WebKitNet
 			return WEBKIT_NAVIGATION_RESPONSE_ACCEPT; 
 		}
 
-		/* If this is an index page, then all the image links need to be
-		 redirected. If this is not an index page, save ourself some trouble */
-		if(!strstr(filename, ".inform/Index/") || g_str_has_suffix(filename, ".inform/Index/")) {
+		/* If this is an index or problems page, then all the image links need to
+		 be redirected. If this is not an index page, save ourself some trouble */
+		if(!strstr(filename, "Problems.html") && !strstr(filename, "Cblorb.html") && (!strstr(filename, ".inform/Index/") || g_str_has_suffix(filename, ".inform/Index/"))) {
 			g_free(filename);
 			g_free(scheme);
 			g_strfreev(uri_parts);

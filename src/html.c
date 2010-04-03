@@ -35,7 +35,7 @@ html_load_file(WebKitWebView *html, const gchar *filename)
 		WARN_S(_("Could not convert filename to URI"), filename, error);
 		return;
 	}
-	webkit_web_view_open(html, uri); /* Deprecated since 1.1.1 */
+	webkit_web_view_open(html, uri); /* SUCKY DEBIAN Deprecated since 1.1.1 */
 	g_free(uri);
 }
 
@@ -44,7 +44,7 @@ void
 html_load_blank(WebKitWebView *html) 
 {
     g_return_if_fail(html);
-	webkit_web_view_open(html, "about:blank"); /* Deprecated since 1.1.1 */
+	webkit_web_view_open(html, "about:blank"); /* SUCKY DEBIAN Deprecated since 1.1.1 */
 }
 
 /* Reload the html widget */

@@ -174,7 +174,7 @@ delete_from_project_dir(I7Story *story, gchar *storyname, gchar *subdir, gchar *
         pathname = g_build_filename(storyname, filename, NULL);
     g_remove(pathname);
     g_free(pathname);
-	i7_document_display_status_busy(I7_DOCUMENT(story));
+	i7_document_display_progress_busy(I7_DOCUMENT(story));
 }
 
 /* If the "delete build files" option is checked, delete all the build files
@@ -218,7 +218,7 @@ delete_build_files(I7Story *story)
 				while((dir_entry = g_dir_read_name(details)) != NULL) {
 					gchar *filename = g_build_filename(storyname, "Index", "Details", dir_entry, NULL);
 					g_remove(filename);
-					i7_document_display_status_busy(I7_DOCUMENT(story));
+					i7_document_display_progress_busy(I7_DOCUMENT(story));
 				}
 				g_dir_close(details);
 				g_remove(details_dir);
@@ -229,7 +229,7 @@ delete_build_files(I7Story *story)
 		g_free(storyname);
     }
 	i7_document_remove_status_message(I7_DOCUMENT(story), FILE_OPERATIONS);
-	i7_document_display_status_percentage(I7_DOCUMENT(story), 0.0);
+	i7_document_display_progress_percentage(I7_DOCUMENT(story), 0.0);
 }
 
 /* Helper function: return the first match within directory @d */

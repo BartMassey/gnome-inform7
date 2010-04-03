@@ -960,16 +960,31 @@ i7_document_flash_status_message(I7Document *document, const gchar *message, con
 
 /* Pulses the progress bar */
 void 
-i7_document_display_status_busy(I7Document *document) 
+i7_document_display_progress_busy(I7Document *document) 
 {
     gtk_progress_bar_pulse(GTK_PROGRESS_BAR(document->progressbar));
 }
 
 /* Displays a percentage in the progress indicator */
 void 
-i7_document_display_status_percentage(I7Document *document, gdouble fraction) 
+i7_document_display_progress_percentage(I7Document *document, gdouble fraction) 
 {
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(document->progressbar), fraction);
+}
+
+/* Displays a message in the progress indicator */
+void
+i7_document_display_progress_message(I7Document *document, const gchar *message)
+{
+	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(document->progressbar), message);
+}
+
+/* Clears the message and progress percentage */
+void
+i7_document_clear_progress(I7Document *document)
+{
+	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(document->progressbar), 0.0);
+	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(document->progressbar), NULL);
 }
 
 static void
