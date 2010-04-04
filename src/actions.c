@@ -22,6 +22,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
 
+/* All the callbacks for the "activate" signal of the GtkActions from the main
+ menu and toolbar of document windows. */
+
 #include <errno.h>
 #include <glib.h>
 #include <glib/gi18n.h>
@@ -41,6 +44,8 @@
 #include "prefs.h"
 #include "story.h"
 
+/* Helper function to get the toplevel window that contains the action's proxy,
+ in case it wasn't passed as a user data parameter to the action callback. */
 static GtkWindow *
 get_toplevel_for_action(GtkAction *action)
 {
@@ -59,6 +64,7 @@ get_toplevel_for_action(GtkAction *action)
 	return GTK_WINDOW(parent);
 }
 
+/* File->New... */
 void
 action_new(GtkAction *action, I7App *app)
 {
@@ -66,12 +72,15 @@ action_new(GtkAction *action, I7App *app)
 	gtk_widget_show(newdialog);
 }
 
+/* File->Open... */
 void
 action_open(GtkAction *action, I7App *app)
 {
 	i7_story_new_from_dialog(app);
 }
 
+/* Callback for when of the items from the File->Open Recent submenu 
+ is selected */
 void
 action_open_recent(GtkAction *action, I7App *app)
 {
@@ -89,6 +98,7 @@ action_open_recent(GtkAction *action, I7App *app)
 	gtk_recent_info_unref(item);
 }
 
+/* File->Install Extension... */
 void
 action_install_extension(GtkAction *action, I7App *app)
 {
@@ -102,30 +112,37 @@ action_install_extension(GtkAction *action, I7App *app)
     g_signal_emit_by_name(app->prefs->extensions_add, "clicked");
 }
 
+/* Callback for when one of the items from the File->Open Extension submenu
+ is selected, and it is a built-in extension */
 void
 on_open_extension_readonly_activate(GtkMenuItem *menuitem, gchar *path)
 {
 	i7_extension_new_from_file(i7_app_get(), path, TRUE);
 }
 
+/* Callback for when one of the items from the File->Open Extension submenu
+ is selected, and it is a user-installed extension */
 void
 on_open_extension_activate(GtkMenuItem *menuitem, gchar *path)
 {
 	i7_extension_new_from_file(i7_app_get(), path, FALSE);
 }
 
+/* File->Import Into Skein... */
 void
 action_import_into_skein(GtkAction *action, I7Story *story)
 {
 	
 }
 
+/* File->Save */
 void
 action_save(GtkAction *action, I7Document *document)
 {
 	i7_document_save(document);
 }
 
+/* File->Save As... */
 void
 action_save_as(GtkAction *action, I7Document *document)
 {
@@ -141,6 +158,7 @@ action_save_as(GtkAction *action, I7Document *document)
 	}
 }
 
+/* File->Save a Copy */
 void
 action_save_copy(GtkAction *action, I7Document *document)
 {
@@ -151,6 +169,7 @@ action_save_copy(GtkAction *action, I7Document *document)
 	}
 }
 
+/* File->Revert */
 void
 action_revert(GtkAction *action, I7Document *document)
 {
@@ -182,6 +201,7 @@ action_revert(GtkAction *action, I7Document *document)
 	g_free(filename);
 }
 
+/* File->Page Setup... */
 void
 action_page_setup(GtkAction *action, I7Document *document)
 {
@@ -196,20 +216,23 @@ action_page_setup(GtkAction *action, I7Document *document)
 	i7_app_set_page_setup(theapp, new_page_setup);
 }
 
+/* Callback for drawing a page to the output when requested. Just use the
+ standard GtkSourcePrintCompositor way of doing it, no customizations. */
 static void
-on_draw_page(GtkPrintOperation *print, GtkPrintContext *context, gint page_nr,
-	GtkSourcePrintCompositor *compositor)
+on_draw_page(GtkPrintOperation *print, GtkPrintContext *context, gint page_nr, GtkSourcePrintCompositor *compositor)
 {
 	gtk_source_print_compositor_draw_page(compositor, context, page_nr);
 }
 
+/* Callback for ending print operation, no customizations here either */
 static void
-on_end_print(GtkPrintOperation *print, GtkPrintContext *context,
-	GtkSourcePrintCompositor *compositor)
+on_end_print(GtkPrintOperation *print, GtkPrintContext *context, GtkSourcePrintCompositor *compositor)
 {
 	g_object_unref(compositor);
 }
 
+/* Callback for beginning the print operation, we give the printed pages our
+ tab width from the preferences, and the margins from the page setup dialog. */
 static void
 on_begin_print(GtkPrintOperation *print, GtkPrintContext *context, 
 	I7Document *document)
@@ -234,7 +257,8 @@ on_begin_print(GtkPrintOperation *print, GtkPrintContext *context,
 	gtk_source_print_compositor_set_bottom_margin(compositor, gtk_page_setup_get_bottom_margin(setup, GTK_UNIT_MM), GTK_UNIT_MM);
 	gtk_source_print_compositor_set_left_margin(compositor, gtk_page_setup_get_left_margin(setup, GTK_UNIT_MM), GTK_UNIT_MM);
 	gtk_source_print_compositor_set_right_margin(compositor, gtk_page_setup_get_right_margin(setup, GTK_UNIT_MM), GTK_UNIT_MM);
-	
+
+	/* Display a notification in the status bar while paginating */
 	i7_document_display_status_message(document, _("Paginating..."), PRINT_OPERATIONS);
 	while(!gtk_source_print_compositor_paginate(compositor, context)) {
 		i7_document_display_progress_percentage(document, gtk_source_print_compositor_get_pagination_progress(compositor));
@@ -247,6 +271,7 @@ on_begin_print(GtkPrintOperation *print, GtkPrintContext *context,
 	gtk_print_operation_set_n_pages(print, gtk_source_print_compositor_get_n_pages(compositor));
 }
 
+/* File->Print Preview... */
 void
 action_print_preview(GtkAction *action, I7Document *document)
 {
@@ -268,6 +293,7 @@ action_print_preview(GtkAction *action, I7Document *document)
 	g_object_unref(print);
 }
 
+/* File->Print... */
 void
 action_print(GtkAction *action, I7Document *document)
 {
@@ -289,6 +315,7 @@ action_print(GtkAction *action, I7Document *document)
 	g_object_unref(print);
 }
 
+/* File->Close */
 void
 action_close(GtkAction *action, I7Document *document)
 {
@@ -299,54 +326,63 @@ action_close(GtkAction *action, I7Document *document)
     }
 }
 
+/* File->Quit */
 void
 action_quit(GtkAction *action, I7App *app)
 {
 	i7_app_close_all_documents(app);
 }
 
+/* Edit->Undo */
 void
 action_undo(GtkAction *action, I7Document *document)
 {
 	GtkSourceBuffer *buffer = i7_document_get_buffer(document);
 	if(gtk_source_buffer_can_undo(buffer))
 		gtk_source_buffer_undo(buffer);
-	
+
+	/* Update the "sensitive" state of the undo and redo actions */
 	gtk_action_set_sensitive(action, gtk_source_buffer_can_undo(buffer));
 	gtk_action_set_sensitive(document->redo, gtk_source_buffer_can_redo(buffer));
 }
 
+/* Edit->Redo */
 void
 action_redo(GtkAction *action, I7Document *document)
 {
 	GtkSourceBuffer *buffer = i7_document_get_buffer(document);
 	if(gtk_source_buffer_can_redo(buffer))
 		gtk_source_buffer_redo(buffer);
-	
+
+	/* Update the "sensitive" state of the undo and redo actions */
 	gtk_action_set_sensitive(action, gtk_source_buffer_can_redo(buffer));
 	gtk_action_set_sensitive(document->undo, gtk_source_buffer_can_undo(buffer));
 }
 
+/* Edit->Cut */
 void
 action_cut(GtkAction *action, I7Document *document)
 {
 	GtkWidget *widget = gtk_window_get_focus(GTK_WINDOW(document));
 
-	if(WEBKIT_IS_WEB_VIEW(widget)) /* only copy */
+	/* What actually happens depends on the type of widget that is focused */
+	if(WEBKIT_IS_WEB_VIEW(widget)) /* can't cut, just copy */
 		webkit_web_view_copy_clipboard(WEBKIT_WEB_VIEW(widget));
 	else if(GTK_IS_LABEL(widget) && gtk_label_get_selectable(GTK_LABEL(widget)))
-		g_signal_emit_by_name(widget, "copy-clipboard", NULL);  /* only copy */
+		g_signal_emit_by_name(widget, "copy-clipboard", NULL);  /* just copy */
 	else if(GTK_IS_ENTRY(widget) || GTK_IS_TEXT_VIEW(widget))
 		g_signal_emit_by_name(widget, "cut-clipboard", NULL);
 	else /* If we don't know how to cut from it, just cut from the source */
 		g_signal_emit_by_name(i7_document_get_default_view(document), "cut-clipboard", NULL);
 }
 
+/* Edit->Copy */
 void
 action_copy(GtkAction *action, I7Document *document)
 {
 	GtkWidget *widget = gtk_window_get_focus(GTK_WINDOW(document));
 
+	/* What actually happens depends on the type of widget that is focused */
 	if(WEBKIT_IS_WEB_VIEW(widget))
 		webkit_web_view_copy_clipboard(WEBKIT_WEB_VIEW(widget));
 	else if((GTK_IS_LABEL(widget) && gtk_label_get_selectable(GTK_LABEL(widget)))
@@ -356,20 +392,26 @@ action_copy(GtkAction *action, I7Document *document)
 		g_signal_emit_by_name(i7_document_get_default_view(document), "copy-clipboard", NULL);
 }
 
+/* Edit->Paste */
 void
 action_paste(GtkAction *action, I7Document *document)
 {
 	GtkWidget *widget = gtk_window_get_focus(GTK_WINDOW(document));
+
+	/* What actually happens depends on the type of widget that is focused */
     if(GTK_IS_ENTRY(widget) || GTK_IS_TEXT_VIEW(widget))
         g_signal_emit_by_name(widget, "paste-clipboard", NULL);
     else /* If we don't know how to paste to it, just paste to the source */
         g_signal_emit_by_name(i7_document_get_default_view(document), "paste-clipboard", NULL);
 }
 
+/* Edit->Select All */
 void
 action_select_all(GtkAction *action, I7Document *document)
 {
 	GtkWidget *widget = gtk_window_get_focus(GTK_WINDOW(document));
+
+	/* What actually happens depends on the type of widget that is focused */
     if(WEBKIT_IS_WEB_VIEW(widget)) 
 		webkit_web_view_select_all(WEBKIT_WEB_VIEW(widget));
 	else if(GTK_IS_LABEL(widget) && gtk_label_get_selectable(GTK_LABEL(widget)))
@@ -382,16 +424,18 @@ action_select_all(GtkAction *action, I7Document *document)
         g_signal_emit_by_name(i7_document_get_default_view(document), "select-all", TRUE, NULL);
 }
 
+/* Edit->Find - Unhide the find bar at the bottom */
 void
 action_find(GtkAction *action, I7Document *document)
 {
 	gtk_widget_show(document->findbar);
 	const gchar *text = gtk_entry_get_text(GTK_ENTRY(document->findbar_entry));
-	i7_document_set_quicksearch_not_found(document, !i7_document_highlight_quicksearch(document, text, TRUE));
 	/* don't free */
+	i7_document_set_quicksearch_not_found(document, !i7_document_highlight_quicksearch(document, text, TRUE));
 	gtk_widget_grab_focus(document->findbar_entry);
 }
 
+/* Edit->Find Next */
 void
 action_find_next(GtkAction *action, I7Document *document)
 {
@@ -399,6 +443,7 @@ action_find_next(GtkAction *action, I7Document *document)
 	i7_document_set_quicksearch_not_found(document, !i7_document_highlight_quicksearch(document, text, TRUE));
 }
 
+/* Edit->Find Previous */
 void
 action_find_previous(GtkAction *action, I7Document *document)
 {
@@ -406,6 +451,8 @@ action_find_previous(GtkAction *action, I7Document *document)
 	i7_document_set_quicksearch_not_found(document, !i7_document_highlight_quicksearch(document, text, FALSE));
 }
 
+/* Edit->Find and Replace... - For more complicated find operations, we use a
+ dialog instead of the find bar */
 void
 action_replace(GtkAction *action, I7Document *document)
 {
@@ -413,24 +460,29 @@ action_replace(GtkAction *action, I7Document *document)
 	gtk_window_present(GTK_WINDOW(document->find_dialog));
 }
 
+/* Edit->Scroll to Selection */
 void
 action_scroll_selection(GtkAction *action, I7Document *document)
 {
 	i7_document_scroll_to_selection(document);
 }
 
+/* Edit->Search... - This is another dialog that searches any combination of 
+ the story, the installed extensions, and the documentation. */
 void
 action_search(GtkAction *action, I7Document *document)
 {
 	
 }
 
+/* Edit->Recheck Document */
 void
 action_check_spelling(GtkAction *action, I7Document *document)
 {
 	i7_document_check_spelling(document);
 }
 
+/* Edit->Autocheck Spelling */
 void
 action_autocheck_spelling_toggle(GtkToggleAction *action, I7Document *document)
 {
@@ -441,12 +493,14 @@ action_autocheck_spelling_toggle(GtkToggleAction *action, I7Document *document)
 	i7_document_set_spellcheck(document, value);
 }
 
+/* Edit->Preferences... */
 void
 action_preferences(GtkAction *action, I7App *app)
 {
 	i7_app_present_prefs_window(app);
 }
 
+/* View->Toolbar */
 void
 action_view_toolbar_toggled(GtkToggleAction *action, I7Document *document)
 {
@@ -458,6 +512,7 @@ action_view_toolbar_toggled(GtkToggleAction *action, I7Document *document)
 	config_file_set_bool(PREFS_TOOLBAR_VISIBLE, show);
 }
 
+/* View->Statusbar */
 void
 action_view_statusbar_toggled(GtkToggleAction *action, I7Document *document)
 {
@@ -469,6 +524,7 @@ action_view_statusbar_toggled(GtkToggleAction *action, I7Document *document)
 	config_file_set_bool(PREFS_STATUSBAR_VISIBLE, show);
 }
 
+/* View->Notepad */
 void
 action_view_notepad_toggled(GtkToggleAction *action, I7Story *story)
 {
@@ -480,102 +536,119 @@ action_view_notepad_toggled(GtkToggleAction *action, I7Story *story)
 	config_file_set_bool(PREFS_NOTEPAD_VISIBLE, show);
 }
 
+/* View->Show Tab->Source */
 void
 action_show_source(GtkAction *action, I7Story *story)
 {
 	i7_story_show_tab(story, I7_PANE_SOURCE, I7_SOURCE_VIEW_TAB_SOURCE);
 }
 
+/* View->Show Tab->Errors */
 void
 action_show_errors(GtkAction *action, I7Story *story)
 {
 	i7_story_show_pane(story, I7_PANE_ERRORS);
 }
 
+/* View->Show Tab->Index */
 void
 action_show_index(GtkAction *action, I7Story *story)
 {
 	i7_story_show_pane(story, I7_PANE_INDEX);
 }
 
+/* View->Show Tab->Skein */
 void
 action_show_skein(GtkAction *action, I7Story *story)
 {
 	i7_story_show_pane(story, I7_PANE_SKEIN);
 }
 
+/* View->Show Tab->Transcript */
 void
 action_show_transcript(GtkAction *action, I7Story *story)
 {
 	i7_story_show_pane(story, I7_PANE_TRANSCRIPT);
 }
 
+/* View->Show Tab->Game */
 void
 action_show_game(GtkAction *action, I7Story *story)
 {
 	i7_story_show_pane(story, I7_PANE_GAME);
 }
 
+/* View->Show Tab->Documentation */
 void
 action_show_documentation(GtkAction *action, I7Story *story)
 {
 	i7_story_show_pane(story, I7_PANE_DOCUMENTATION);
 }
 
+/* View->Show Tab->Settings */
 void
 action_show_settings(GtkAction *action, I7Story *story)
 {
 	i7_story_show_pane(story, I7_PANE_SETTINGS);
 }
 
+/* View->Show Index->Actions */
 void
 action_show_actions(GtkAction *action, I7Story *story)
 {
 	i7_story_show_tab(story, I7_PANE_INDEX, I7_INDEX_TAB_ACTIONS);
 }
 
+/* View->Show Index->Contents */
 void
 action_show_contents(GtkAction *action, I7Story *story)
 {
 	i7_story_show_tab(story, I7_PANE_INDEX, I7_INDEX_TAB_CONTENTS);
 }
 
+/* View->Show Index->Kinds */
 void
 action_show_kinds(GtkAction *action, I7Story *story)
 {
 	i7_story_show_tab(story, I7_PANE_INDEX, I7_INDEX_TAB_KINDS);
 }
 
+/* View->Show Index->Phrasebook */
 void
 action_show_phrasebook(GtkAction *action, I7Story *story)
 {
 	i7_story_show_tab(story, I7_PANE_INDEX, I7_INDEX_TAB_PHRASEBOOK);
 }
 
+/* View->Show Index->Rules */
 void
 action_show_rules(GtkAction *action, I7Story *story)
 {
 	i7_story_show_tab(story, I7_PANE_INDEX, I7_INDEX_TAB_RULES);
 }
 
+/* View->Show Index->Scenes */
 void
 action_show_scenes(GtkAction *action, I7Story *story)
 {
 	i7_story_show_tab(story, I7_PANE_INDEX, I7_INDEX_TAB_SCENES);
 }
 
+/* View->Show Index->World */
 void
 action_show_world(GtkAction *action, I7Story *story)
 {
 	i7_story_show_tab(story, I7_PANE_INDEX, I7_INDEX_TAB_WORLD);
 }
 
+/* View->Show Headings */
 void
 action_show_headings(GtkAction *action, I7Story *story)
 {
 	i7_story_show_tab(story, I7_PANE_SOURCE, I7_SOURCE_VIEW_TAB_CONTENTS);
 }
 
+/* View->Current Section Only */
 void
 action_current_section_only(GtkAction *action, I7Document *document)
 {
@@ -583,6 +656,7 @@ action_current_section_only(GtkAction *action, I7Document *document)
 	i7_document_show_heading(document, path);
 }
 
+/* View->Increase Restriction - View one level deeper in the headings hierarchy */
 void
 action_increase_restriction(GtkAction *action, I7Document *document)
 {
@@ -590,6 +664,7 @@ action_increase_restriction(GtkAction *action, I7Document *document)
 	i7_document_show_heading(document, path);
 }
 
+/* View->Decrease Restriction - View one level less deep in the headings hierarchy */
 void
 action_decrease_restriction(GtkAction *action, I7Document *document)
 {
@@ -597,12 +672,14 @@ action_decrease_restriction(GtkAction *action, I7Document *document)
 	i7_document_show_heading(document, path);
 }
 
+/* View->Entire Source */
 void
 action_entire_source(GtkAction *action, I7Document *document)
 {
 	i7_document_show_entire_source(document);
 }
 
+/* View->Previous Section */
 void
 action_previous_section(GtkAction *action, I7Document *document)
 {
@@ -610,6 +687,7 @@ action_previous_section(GtkAction *action, I7Document *document)
 	i7_document_show_heading(document, path);
 }
 
+/* View->Next Section */
 void
 action_next_section(GtkAction *action, I7Document *document)
 {
@@ -617,6 +695,7 @@ action_next_section(GtkAction *action, I7Document *document)
 	i7_document_show_heading(document, path);
 }
 
+/* Format->Indent */
 void
 action_indent(GtkAction *action, I7Document *document)
 {
@@ -625,6 +704,7 @@ action_indent(GtkAction *action, I7Document *document)
 	/* Adapted from gtksourceview.c */
 	GtkTextIter start, end;
 	gtk_text_buffer_get_selection_bounds(buffer, &start, &end);
+	/* Find out which lines to indent */
 	gint start_line = gtk_text_iter_get_line(&start);
 	gint end_line = gtk_text_iter_get_line(&end);
 	gint i;
@@ -634,6 +714,7 @@ action_indent(GtkAction *action, I7Document *document)
 	if((gtk_text_iter_get_visible_line_offset(&end) == 0) && (end_line > start_line))
 		end_line--;
 
+	/* Treat it as one single undo action */
 	gtk_text_buffer_begin_user_action(buffer);
 	for(i = start_line; i <= end_line; i++) {
 		GtkTextIter iter;
@@ -648,6 +729,7 @@ action_indent(GtkAction *action, I7Document *document)
 	gtk_text_buffer_end_user_action(buffer);
 }
 
+/* Format->Unindent */
 void
 action_unindent(GtkAction *action, I7Document *document)
 {
@@ -657,15 +739,17 @@ action_unindent(GtkAction *action, I7Document *document)
 	/* Adapted from gtksourceview.c */
 	GtkTextIter start, end;
 	gtk_text_buffer_get_selection_bounds(buffer, &start, &end);
+	/* Find out which lines to unindent */
 	gint start_line = gtk_text_iter_get_line(&start);
 	gint end_line = gtk_text_iter_get_line(&end);
 	gint i;
 
 	/* if the end of the selection is before the first character on a line,
-	don't indent it */
+	don't unindent it */
 	if((gtk_text_iter_get_visible_line_offset(&end) == 0) && (end_line > start_line))
 		end_line--;
 
+	/* Treat it as one single undo action */
 	gtk_text_buffer_begin_user_action(buffer);
 	for(i = start_line; i <= end_line; i++) {
 		GtkTextIter iter, iter2;
@@ -681,6 +765,7 @@ action_unindent(GtkAction *action, I7Document *document)
 	gtk_text_buffer_end_user_action(buffer);
 }
 
+/* Format->Comment Out Selection */
 void
 action_comment_out_selection(GtkAction *action, I7Document *document)
 {
@@ -691,7 +776,10 @@ action_comment_out_selection(GtkAction *action, I7Document *document)
 		return;
 	gchar *text = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
 
+	/* Treat it as one single undo action */
 	gtk_text_buffer_begin_user_action(buffer);
+	/* Delete the entire text and reinsert it inside brackets, in order to
+	 avoid excessively recalculating the syntax highlighting */
 	gtk_text_buffer_delete(buffer, &start, &end);
 	gchar *newtext = g_strconcat("[", text, "]", NULL);
 	GtkTextMark *tempmark = gtk_text_buffer_create_mark(buffer, NULL, &end, TRUE);
@@ -714,6 +802,7 @@ char_equals(gunichar ch, gpointer data)
 	return ch == (gunichar)GPOINTER_TO_UINT(data);
 }
 
+/* Format->Uncomment Selection */
 void
 action_uncomment_selection(GtkAction *action, I7Document *document)
 {
@@ -723,7 +812,8 @@ action_uncomment_selection(GtkAction *action, I7Document *document)
 	if(!gtk_text_buffer_get_selection_bounds(buffer, &start, &end))
 		return;
 
-	/* Find first [ from beginning, then last ] between there and end */
+	/* Find first [ from the beginning of the selection, then the last ] between
+	 there and the end of the selection */
 	if(gtk_text_iter_get_char(&start) != '[' 
 	    && !gtk_text_iter_forward_find_char(&start, char_equals, GUINT_TO_POINTER('['), &end))
 		return;
@@ -735,7 +825,9 @@ action_uncomment_selection(GtkAction *action, I7Document *document)
 
 	gchar *text = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
 
+	/* Treat it as one single undo action */
 	gtk_text_buffer_begin_user_action(buffer);
+	/* Delete the comment and re-insert it without brackets */
 	gtk_text_buffer_delete(buffer, &start, &end);
 	gchar *newtext = g_strndup(text + 1, strlen(text) - 2);
 	GtkTextMark *tempmark = gtk_text_buffer_create_mark(buffer, NULL, &end, TRUE);
@@ -751,6 +843,7 @@ action_uncomment_selection(GtkAction *action, I7Document *document)
 	gtk_text_buffer_delete_mark(buffer, tempmark);
 }
 
+/* Format->Renumber All Sections */
 void
 action_renumber_all_sections(GtkAction *action, I7Document *document)
 {
@@ -820,6 +913,7 @@ action_renumber_all_sections(GtkAction *action, I7Document *document)
 	gtk_text_buffer_end_user_action(buffer);
 }
 
+/* Format->Enable Elastic Tabs */
 void
 action_enable_elastic_tabs_toggled(GtkToggleAction *action, I7Document *document)
 {
@@ -829,6 +923,7 @@ action_enable_elastic_tabs_toggled(GtkToggleAction *action, I7Document *document
 	i7_document_set_elastic_tabs(document, value);
 }
 
+/* Play->Go */
 void
 action_go(GtkAction *action, I7Story *story)
 {
@@ -838,6 +933,7 @@ action_go(GtkAction *action, I7Story *story)
 	i7_story_compile(story, FALSE, FALSE);
 }
 
+/* Play->Test Me */
 void
 action_test_me(GtkAction *action, I7Story *story)
 {
@@ -847,6 +943,7 @@ action_test_me(GtkAction *action, I7Story *story)
 	i7_story_compile(story, FALSE, FALSE);
 }
 
+/* Play->Stop */
 void
 action_stop(GtkAction *action, I7Story *story)
 {
@@ -861,6 +958,7 @@ refresh_index_helper(I7Story *story)
 	i7_story_show_pane(story, I7_PANE_INDEX);
 }
 
+/* Play->Refresh Index */
 void
 action_refresh_index(GtkAction *action, I7Story *story)
 {
@@ -868,6 +966,7 @@ action_refresh_index(GtkAction *action, I7Story *story)
 	i7_story_compile(story, FALSE, TRUE);
 }
 
+/* Replay->Replay Last Commands */
 void
 action_replay(GtkAction *action, I7Story *story)
 {
@@ -875,6 +974,7 @@ action_replay(GtkAction *action, I7Story *story)
 	i7_story_compile(story, FALSE, FALSE);
 }
 
+/* Replay->Replay Commands Blessed in Transcript */
 void
 action_play_all_blessed(GtkAction *action, I7Story *story)
 {
@@ -882,48 +982,56 @@ action_play_all_blessed(GtkAction *action, I7Story *story)
 	i7_story_compile(story, FALSE, FALSE);
 }
 
+/* Replay->Show Last Command */
 void
 action_show_last_command(GtkAction *action, I7Story *story)
 {
 	
 }
 
+/* Replay->Show Last Command in Skein */
 void
 action_show_last_command_skein(GtkAction *action, I7Story *story)
 {
 	
 }
 
+/* Replay->Find Previous Changed Command */
 void
 action_previous_changed_command(GtkAction *action, I7Story *story)
 {
 	
 }
 
+/* Replay->Find Next Changed Command */
 void
 action_next_changed_command(GtkAction *action, I7Story *story)
 {
 	
 }
 
+/* Replay->Find Previous Difference */
 void
 action_previous_difference(GtkAction *action, I7Story *story)
 {
 	
 }
 
+/* Replay->Find Next Difference */
 void
 action_next_difference(GtkAction *action, I7Story *story)
 {
 	
 }
 
+/* Replay->Show Next Difference in Skein */
 void
 action_next_difference_skein(GtkAction *action, I7Story *story)
 {
 	
 }
 
+/* Release->Release... (which was a 1978 song by Yes) */
 void
 action_release(GtkAction *action, I7Story *story)
 {
@@ -931,6 +1039,7 @@ action_release(GtkAction *action, I7Story *story)
 	i7_story_compile(story, TRUE, FALSE);
 }
 
+/* Release->Release for Testing... */
 void
 action_save_debug_build(GtkAction *action, I7Story *story)
 {
@@ -938,6 +1047,7 @@ action_save_debug_build(GtkAction *action, I7Story *story)
 	i7_story_compile(story, FALSE, FALSE);
 }
 
+/* Release->Open Materials Folder */
 void
 action_open_materials_folder(GtkAction *action, I7Story *story)
 {
@@ -989,6 +1099,7 @@ finally:
 	g_free(materialspath);
 }
 
+/* Release->Export iFiction Record... */
 void
 action_export_ifiction_record(GtkAction *action, I7Story *story)
 {
@@ -996,6 +1107,7 @@ action_export_ifiction_record(GtkAction *action, I7Story *story)
 	i7_story_compile(story, FALSE, FALSE);
 }
 
+/* Help->Contents */
 void
 action_help_contents(GtkAction *action, I7Story *story)
 {
@@ -1004,6 +1116,7 @@ action_help_contents(GtkAction *action, I7Story *story)
 	g_free(file);
 }
 
+/* Help->License */
 void
 action_help_license(GtkAction *action, I7Story *story)
 {
@@ -1012,6 +1125,7 @@ action_help_license(GtkAction *action, I7Story *story)
 	g_free(file);
 }
 
+/* Help->Report a Bug */
 void
 action_report_bug(GtkAction *action, I7App *app)
 {
@@ -1023,6 +1137,7 @@ action_report_bug(GtkAction *action, I7App *app)
 			"opened in your browser:"));
 }
 
+/* Help->Help on Installed Extensions */
 void
 action_help_extensions(GtkAction *action, I7Story *story)
 {
@@ -1031,6 +1146,7 @@ action_help_extensions(GtkAction *action, I7Story *story)
 	g_free(file);
 }
 
+/* Help->Recipe Book */
 void
 action_help_recipe_book(GtkAction *action, I7Story *story)
 {
@@ -1039,6 +1155,7 @@ action_help_recipe_book(GtkAction *action, I7Story *story)
 	g_free(file);
 }
 
+/* Help->About */
 void
 action_about(GtkAction *action, I7App *app)
 {
