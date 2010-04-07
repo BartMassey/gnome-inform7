@@ -6,13 +6,14 @@
 #include <webkit/webkit.h>
 #include "document.h"
 #include "document-private.h"
+#include "searchwindow.h"
 
 #define FINDBAR_NOT_FOUND_FALLBACK_BG_COLOR "#F03838"
 #define FINDBAR_NOT_FOUND_FALLBACK_FG_COLOR "black"
 
 /* THE "SEARCH ENGINE" */
 
-static gboolean
+gboolean
 find_no_wrap(const GtkTextIter *startpos, const gchar *text, gboolean forward, GtkSourceSearchFlags flags, I7SearchType search_type, GtkTextIter *match_start, GtkTextIter *match_end)
 {
 	if(search_type == I7_SEARCH_CONTAINS)
@@ -171,6 +172,34 @@ on_replace_all_button_clicked(GtkButton *button, I7Document *document)
 
 	/* Close the dialog */
 	gtk_widget_hide(document->find_dialog);
+}
+
+void
+on_search_files_entry_changed(GtkEditable *editable, I7Document *document)
+{
+    const gchar *text = gtk_entry_get_text(GTK_ENTRY(editable));
+    gboolean text_not_empty = !(text == NULL || strlen(text) == 0);
+    gtk_widget_set_sensitive(document->search_files_find, text_not_empty);
+}
+
+void
+on_search_files_find_clicked(GtkButton *button, I7Document *document)
+{
+	const gchar *text = gtk_entry_get_text(GTK_ENTRY(document->search_files_entry));
+	gboolean ignore_case = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(document->search_files_ignore_case));
+	I7SearchType search_type = gtk_combo_box_get_active(GTK_COMBO_BOX(document->search_files_type));
+
+	/* Close the dialog */
+	gtk_widget_hide(document->search_files_dialog);
+	
+	GtkWidget *search_window = i7_search_window_new(document, text, ignore_case, search_type);
+	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(document->search_files_project)))
+		i7_search_window_search_project(I7_SEARCH_WINDOW(search_window));
+	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(document->search_files_extensions)))
+		i7_search_window_search_extensions(I7_SEARCH_WINDOW(search_window));
+	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(document->search_files_documentation)))
+		i7_search_window_search_documentation(I7_SEARCH_WINDOW(search_window));
+	i7_search_window_done_searching(I7_SEARCH_WINDOW(search_window));
 }
 
 /* PUBLIC FUNCTIONS */

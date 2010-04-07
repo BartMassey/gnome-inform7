@@ -39,6 +39,26 @@ html_load_file(WebKitWebView *html, const gchar *filename)
 	g_free(uri);
 }
 
+/* Have the html widget display the HTML file and jump to the anchor */
+void
+html_load_file_at_anchor(WebKitWebView *html, const gchar *file, const gchar *anchor)
+{
+	g_return_if_fail(html);
+    g_return_if_fail(file || strlen(file));
+	g_return_if_fail(anchor);
+    
+    GError *error = NULL;
+	gchar *uri = g_filename_to_uri(file, NULL, &error);
+	if(!uri) {
+		WARN_S(_("Could not convert filename to URI"), file, error);
+		return;
+	}
+	gchar *real_uri = g_strconcat(uri, "#", anchor, NULL);
+	g_free(uri);
+	webkit_web_view_open(html, real_uri); /* SUCKY DEBIAN Deprecated since 1.1.1 */
+	g_free(real_uri);
+}
+
 /* Blank the html widget */
 void 
 html_load_blank(WebKitWebView *html) 

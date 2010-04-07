@@ -128,6 +128,7 @@ i7_document_init(I7Document *self)
 		"find_next", "<ctrl>G",
 		"find_previous", "<shift><ctrl>G",
 		"replace", "<ctrl>H",
+		"search", "<shift><ctrl>F",
 		"check_spelling", "<shift>F7",
 		"autocheck_spelling", "",
 		"view_toolbar", "",
@@ -185,6 +186,15 @@ i7_document_init(I7Document *self)
 	LOAD_WIDGET(find_button);
 	LOAD_WIDGET(replace_button);
 	LOAD_WIDGET(replace_all_button);
+	LOAD_WIDGET(search_files_dialog);
+	gtk_window_set_transient_for(GTK_WINDOW(self->search_files_dialog), GTK_WINDOW(self));
+	LOAD_WIDGET(search_files_type);
+	LOAD_WIDGET(search_files_entry);
+	LOAD_WIDGET(search_files_project);
+	LOAD_WIDGET(search_files_extensions);
+	LOAD_WIDGET(search_files_documentation);
+	LOAD_WIDGET(search_files_ignore_case);
+	LOAD_WIDGET(search_files_find);
 	LOAD_ACTION(priv->document_action_group, undo);
 	LOAD_ACTION(priv->document_action_group, redo);
 	LOAD_ACTION(priv->document_action_group, current_section_only);
@@ -526,6 +536,19 @@ i7_document_close(I7Document *document)
 void
 i7_document_scroll_to_selection(I7Document *document)
 {
+	I7_DOCUMENT_GET_CLASS(document)->scroll_to_selection(document);
+}
+
+void
+i7_document_jump_to_line(I7Document *document, guint lineno)
+{
+	I7_DOCUMENT_USE_PRIVATE(document, priv);
+	GtkTextIter start, end;
+	/* Line number is counted from 0 internally, so subtract one */
+	gtk_text_buffer_get_iter_at_line(GTK_TEXT_BUFFER(priv->buffer), &start, lineno - 1);
+	end = start;
+	gtk_text_iter_forward_to_line_end(&end);
+	gtk_text_buffer_select_range(GTK_TEXT_BUFFER(priv->buffer), &start, &end);
 	I7_DOCUMENT_GET_CLASS(document)->scroll_to_selection(document);
 }
 

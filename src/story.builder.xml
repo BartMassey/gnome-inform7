@@ -113,11 +113,6 @@
     <property name="label">_Import into Skein...</property>
     <property name="tooltip">Import a play transcript into this story's Skein</property>
   </object>
-  <object class="GtkAction" id="search">
-    <property name="label">_Search...</property>
-    <property name="tooltip">Search through the entire project, including the documentation</property>
-    <signal name="activate" handler="action_search"/>
-  </object>
   <object class="GtkAction" id="show_last_command">
     <property name="label">Show _Last Command</property>
     <property name="tooltip">Show the last command</property>

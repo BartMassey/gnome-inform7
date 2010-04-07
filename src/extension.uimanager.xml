@@ -35,7 +35,7 @@
 			<menuitem action="find_previous"/>
 			<menuitem action="replace"/>
 			<menuitem action="scroll_selection"/>
-			<!--<menuitem action="search"/>-->
+			<menuitem action="search"/>
 			<separator/>
 			<menuitem action="check_spelling"/>
 			<menuitem action="autocheck_spelling"/>
@@ -66,7 +66,7 @@
 		<menu action="help_menu">
 			<menuitem action="report_bug"/>
 			<separator/>
-			<!--<menuitem action="visit_inform7_com"/>-->
+			<menuitem action="visit_inform7_com"/>
 			<separator/>
 			<menuitem action="about"/>
 		</menu>

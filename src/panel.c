@@ -550,6 +550,7 @@ on_navigation_requested(WebKitWebView *webview, WebKitWebFrame *frame, WebKitNet
 		if(uri_parts[1]) {
 			/* Jump to the anchor if there was one */
 			gchar *anchor = g_strconcat("#", uri_parts[1], NULL);
+			/* SUCKY DEBIAN use webkit_web_view_load_request */
 			webkit_web_frame_load_request(frame, webkit_network_request_new(anchor));
 			g_free(anchor);
 		}
@@ -697,6 +698,12 @@ void
 i7_panel_goto_docpage(I7Panel *self, const gchar *file)
 {
 	html_load_file(WEBKIT_WEB_VIEW(self->tabs[I7_PANE_DOCUMENTATION]), file);
+}
+
+void
+i7_panel_goto_docpage_at_anchor(I7Panel *self, const gchar *file, const gchar *anchor)
+{
+	html_load_file_at_anchor(WEBKIT_WEB_VIEW(self->tabs[I7_PANE_DOCUMENTATION]), file, anchor);
 }
 
 void

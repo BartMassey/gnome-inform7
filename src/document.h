@@ -74,6 +74,15 @@ typedef struct {
 	GtkWidget *find_button;
 	GtkWidget *replace_button;
 	GtkWidget *replace_all_button;
+	/* "Search Files" dialog widgets */
+	GtkWidget *search_files_dialog;
+	GtkWidget *search_files_type;
+	GtkWidget *search_files_entry;
+	GtkWidget *search_files_project;
+	GtkWidget *search_files_extensions;
+	GtkWidget *search_files_documentation;
+	GtkWidget *search_files_ignore_case;
+	GtkWidget *search_files_find;
 
 	GtkAction *undo;
 	GtkAction *redo;
@@ -141,6 +150,7 @@ void i7_document_save_as(I7Document *document, const gchar *filename);
 gboolean i7_document_verify_save(I7Document *document);
 void i7_document_close(I7Document *document);
 void i7_document_scroll_to_selection(I7Document *document);
+void i7_document_jump_to_line(I7Document *document, guint lineno);
 
 void i7_document_update_tabs(I7Document *document);
 void i7_document_update_fonts(I7Document *document);

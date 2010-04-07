@@ -117,7 +117,8 @@ i7_app_init(I7App *self)
 		{ "^(?P<level>volume|book|part|chapter|section)\\s+(?P<secnum>.*?)(\\s+-\\s+(?P<sectitle>.*))?$", TRUE },
 		{ "\\[=0x([0-9A-F]{4})=\\]", FALSE },
 		{ "src=(['\"]?)inform:/(.*?\\.png)\\1(\\s|>)", FALSE },
-		{ "^\\s*(version\\s.+\\sof\\s+)?(the\\s+)?(?P<title>.+)\\s+by\\s+(?P<author>.+)\\s+begins?\\s+here\\.?\\s*\\n", TRUE }
+		{ "^\\s*(version\\s.+\\sof\\s+)?(the\\s+)?(?P<title>.+)\\s+by\\s+(?P<author>.+)\\s+begins?\\s+here\\.?\\s*\\n", TRUE },
+		{ "R?ex(?P<number>[0-9]+).html$", FALSE }
 	};
 	int i;
 	for(i = 0; i < I7_APP_NUM_REGICES; i++) {

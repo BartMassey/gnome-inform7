@@ -467,12 +467,13 @@ action_scroll_selection(GtkAction *action, I7Document *document)
 	i7_document_scroll_to_selection(document);
 }
 
-/* Edit->Search... - This is another dialog that searches any combination of 
- the story, the installed extensions, and the documentation. */
+/* Edit->Search Files... - This is another dialog that searches any combination 
+ of the story, the installed extensions, and the documentation. */
 void
 action_search(GtkAction *action, I7Document *document)
 {
-	
+	gtk_widget_show(document->search_files_dialog);
+	gtk_window_present(GTK_WINDOW(document->search_files_dialog));
 }
 
 /* Edit->Recheck Document */

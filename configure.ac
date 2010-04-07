@@ -148,6 +148,7 @@ PKG_CHECK_MODULES([INFORM7], [
 	gtksourceview-2.0 >= 2.2
 	webkit-1.0 >= 1.0
 	gtkspell-2.0
+	libxml-2.0
 	$UUID_MODULE
 ])
 PKG_CHECK_MODULES([OSXCART], [

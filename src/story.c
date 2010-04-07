@@ -598,7 +598,6 @@ i7_story_init(I7Story *self)
 	/* Temporary "unimplemented" group */
 	const gchar *unimplemented[] = {
 		"import_into_skein", "",
-		"search", "<shift><ctrl>F",
 		"show_last_command", "<alt><ctrl>L",
 		"show_last_command_skein", "<shift><ctrl>L",
 		"previous_changed_command", "",
@@ -629,9 +628,9 @@ i7_story_init(I7Story *self)
 	gtk_box_pack_end(GTK_BOX(I7_DOCUMENT(self)->box), I7_DOCUMENT(self)->findbar, FALSE, FALSE, 0);
 	
 	/* Save public pointers to other widgets */
-	self->facing_pages = GTK_WIDGET(load_object(builder, "facing_pages"));
-	self->notes_window = GTK_WIDGET(load_object(builder, "notes_window"));
-	self->notes_view = GTK_WIDGET(load_object(builder, "notes_view"));
+	LOAD_WIDGET(facing_pages);
+	LOAD_WIDGET(notes_window);
+	LOAD_WIDGET(notes_view);
 	
 	/* Set up the signals to do the menu hints in the statusbar */
 	i7_document_attach_menu_hints(I7_DOCUMENT(self), GTK_MENU_BAR(menu));
@@ -1038,10 +1037,18 @@ i7_story_show_tab(I7Story *story, I7PanelPane pane, gint tab)
 }
 
 void
-i7_story_show_docpage(I7Story *story, gchar *file)
+i7_story_show_docpage(I7Story *story, const gchar *file)
 {
 	I7StoryPanel side = i7_story_choose_panel(story, I7_PANE_DOCUMENTATION);
 	i7_panel_goto_docpage(story->panel[side], file);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(story->panel[side]->notebook), I7_PANE_DOCUMENTATION);
+}
+
+void
+i7_story_show_docpage_at_anchor(I7Story *story, const gchar *file, const gchar *anchor)
+{
+	I7StoryPanel side = i7_story_choose_panel(story, I7_PANE_DOCUMENTATION);
+	i7_panel_goto_docpage_at_anchor(story->panel[side], file, anchor);
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(story->panel[side]->notebook), I7_PANE_DOCUMENTATION);
 }
 

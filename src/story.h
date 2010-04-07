@@ -72,7 +72,8 @@ gboolean i7_story_open(I7Story *story, const gchar *directory);
 I7StoryPanel i7_story_choose_panel(I7Story *story, I7PanelPane newtab);
 void i7_story_show_pane(I7Story *story, I7PanelPane pane);
 void i7_story_show_tab(I7Story *story, I7PanelPane pane, gint tab);
-void i7_story_show_docpage(I7Story *story, gchar *file);
+void i7_story_show_docpage(I7Story *story, const gchar *file);
+void i7_story_show_docpage_at_anchor(I7Story *story, const gchar *file, const gchar *anchor);
 gchar *i7_story_get_materials_path(I7Story *story);
 const gchar *i7_story_get_extension(I7Story *story);
 

@@ -98,6 +98,7 @@ GType i7_panel_get_type() G_GNUC_CONST;
 GtkWidget *i7_panel_new();
 void i7_panel_reset_queue(I7Panel *self, I7PanelPane pane, gint tab, const gchar *page);
 void i7_panel_goto_docpage(I7Panel *self, const gchar *file);
+void i7_panel_goto_docpage_at_anchor(I7Panel *self, const gchar *file, const gchar *anchor);
 void i7_panel_update_tabs(I7Panel *self);
 void i7_panel_update_fonts(I7Panel *self);
 void i7_panel_update_font_sizes(I7Panel *self);
