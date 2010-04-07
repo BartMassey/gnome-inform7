@@ -25,7 +25,6 @@ gnome_inform7_SOURCES = \
 	notepad.c \
 	panel.c panel.h panel-private.h \
 	prefs.c prefs.h \
-	rtf.c rtf.h \
 	searchwindow.c searchwindow.h \
 	source-view.c source-view.h \
 	spawn.c spawn.h \
