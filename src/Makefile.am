@@ -24,6 +24,7 @@ gnome_inform7_SOURCES = \
 	newdialog.c newdialog.h \
 	notepad.c \
 	panel.c panel.h panel-private.h \
+	placeholder-entry.c placeholder-entry.h \
 	prefs.c prefs.h \
 	searchwindow.c searchwindow.h \
 	source-view.c source-view.h \
