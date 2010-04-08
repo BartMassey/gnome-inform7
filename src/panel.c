@@ -614,31 +614,37 @@ on_navigation_requested(WebKitWebView *webview, WebKitWebFrame *frame, WebKitNet
 		
 	} else if(strcmp(scheme, "source") == 0) {
 		guint line;
-		gchar *file = g_strdup(uri + strlen("source:"));
-		gchar *ptr = strrchr(file, '#');
+		gchar *path = g_strdup(uri + strlen("source:"));
+		gchar *ptr = strrchr(path, '#');
 		gchar *anchor = g_strdup(ptr);
 		*ptr = 0;
 
 		/* If it links to the source file, just jump to the line */
-		if(strcmp(file, "story.ni") == 0) {
+		if(strcmp(path, "story.ni") == 0) {
 			if(sscanf(anchor, "#line%u", &line))
 				g_signal_emit_by_name(panel, "jump-to-line", line);
 		} else {
+			gchar *real_uri = g_strconcat("file://", path, NULL);
+			gchar *uri_path = g_filename_from_uri(real_uri, NULL, &error);
+			if(!uri_path)
+				error_dialog(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(panel))), error, _("Error converting URI '%s' to filename: "), real_uri);
+			g_free(real_uri);
 			/* Else it's a link to an extension, open it in a new window */
-			gchar *path = get_case_insensitive_extension(file);
+			gchar *realpath = get_case_insensitive_extension(uri_path);
+			g_free(uri_path);
 			/* Check if we need to open the extension read-only */
 			gchar *userpath = i7_app_get_extension_path(i7_app_get(), NULL, NULL);
-			gboolean readonly = !strstr(path, userpath);
+			gboolean readonly = !strstr(realpath, userpath);
 			g_free(userpath);
 			
-			I7Extension *ext = i7_extension_new_from_file(i7_app_get(), file, readonly); 
+			I7Extension *ext = i7_extension_new_from_file(i7_app_get(), realpath, readonly); 
             if(ext != NULL) { 
                 if(sscanf(anchor, "#line%u", &line)) 
                     i7_source_view_jump_to_line(ext->sourceview, line);
             } 
-			g_free(path);
+			g_free(realpath);
 		}
-		g_free(file);
+		g_free(path);
 		g_free(anchor);
 		
 	} else
