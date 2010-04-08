@@ -83,15 +83,14 @@ struct _I7Skein
 
 GType i7_skein_get_type(void) G_GNUC_CONST;
 I7Skein *i7_skein_new(void);
-void i7_skein_free(I7Skein *skein);
 
 GNode *i7_skein_get_root_node(I7Skein *skein);
 GNode *i7_skein_get_current_node(I7Skein *skein);
 void i7_skein_set_current_node(I7Skein *skein, GNode *node);
 gboolean in_current_thread(I7Skein *skein, GNode *node);
 GNode *i7_skein_get_played_node(I7Skein *skein);
-void i7_skein_load(I7Skein *skein, const gchar *path);
-void i7_skein_save(I7Skein *skein, const gchar *path);
+void i7_skein_load(I7Skein *skein, const gchar *filename);
+void i7_skein_save(I7Skein *skein, const gchar *filename);
 void i7_skein_reset(I7Skein *skein, gboolean current);
 void i7_skein_layout(I7Skein *skein, double spacing);
 void i7_skein_invalidate_layout(I7Skein *skein);
