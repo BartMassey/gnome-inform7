@@ -34,6 +34,8 @@
 #include "file.h"
 #include "lang.h"
 #include "panel.h"
+#include "placeholder-entry.h"
+#include "searchwindow.h"
 #include "source-view.h"
 
 enum {
@@ -157,6 +159,22 @@ on_facing_pages_set_focus_child(GtkContainer *container, GtkWidget *child, I7Sto
 		I7_STORY_PRIVATE(story)->last_focused = child;
 	/* Do not save the pointer if it is NULL: that means the focus left the
 	 widget */
+}
+
+void
+on_search_entry_activate(GtkEntry *entry, I7Story *story)
+{
+	const gchar *text = gtk_entry_get_text(entry);
+	
+	GtkWidget *search_window = i7_search_window_new(I7_DOCUMENT(story), text, TRUE, I7_SEARCH_CONTAINS);
+	i7_search_window_search_documentation(I7_SEARCH_WINDOW(search_window));
+	i7_search_window_done_searching(I7_SEARCH_WINDOW(search_window));
+}
+
+void
+on_search_entry_icon_press(GtkEntry *entry, GtkEntryIconPosition icon_pos, GdkEvent *event)
+{
+	gtk_entry_set_text(entry, "");
 }
 
 /* OVERRIDES */
@@ -626,6 +644,22 @@ i7_story_init(I7Story *self)
 	gtk_box_pack_start(GTK_BOX(I7_DOCUMENT(self)->box), menu, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(I7_DOCUMENT(self)->box), I7_DOCUMENT(self)->toolbar, FALSE, FALSE, 0);
 	gtk_box_pack_end(GTK_BOX(I7_DOCUMENT(self)->box), I7_DOCUMENT(self)->findbar, FALSE, FALSE, 0);
+	GtkToolItem *search_toolitem = gtk_tool_item_new();
+	GtkWidget *search_entry = i7_placeholder_entry_new(_("Documentation"));
+	gtk_container_add(GTK_CONTAINER(search_toolitem), search_entry);
+	/* "activate" is a keybinding signal, but what else am I supposed to connect to? */
+	g_signal_connect(search_entry, "activate", G_CALLBACK(on_search_entry_activate), self);
+	gtk_widget_show_all(GTK_WIDGET(search_toolitem));
+	gtk_toolbar_insert(GTK_TOOLBAR(I7_DOCUMENT(self)->toolbar), search_toolitem, 6);
+	/* Add icons to the entry, but only if compiled and linked with >= 2.16 */
+#if GTK_CHECK_VERSION(2,16,0)
+	if(gtk_check_version(2, 16, 0) == NULL) {
+		gtk_entry_set_icon_from_stock(GTK_ENTRY(search_entry), GTK_ENTRY_ICON_PRIMARY, GTK_STOCK_FIND);
+		gtk_entry_set_icon_from_stock(GTK_ENTRY(search_entry), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_CLEAR);
+		gtk_entry_set_icon_activatable(GTK_ENTRY(search_entry), GTK_ENTRY_ICON_SECONDARY, TRUE);
+		g_signal_connect(search_entry, "icon-press", G_CALLBACK(on_search_entry_icon_press), NULL);
+	}
+#endif /* GTK_CHECK_VERSION(2,16,0) */
 	
 	/* Save public pointers to other widgets */
 	LOAD_WIDGET(facing_pages);
