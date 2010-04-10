@@ -86,12 +86,8 @@ read_source_file(const gchar *filename)
 		g_free(text);
 		text = g_strjoinv("\n", lines);
 		g_strfreev(lines);
-	} else if(strstr(text, "\r")) {
-		gchar **lines = g_strsplit(text, "\r", 0);
-		g_free(text);
-		text = g_strjoinv("\n", lines);
-		g_strfreev(lines);
 	}
+	text = g_strdelimit(text, "\r", '\n');
 	
 	return text;
 }
