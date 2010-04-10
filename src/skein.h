@@ -18,30 +18,13 @@
 #ifndef _SKEIN_H_
 #define _SKEIN_H_
 
+#include <glib.h>
 #include <glib-object.h>
-
-typedef struct {
-    gchar *line;
-    gchar *label;
-    gchar *id;
-    
-    gchar *text_transcript;
-    gchar *text_expected;
-    
-    gboolean played;
-    gboolean changed;
-    gboolean temp;
-    int score;
-    
-    double width;
-    double linewidth;
-    double labelwidth;
-    double x;
-} NodeData;
+#include "node.h"
 
 typedef struct {
 	gchar *label;
-	GNode *node;
+	I7Node *node;
 } NodeLabel;
 
 enum {
@@ -81,16 +64,24 @@ struct _I7Skein
 	GObject parent_instance;
 };
 
+typedef enum _I7SkeinError {
+	I7_SKEIN_ERROR_XML,
+	I7_SKEIN_ERROR_BAD_FORMAT,
+} I7SkeinError;
+
+#define I7_SKEIN_ERROR i7_skein_error_quark()
+
+GQuark i7_skein_error_quark(void);
 GType i7_skein_get_type(void) G_GNUC_CONST;
 I7Skein *i7_skein_new(void);
 
-GNode *i7_skein_get_root_node(I7Skein *skein);
-GNode *i7_skein_get_current_node(I7Skein *skein);
-void i7_skein_set_current_node(I7Skein *skein, GNode *node);
-gboolean in_current_thread(I7Skein *skein, GNode *node);
-GNode *i7_skein_get_played_node(I7Skein *skein);
-void i7_skein_load(I7Skein *skein, const gchar *filename);
-void i7_skein_save(I7Skein *skein, const gchar *filename);
+I7Node *i7_skein_get_root_node(I7Skein *skein);
+I7Node *i7_skein_get_current_node(I7Skein *skein);
+void i7_skein_set_current_node(I7Skein *skein, I7Node *node);
+gboolean in_current_thread(I7Skein *skein, I7Node *node);
+I7Node *i7_skein_get_played_node(I7Skein *skein);
+gboolean i7_skein_load(I7Skein *skein, const gchar *filename, GError **error);
+gboolean i7_skein_save(I7Skein *skein, const gchar *filename, GError **error);
 void i7_skein_reset(I7Skein *skein, gboolean current);
 void i7_skein_layout(I7Skein *skein, double spacing);
 void i7_skein_invalidate_layout(I7Skein *skein);
@@ -99,47 +90,20 @@ gboolean i7_skein_next_line(I7Skein *skein, gchar **line);
 GSList *i7_skein_get_commands(I7Skein *skein);
 void i7_skein_update_after_playing(I7Skein *skein, const gchar *transcript);
 gboolean i7_skein_get_line_from_history(I7Skein *skein, gchar **line, int history);
-GNode *i7_skein_add_new(I7Skein *skein, GNode *node);
-GNode *i7_skein_add_new_parent(I7Skein *skein, GNode *node);
-gboolean i7_skein_remove_all(I7Skein *skein, GNode *node, gboolean notify);
-gboolean i7_skein_remove_single(I7Skein *skein, GNode *node);
-void i7_skein_set_line(I7Skein *skein, GNode *node, const gchar *line);
-void i7_skein_set_label(I7Skein *skein, GNode *node, const gchar *label);
-void i7_skein_lock(I7Skein *skein, GNode *node);
-void i7_skein_unlock(I7Skein *skein, GNode *node, gboolean notify);
-void i7_skein_trim(I7Skein *skein, GNode *node, int minScore, gboolean notify);
+I7Node *i7_skein_add_new(I7Skein *skein, I7Node *node);
+I7Node *i7_skein_add_new_parent(I7Skein *skein, I7Node *node);
+gboolean i7_skein_remove_all(I7Skein *skein, I7Node *node, gboolean notify);
+gboolean i7_skein_remove_single(I7Skein *skein, I7Node *node);
+void i7_skein_lock(I7Skein *skein, I7Node *node);
+void i7_skein_unlock(I7Skein *skein, I7Node *node, gboolean notify);
+void i7_skein_trim(I7Skein *skein, I7Node *node, int minScore, gboolean notify);
 GSList *i7_skein_get_labels(I7Skein *skein);
 gboolean i7_skein_has_labels(I7Skein *skein);
-void i7_skein_bless(I7Skein *skein, GNode *node, gboolean all);
-gboolean i7_skein_can_bless(I7Skein *skein, GNode *node, gboolean all);
-void i7_skein_set_expected_text(I7Skein *skein, GNode *node, const gchar *text);
-GNode *i7_skein_get_thread_top(I7Skein *skein, GNode *node);
-GNode *i7_skein_get_thread_bottom(I7Skein *skein, GNode *node);
+void i7_skein_bless(I7Skein *skein, I7Node *node, gboolean all);
+gboolean i7_skein_can_bless(I7Skein *skein, I7Node *node, gboolean all);
+I7Node *i7_skein_get_thread_top(I7Skein *skein, I7Node *node);
+I7Node *i7_skein_get_thread_bottom(I7Skein *skein, I7Node *node);
 gboolean i7_skein_get_modified(I7Skein *skein);
-GNode *node_create(const gchar *line, const gchar *label,
-                   const gchar *transcript, const gchar *expected,
-                   gboolean played, gboolean changed, gboolean temp, int score);
-void node_destroy(GNode *node);
-const gchar *node_get_line(GNode *node);
-void node_set_line(GNode *node, const gchar *line);
-const gchar *node_get_label(GNode *node);
-void node_set_label(GNode *node, const gchar *label);
-gboolean node_has_label(GNode *node);
-const gchar *node_get_expected_text(GNode *node);
-gboolean node_get_changed(GNode *node);
-gboolean node_get_temporary(GNode *node);
-void node_set_played(GNode *node);
-void node_set_temporary(GNode *node, gboolean temp);
-void node_new_transcript_text(GNode *node, const gchar *transcript);
-void node_bless(GNode *node);
-void node_set_expected_text(GNode *node, const gchar *text);
-double node_get_line_width(GNode *node, PangoLayout *layout);
-double node_get_line_text_width(GNode *node);
-double node_get_label_text_width(GNode *node);
-double node_get_tree_width(GNode *node, PangoLayout *layout, double spacing);
-const gchar *node_get_unique_id(GNode *node);
-double node_get_x(GNode *node);
-gboolean node_in_thread(GNode *node, GNode *endnode);
 
 /* DEBUG */
 void i7_skein_dump(I7Skein *skein);

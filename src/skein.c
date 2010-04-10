@@ -20,19 +20,15 @@
 #include <glib/gi18n.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
-#include <libgnomecanvas/libgnomecanvas.h>
 
 #include "skein.h"
-#include "prefs.h"
-
-#define MIN_TEXT_WIDTH 25.0
-#define DATA(node) ((NodeData *)(node)->data)
+#include "node.h"
 
 typedef struct _SkeinPrivate
 {
-	GNode *root;
-	GNode *current;
-	GNode *played;
+	I7Node *root;
+	I7Node *current;
+	I7Node *played;
 	gboolean layout;
     gboolean modified;
 } I7SkeinPrivate;
@@ -57,11 +53,41 @@ static guint i7_skein_signals[LAST_SIGNAL] = { 0 };
 
 G_DEFINE_TYPE(I7Skein, i7_skein, G_TYPE_OBJECT);
 
+/* SIGNAL HANDLERS */
+
+static void
+on_node_text_notify(I7Node *node, GParamSpec *pspec, I7Skein *skein)
+{
+	I7_SKEIN_USE_PRIVATE(skein, priv);
+	priv->layout = FALSE;
+	g_signal_emit_by_name(skein, "node-text-changed");
+	priv->modified = TRUE;
+}
+
+static void
+on_node_color_notify(I7Node *node, GParamSpec *pspec, I7Skein *skein)
+{
+	I7_SKEIN_USE_PRIVATE(skein, priv);
+	g_signal_emit_by_name(skein, "node-color-changed");
+	priv->modified = TRUE;
+}
+
+static void
+node_listen(I7Skein *skein, I7Node *node)
+{
+	g_signal_connect(node, "notify::line", G_CALLBACK(on_node_text_notify), skein);
+	g_signal_connect(node, "notify::label", G_CALLBACK(on_node_text_notify), skein);
+	g_signal_connect(node, "notify::text-expected", G_CALLBACK(on_node_color_notify), skein);
+}
+
+/* TYPE SYSTEM */
+
 static void
 i7_skein_init(I7Skein *self)
 {
 	I7_SKEIN_USE_PRIVATE(self, priv);
-    priv->root = node_create(_("- start -"), "", "", "", FALSE, FALSE, FALSE, 0);
+    priv->root = i7_node_new(_("- start -"), "", "", "", FALSE, FALSE, FALSE, 0);
+	node_listen(self, priv->root);
     priv->current = priv->root;
     priv->played = priv->root;
     priv->layout = FALSE;
@@ -71,7 +97,7 @@ i7_skein_init(I7Skein *self)
 static void
 i7_skein_finalize(GObject *object)
 {
-	node_destroy(I7_SKEIN_PRIVATE(object)->root);
+	g_object_unref(I7_SKEIN_PRIVATE(object)->root);
 	G_OBJECT_CLASS(i7_skein_parent_class)->finalize(object);
 }
 
@@ -117,7 +143,7 @@ i7_skein_class_init(I7SkeinClass *klass)
 	    G_OBJECT_CLASS_TYPE(klass), 0,
 	    G_STRUCT_OFFSET(I7SkeinClass, show_node), NULL, NULL,
 	    g_cclosure_marshal_VOID__UINT_POINTER, G_TYPE_NONE, 2, 
-	    G_TYPE_UINT, G_TYPE_POINTER);
+	    G_TYPE_UINT, I7_TYPE_NODE);
 
 	/* Add private data */
 	g_type_class_add_private(klass, sizeof(I7SkeinPrivate));
@@ -129,20 +155,26 @@ i7_skein_new(void)
 	return g_object_new(I7_TYPE_SKEIN, NULL);
 }
 
-GNode *
+GQuark
+i7_skein_error_quark(void)
+{
+	return g_quark_from_static_string("i7-skein-error-quark");
+}
+
+I7Node *
 i7_skein_get_root_node(I7Skein *skein)
 {
     return I7_SKEIN_PRIVATE(skein)->root;
 }
 
-GNode *
+I7Node *
 i7_skein_get_current_node(I7Skein *skein)
 {
     return I7_SKEIN_PRIVATE(skein)->current;
 }
 
 void
-i7_skein_set_current_node(I7Skein *skein, GNode *node)
+i7_skein_set_current_node(I7Skein *skein, I7Node *node)
 {
 	I7_SKEIN_USE_PRIVATE(skein, priv);
     priv->current = node;
@@ -151,12 +183,12 @@ i7_skein_set_current_node(I7Skein *skein, GNode *node)
 }
 
 gboolean
-in_current_thread(I7Skein *skein, GNode *node)
+i7_skein_is_node_in_current_thread(I7Skein *skein, I7Node *node)
 {
-    return node_in_thread(node, I7_SKEIN_PRIVATE(skein)->current);
+    return i7_node_in_thread(node, I7_SKEIN_PRIVATE(skein)->current);
 }
 
-GNode *
+I7Node *
 i7_skein_get_played_node(I7Skein *skein)
 {
     return I7_SKEIN_PRIVATE(skein)->played;
@@ -195,30 +227,35 @@ get_text_content_from_node(xmlNode *node)
     return NULL;
 }
 
-void
-i7_skein_load(I7Skein *skein, const gchar *filename)
+gboolean
+i7_skein_load(I7Skein *skein, const gchar *filename, GError **error)
 {
+	g_return_if_fail(error == NULL || *error == NULL);
+	
 	I7_SKEIN_USE_PRIVATE(skein, priv);
 	
     xmlDoc *xmldoc = xmlParseFile(filename);
     if(!xmldoc) {
-        error_dialog(NULL, NULL, 
-		  _("This project's Skein was not found, or it was unreadable."));
-        return;
+		xmlErrorPtr xml_error = xmlGetLastError();
+		if(error)
+			*error = g_error_new_literal(I7_SKEIN_ERROR, I7_SKEIN_ERROR_XML, g_strdup(xml_error->message));
+        return FALSE;
     }
     
     /* Get the top XML node */
     xmlNode *top = xmlDocGetRootElement(xmldoc);
     if(!xmlStrEqual(top->name, "Skein")) {
-        error_dialog(NULL, NULL, _("This project's Skein was unreadable."));
-        goto finally;
+		if(error)
+			*error = g_error_new(I7_SKEIN_ERROR, I7_SKEIN_ERROR_BAD_FORMAT, _("<Skein> element not found."));
+        goto fail;
     }
     
     /* Get the ID of the root node */
     gchar *root_id = get_property_from_node(top, "rootNode");
     if(!root_id) {
-        error_dialog(NULL, NULL, _("This project's Skein was unreadable."));
-        goto finally;
+		if(error)
+			*error = g_error_new(I7_SKEIN_ERROR, I7_SKEIN_ERROR_BAD_FORMAT, _("rootNode attribute not found."));
+        goto fail;
     }
 
     /* Get all the item nodes and the ID of the active node */
@@ -257,8 +294,9 @@ i7_skein_load(I7Skein *skein, const gchar *filename)
                 }
             }
             id = get_property_from_node(item, "nodeId"); /* freed by table */
-                
-            GNode *skein_node = node_create(command, label, result, commentary, played, changed, temp, score);
+            
+            I7Node *skein_node = i7_node_new(command, label, result, commentary, played, changed, temp, score);
+			node_listen(skein, skein_node);
             g_hash_table_insert(nodetable, id, skein_node);
             g_free(command);
             g_free(label);
@@ -272,7 +310,7 @@ i7_skein_load(I7Skein *skein, const gchar *filename)
         if(!xmlStrEqual(item->name, "item"))
             continue;
         gchar *id = get_property_from_node(item, "nodeId");
-        GNode *parent_node = g_hash_table_lookup(nodetable, id);
+        I7Node *parent_node = g_hash_table_lookup(nodetable, id);
         xmlNode *child;
         for(child = item->children; child; child = child->next) {
             if(!xmlStrEqual(child->name, "children"))
@@ -282,7 +320,7 @@ i7_skein_load(I7Skein *skein, const gchar *filename)
                 if(!xmlStrEqual(list->name, "child"))
                     continue;
                 gchar *child_id = get_property_from_node(list, "nodeId");
-                g_node_append(parent_node, (GNode *)g_hash_table_lookup(nodetable, child_id));
+                g_node_append(parent_node->gnode, I7_NODE(g_hash_table_lookup(nodetable, child_id))->gnode);
                 g_free(child_id);
             }
         }
@@ -290,9 +328,9 @@ i7_skein_load(I7Skein *skein, const gchar *filename)
     }
 
     /* Discard the current skein and replace with the new */
-    node_destroy(priv->root);
-    priv->root = (GNode *)g_hash_table_lookup(nodetable, root_id);
-    priv->current = (GNode *)g_hash_table_lookup(nodetable, active_id);
+    g_object_unref(priv->root);
+    priv->root = I7_NODE(g_hash_table_lookup(nodetable, root_id));
+    priv->current = I7_NODE(g_hash_table_lookup(nodetable, active_id));
     priv->played = priv->root;
     priv->layout = FALSE;
     g_signal_emit_by_name(skein, "tree-changed");
@@ -301,64 +339,35 @@ i7_skein_load(I7Skein *skein, const gchar *filename)
     g_free(root_id);
     g_free(active_id);    
     g_hash_table_destroy(nodetable);
-finally:
+
+	return TRUE;
+fail:
     xmlFreeDoc(xmldoc);
+	return FALSE;
 }
 
-static gboolean
-node_write_xml(GNode *node, FILE *fp)
+gboolean
+node_write_xml(I7Node *node, FILE *fp)
 {
-    NodeData *data = DATA(node);
-    /* Escape the following strings if necessary */
-    gchar *line = g_markup_escape_text(data->line, -1);
-    gchar *text_transcript = g_markup_escape_text(data->text_transcript, -1);
-    gchar *text_expected = g_markup_escape_text(data->text_expected, -1);
-    gchar *label = g_markup_escape_text(data->label, -1);
-    
-    fprintf(fp,
-            "  <item nodeId=\"%s\">\n"
-            "    <command xml:space=\"preserve\">%s</command>\n"
-            "    <result xml:space=\"preserve\">%s</result>\n"
-            "    <commentary xml:space=\"preserve\">%s</commentary>\n"
-            "    <played>%s</played>\n"
-            "    <changed>%s</changed>\n"
-            "    <temporary score=\"%d\">%s</temporary>\n",
-            data->id? data->id : "",
-            line? line : "",
-            text_transcript? text_transcript : "",
-            text_expected? text_expected : "",
-            data->played? "YES" : "NO",
-            data->changed? "YES" : "NO",
-            data->score,
-            data->temp? "YES" : "NO");
-    if(label && strlen(label))
-        fprintf(fp, "    <annotation xml:space=\"preserve\">%s</annotation>\n", data->label);
-    if(node->children) {
-        fprintf(fp, "    <children>\n");
-        GNode *child;
-        for(child = node->children; child; child = child->next)
-            fprintf(fp, "      <child nodeId=\"%s\"/>\n", DATA(child)->id);
-        fprintf(fp, "    </children>\n");
-    }
-    fprintf(fp, "  </item>\n");
-    /* Free strings if necessary */
-    g_free(line);
-	g_free(text_transcript);
-    g_free(text_expected);
-    g_free(label);
+	gchar *xml = i7_node_get_xml(node);
+	fprintf(fp, xml);
+	g_free(xml);
     return FALSE; /* Do not stop the traversal */
 }
     
-void
-i7_skein_save(I7Skein *skein, const gchar *filename)
+gboolean
+i7_skein_save(I7Skein *skein, const gchar *filename, GError **error)
 {
+	g_return_if_fail(error == NULL || *error == NULL);
+	
 	I7_SKEIN_USE_PRIVATE(skein, priv);
-    GError *err = NULL;
 	
     FILE *skeinfile = fopen(filename, "w");
     if(!skeinfile) {
-        error_dialog(NULL, NULL, _("Error saving file '%s': %s"), filename, g_strerror(errno));
-        return;
+		if(error)
+			*error = g_error_new(G_FILE_ERROR, g_file_error_from_errno(errno),
+			    _("Error saving file '%s': %s"), filename, g_strerror(errno));
+        return FALSE;
     }
     
     fprintf(skeinfile,
@@ -367,12 +376,14 @@ i7_skein_save(I7Skein *skein, const gchar *filename)
             "xmlns=\"http://www.logicalshift.org.uk/IF/Skein\">\n"
             "  <generator>GNOME Inform 7</generator>\n"
             "  <activeNode nodeId=\"%s\"/>\n",
-            node_get_unique_id(priv->root),
-            node_get_unique_id(priv->current));
-    g_node_traverse(priv->root, G_PRE_ORDER, G_TRAVERSE_ALL, -1, (GNodeTraverseFunc)node_write_xml, skeinfile);
+            i7_node_get_unique_id(priv->root),
+            i7_node_get_unique_id(priv->current));
+    g_node_traverse(priv->root->gnode, G_PRE_ORDER, G_TRAVERSE_ALL, -1, (GNodeTraverseFunc)node_write_xml, skeinfile);
     fprintf(skeinfile, "</Skein>\n");
     fclose(skeinfile);
     priv->modified = FALSE;
+
+	return TRUE;
 }
 
 void
@@ -385,39 +396,13 @@ i7_skein_reset(I7Skein *skein, gboolean current)
     g_signal_emit_by_name(skein, "thread-changed");
     priv->modified = TRUE;
 }
-
-static void
-node_layout(GNode *node, PangoLayout *layout, double x, double spacing)
-{
-    /* Store the centre x coordinate for this node */
-    DATA(node)->x = x;
-    
-    /* Find the total width of all descendant nodes */
-    int i;
-    double total = node_get_tree_width(node, layout, spacing);
-    /* Lay out each child node */
-    double child_x = 0.0;
-    for(i = 0; i < g_node_n_children(node); i++) {
-        GNode *child = g_node_nth_child(node, i);
-        double treewidth = node_get_tree_width(child, layout, spacing);
-        node_layout(child, layout, x - total * 0.5 + child_x + treewidth * 0.5, spacing);
-        child_x += treewidth + spacing;
-    }
-}  
             
 void
 i7_skein_layout(I7Skein *skein, double spacing)
 {
 	I7_SKEIN_USE_PRIVATE(skein, priv);
     if(!priv->layout) {
-        PangoFontDescription *font = get_font_description();
-        PangoContext *context = gdk_pango_context_get();
-        PangoLayout *layout = pango_layout_new(context);
-        pango_layout_set_font_description(layout, font);
-        node_layout(priv->root, layout, 0.0, spacing);
-        g_object_unref(G_OBJECT(layout));
-        g_object_unref(G_OBJECT(context));
-        pango_font_description_free(font);
+        i7_node_layout(priv->root, 0.0, spacing);
     }
     priv->layout = TRUE;
 }
@@ -438,19 +423,23 @@ i7_skein_new_line(I7Skein *skein, const gchar *line)
     gchar *nodeline = g_strescape(line, "\"");
 
     /* Is there a child node with the same line? */
-    GNode *node = priv->current->children;
-    while(node != NULL) {
+	I7Node *node = NULL;
+    GNode *gnode = priv->current->gnode->children;
+    while(gnode != NULL) {
+		gchar *cmpline = i7_node_get_line(I7_NODE(gnode->data));
         /* Special case: NULL is treated as "" */
-        if(DATA(node)->line == NULL) {
-            if(line == NULL || strlen(line) == 0)
-                break;
-        } else if(strcmp(DATA(node)->line, line) == 0)
+        if((strlen(cmpline) == 0 && (line == NULL || strlen(line) == 0)) || (strcmp(cmpline, line) == 0)) {
+			g_free(cmpline);
+			node = gnode->data;
             break;
-        node = node->next;
+		}
+        gnode = gnode->next;
     }
-    if(node == NULL) {
-        node = node_create(nodeline, "", "", "", TRUE, FALSE, TRUE, 0);
-        g_node_append(priv->current, node);
+    if(node == NULL) { 
+		/* Wasn't found, create new node */
+        node = i7_node_new(nodeline, "", "", "", TRUE, FALSE, TRUE, 0);
+		node_listen(skein, node);
+        g_node_append(priv->current->gnode, node->gnode);
         node_added = TRUE;
     }
     g_free(nodeline);
@@ -476,14 +465,16 @@ i7_skein_next_line(I7Skein *skein, gchar **line)
 {
 	I7_SKEIN_USE_PRIVATE(skein, priv);
 	
-    if(!g_node_is_ancestor(priv->played, priv->current))
+    if(!g_node_is_ancestor(priv->played->gnode, priv->current->gnode))
         return FALSE;
 
-    GNode *next = priv->current;
-    while(next->parent != priv->played)
-        next = next->parent;
+    I7Node *next = priv->current;
+    while(next->gnode->parent != priv->played->gnode)
+        next = next->gnode->parent->data;
     priv->played = next;
-    *line = g_strcompress(node_get_line(next));
+	gchar *temp = i7_node_get_line(next);
+    *line = g_strcompress(temp);
+	g_free(temp);
     g_signal_emit_by_name(skein, "thread-changed");
     g_signal_emit_by_name(skein, "show-node", GOT_LINE, next);
     return TRUE;
@@ -497,16 +488,15 @@ i7_skein_get_commands(I7Skein *skein)
 	I7_SKEIN_USE_PRIVATE(skein, priv);
 	
     GSList *commands = NULL;
-    gchar *skeinline = NULL;
-    GNode *pointer = priv->played;
-    while(g_node_is_ancestor(pointer, priv->current)) {
-        GNode *next = priv->current;
-        while(next->parent != pointer)
-            next = next->parent;
-        pointer = next;
-        skeinline = g_strcompress(node_get_line(next));
-        commands = g_slist_prepend(commands, g_strdup(skeinline));
-        g_free(skeinline);
+    GNode *pointer = priv->played->gnode;
+    while(g_node_is_ancestor(pointer, priv->current->gnode)) {
+        I7Node *next = priv->current;
+        while(next->gnode->parent != pointer)
+            next = next->gnode->parent->data;
+        pointer = next->gnode;
+		gchar *skeinline = i7_node_get_line(next);
+        commands = g_slist_prepend(commands, g_strcompress(skeinline));
+		g_free(skeinline);
         g_signal_emit_by_name(skein, "show-node", GOT_LINE, next);
     }
     commands = g_slist_reverse(commands);
@@ -519,10 +509,10 @@ i7_skein_update_after_playing(I7Skein *skein, const gchar *transcript)
 {
 	I7_SKEIN_USE_PRIVATE(skein, priv);
 	
-    node_set_played(priv->played);
+    i7_node_set_played(priv->played);
     g_signal_emit_by_name(skein, "node-color-changed");
     if(strlen(transcript)) {
-        node_new_transcript_text(priv->played, transcript);
+        i7_node_set_transcript_text(priv->played, transcript);
         g_signal_emit_by_name(skein, "show-node", GOT_TRANSCRIPT, priv->played);
     }
 }
@@ -531,7 +521,7 @@ gboolean
 i7_skein_get_line_from_history(I7Skein *skein, gchar **line, int history)
 {
     /* Find the node to return the line from */
-    GNode *node = I7_SKEIN_PRIVATE(skein)->current;
+    GNode *node = I7_SKEIN_PRIVATE(skein)->current->gnode;
     while(--history > 0) {
         node = node->parent;
         if(node == NULL)
@@ -541,18 +531,19 @@ i7_skein_get_line_from_history(I7Skein *skein, gchar **line, int history)
     if(G_NODE_IS_ROOT(node))
         return FALSE;
     
-    *line = g_strdelimit(g_strdup(node_get_line(node)), "\b\f\n\r\t", ' ');
+    *line = g_strdelimit(i7_node_get_line(I7_NODE(node->data)), "\b\f\n\r\t", ' ');
     return TRUE;
 }
 
 /* Add an empty node as the child of node */
-GNode *
-i7_skein_add_new(I7Skein *skein, GNode *node)
+I7Node *
+i7_skein_add_new(I7Skein *skein, I7Node *node)
 {
 	I7_SKEIN_USE_PRIVATE(skein, priv);
 	
-    GNode *newnode = node_create("", "", "", "", FALSE, FALSE, TRUE, 0);
-    g_node_append(node, newnode);
+    I7Node *newnode = i7_node_new("", "", "", "", FALSE, FALSE, TRUE, 0);
+	node_listen(skein, newnode);
+    g_node_append(node->gnode, newnode->gnode);
     
     priv->layout = FALSE;
     g_signal_emit_by_name(skein, "tree-changed");
@@ -561,15 +552,16 @@ i7_skein_add_new(I7Skein *skein, GNode *node)
     return newnode;
 }
 
-GNode *
-i7_skein_add_new_parent(I7Skein *skein, GNode *node)
+I7Node *
+i7_skein_add_new_parent(I7Skein *skein, I7Node *node)
 {
 	I7_SKEIN_USE_PRIVATE(skein, priv);
 	
-    GNode *newnode = node_create("", "", "", "", FALSE, FALSE, TRUE, 0);
-    g_node_insert(node->parent, g_node_child_position(node->parent, node), newnode);
-    g_node_unlink(node);
-    g_node_append(newnode, node);
+    I7Node *newnode = i7_node_new("", "", "", "", FALSE, FALSE, TRUE, 0);
+	node_listen(skein, newnode);
+    g_node_insert(node->gnode->parent, g_node_child_position(node->gnode->parent, node->gnode), newnode->gnode);
+    g_node_unlink(node->gnode);
+    g_node_append(newnode->gnode, node->gnode);
     
     priv->layout = FALSE;
     g_signal_emit_by_name(skein, "tree-changed");
@@ -579,113 +571,94 @@ i7_skein_add_new_parent(I7Skein *skein, GNode *node)
 }
 
 gboolean
-i7_skein_remove_all(I7Skein *skein, GNode *node, gboolean notify)
+i7_skein_remove_all(I7Skein *skein, I7Node *node, gboolean notify)
 {
 	I7_SKEIN_USE_PRIVATE(skein, priv);
 	
-    if(!G_NODE_IS_ROOT(node)) {
-        gboolean in_current = in_current_thread(skein, node);
-        node_destroy(node);
-        
-        if(in_current) {
-            priv->current = priv->root;
-            priv->played = priv->root;
-        }
-        
-        priv->layout = FALSE;
-        if(notify)
-            g_signal_emit_by_name(skein, "tree-changed");
-        priv->modified = TRUE;
-        
-        return TRUE;
+    if(G_NODE_IS_ROOT(node->gnode))
+		return FALSE;
+	
+    gboolean in_current = i7_skein_is_node_in_current_thread(skein, node);
+    g_object_unref(node);
+    
+    if(in_current) {
+        priv->current = priv->root;
+        priv->played = priv->root;
     }
-    return FALSE;
-}
-
-gboolean
-i7_skein_remove_single(I7Skein *skein, GNode *node)
-{
-	I7_SKEIN_USE_PRIVATE(skein, priv);
-	
-    if(!G_NODE_IS_ROOT(node)) {
-        gboolean in_current = in_current_thread(skein, node);
-
-		if(!G_NODE_IS_LEAF(node)) {
-			int i;
-        	for(i = g_node_n_children(node) - 1; i >= 0; i--) {
-				GNode *iter = g_node_nth_child(node, i);
-				g_node_unlink(iter);
-				g_node_insert_after(node->parent, node, iter);
-			}
-		}	
-        node_destroy(node);
-		
-        if(in_current) {
-            priv->current = priv->root;
-            priv->played = priv->root;
-        }
-        
-        priv->layout = FALSE;
+    
+    priv->layout = FALSE;
+    if(notify)
         g_signal_emit_by_name(skein, "tree-changed");
-        priv->modified = TRUE;
-        return TRUE;
-    }
-    return FALSE;
+    priv->modified = TRUE;
+    
+    return TRUE;
 }
 
-void
-i7_skein_set_line(I7Skein *skein, GNode *node, const gchar *line)
+gboolean
+i7_skein_remove_single(I7Skein *skein, I7Node *node)
 {
 	I7_SKEIN_USE_PRIVATE(skein, priv);
-    node_set_line(node, line);
-    priv->layout = FALSE;
-    g_signal_emit(skein, i7_skein_signals[NODE_TEXT_CHANGED], 0);
-    priv->modified = TRUE;
-}
+	
+    if(G_NODE_IS_ROOT(node->gnode))
+		return FALSE;
 
-void
-i7_skein_set_label(I7Skein *skein, GNode *node, const gchar *label)
-{
-	I7_SKEIN_USE_PRIVATE(skein, priv);
-    node_set_label(node, label);
-    priv->layout = FALSE;
-    g_signal_emit(skein, i7_skein_signals[NODE_TEXT_CHANGED], 0);
-    priv->modified = TRUE;
-}
+    gboolean in_current = i7_skein_is_node_in_current_thread(skein, node);
 
-void
-i7_skein_lock(I7Skein *skein, GNode *node)
-{
-    while(node) {
-        node_set_temporary(node, FALSE);
-        node = node->parent;
+	if(!G_NODE_IS_LEAF(node->gnode)) {
+		int i;
+    	for(i = g_node_n_children(node->gnode) - 1; i >= 0; i--) {
+			GNode *iter = g_node_nth_child(node->gnode, i);
+			g_node_unlink(iter);
+			g_node_insert_after(node->gnode->parent, node->gnode, iter);
+		}
+	}	
+    g_object_unref(node);
+	
+    if(in_current) {
+        priv->current = priv->root;
+        priv->played = priv->root;
     }
-    g_signal_emit(skein, i7_skein_signals[LOCK_CHANGED], 0);
+    
+    priv->layout = FALSE;
+    g_signal_emit_by_name(skein, "tree-changed");
+    priv->modified = TRUE;
+    return TRUE;
+}
+
+void
+i7_skein_lock(I7Skein *skein, I7Node *node)
+{
+	GNode *iter;
+	for(iter = node->gnode; iter; iter = iter->parent)
+        i7_node_set_temporary(I7_NODE(iter->data), FALSE);
+    
+    g_signal_emit_by_name(skein, "lock-changed");
     I7_SKEIN_PRIVATE(skein)->modified = TRUE;
 }
 
 void
-i7_skein_unlock(I7Skein *skein, GNode *node, gboolean notify)
+i7_skein_unlock(I7Skein *skein, I7Node *node, gboolean notify)
 {
-    node_set_temporary(node, TRUE);
-    for(node = node->children; node != NULL; node = node->next)
-        i7_skein_unlock(skein, node, FALSE);
+    i7_node_set_temporary(node, TRUE);
+	GNode *iter;
+    for(iter = node->gnode->children; iter; iter = iter->next)
+        i7_skein_unlock(skein, I7_NODE(iter->data), FALSE);
     
     if(notify)
-        g_signal_emit(skein, i7_skein_signals[LOCK_CHANGED], 0);
+        g_signal_emit_by_name(skein, "lock-changed");
     I7_SKEIN_PRIVATE(skein)->modified = TRUE;
 }
 
 void
-i7_skein_trim(I7Skein *skein, GNode *node, int minScore, gboolean notify)
+i7_skein_trim(I7Skein *skein, I7Node *node, int minScore, gboolean notify)
 {
 	I7_SKEIN_USE_PRIVATE(skein, priv);
 	
     int i = 0;
-    while(i < g_node_n_children(node)) {
-        GNode *child = g_node_nth_child(node, i);
-        if(node_get_temporary(child)) {
-            if(in_current_thread(skein, child)) {
+    while(i < g_node_n_children(node->gnode)) {
+        I7Node *child = g_node_nth_child(node->gnode, i)->data;
+        if(i7_node_get_temporary(child)) {
+            if(i7_skein_is_node_in_current_thread(skein, child)) {
                 priv->current = priv->root;
                 priv->played = priv->root;
             }
@@ -703,39 +676,37 @@ i7_skein_trim(I7Skein *skein, GNode *node, int minScore, gboolean notify)
     priv->modified = TRUE;
 }
 
-
-
 static void
-get_labels(GNode *node, GSList **labels)
+get_labels(GNode *gnode, GSList **labels)
 {
-	NodeData *data = DATA(node);
-	if(data->label && strlen(data->label)) {
-		NodeLabel *nodelabel = g_new0(NodeLabel, 1);
-		nodelabel->label = g_strdup(data->label);
+	I7Node *node = gnode->data;
+	if(i7_node_has_label(node)) {
+		NodeLabel *nodelabel = g_slice_new0(NodeLabel);
+		nodelabel->label = i7_node_get_label(node);
 		nodelabel->node = node;
-		*labels = g_slist_prepend(*labels, (gpointer)nodelabel);
+		*labels = g_slist_prepend(*labels, nodelabel);
 	}
-	for(node = node->children; node != NULL; node = node->next)
-		get_labels(node, labels);
+	g_node_children_foreach(gnode, G_TRAVERSE_ALL, (GNodeForeachFunc)get_labels, labels);
 }
 
 GSList *
 i7_skein_get_labels(I7Skein *skein)
 {
 	GSList *labels = NULL;
-	get_labels(I7_SKEIN_PRIVATE(skein)->root, &labels);
+	get_labels(I7_SKEIN_PRIVATE(skein)->root->gnode, &labels);
 	labels = g_slist_sort_with_data(labels, (GCompareDataFunc)strcmp, NULL);
 	return labels;
 }
 
 static gboolean
-has_labels(GNode *node)
+has_labels(I7Node *node)
 {
-    NodeData *data = DATA(node);
-    if(data->label && strlen(data->label))
+    if(i7_node_has_label(node))
         return TRUE;
-    for(node = node->children; node != NULL; node = node->next)
-        if(has_labels(node))
+
+	GNode *iter;
+    for(iter = node->gnode->children; iter; iter = iter->next)
+        if(has_labels(iter->data))
             return TRUE;
     return FALSE;
 }
@@ -747,58 +718,51 @@ i7_skein_has_labels(I7Skein *skein)
 }
 
 void
-i7_skein_bless(I7Skein *skein, GNode *node, gboolean all)
+i7_skein_bless(I7Skein *skein, I7Node *node, gboolean all)
 {
-    while(node != NULL) {
-        node_bless(node);
-        node = all? node->parent : NULL;
-    }
-    g_signal_emit(skein, i7_skein_signals[NODE_COLOR_CHANGED], 0);
+	GNode *iter;
+    for(iter = node->gnode; iter; iter = all? iter->parent : NULL)
+        i7_node_bless(I7_NODE(iter->data));
+
+    g_signal_emit_by_name(skein, "node-color-changed");
     I7_SKEIN_PRIVATE(skein)->modified = TRUE;
 }
 
 gboolean
-i7_skein_can_bless(I7Skein *skein, GNode *node, gboolean all)
+i7_skein_can_bless(I7Skein *skein, I7Node *node, gboolean all)
 {
     gboolean can_bless = FALSE;
-    while(node != NULL) {
-        can_bless |= DATA(node)->changed;
-        node = all? node->parent : NULL;
-    }
-    return can_bless;
+	GNode *iter;
+
+	for(iter = node->gnode; iter; iter = all? iter->parent : NULL)
+        can_bless |= i7_node_get_changed(I7_NODE(iter->data));
+
+	return can_bless;
 }
 
-void
-i7_skein_set_expected_text(I7Skein *skein, GNode *node, const gchar *text)
-{
-    node_set_expected_text(node, text);
-    g_signal_emit(skein, i7_skein_signals[NODE_COLOR_CHANGED], 0);
-    I7_SKEIN_PRIVATE(skein)->modified = TRUE;
-}
-
-GNode *
-i7_skein_get_thread_top(I7Skein *skein, GNode *node)
+I7Node *
+i7_skein_get_thread_top(I7Skein *skein, I7Node *node)
 {
     while(TRUE) {
-        if(G_NODE_IS_ROOT(node)) {
+        if(G_NODE_IS_ROOT(node->gnode)) {
             g_assert_not_reached();
             return node;
         }
-        if(g_node_n_children(node->parent) != 1)
+        if(g_node_n_children(node->gnode->parent) != 1)
             return node;
-        if(G_NODE_IS_ROOT(node->parent))
+        if(G_NODE_IS_ROOT(node->gnode->parent))
             return node;
-        node = node->parent;
+        node = node->gnode->parent->data;
     }
 }
 
-GNode *
-i7_skein_get_thread_bottom(I7Skein *skein, GNode *node)
+I7Node *
+i7_skein_get_thread_bottom(I7Skein *skein, I7Node *node)
 {
     while(TRUE) {
-        if(g_node_n_children(node) != 1)
+        if(g_node_n_children(node->gnode) != 1)
             return node;
-        node = node->children;
+        node = node->gnode->children->data;
     }
 }
 
@@ -815,261 +779,11 @@ i7_skein_get_modified(I7Skein *skein)
     return I7_SKEIN_PRIVATE(skein)->modified;
 }
 
-GNode *
-node_create(const gchar *line, const gchar *label, const gchar *transcript,
-            const gchar *expected, gboolean played, gboolean changed,
-            gboolean temp, int score)
-{
-    NodeData *data = g_slice_new0(NodeData);
-    data->line = g_strdup(line);
-    data->label = g_strdup(label);
-    data->text_transcript = g_strdup(transcript);
-    data->text_expected = g_strdup(expected);
-    data->played = played;
-    data->changed = changed;
-    data->temp = temp;
-    data->score = score;
-    data->width = -1.0;
-    data->linewidth = -1.0;
-    data->labelwidth = 0.0;
-    data->x = 0.0;
-    
-    data->id = g_strdup_printf("node-%p", data);
-    /* diffs */
-    
-    return g_node_new(data);
-}
-
-static void
-free_node_data(GNode *node)
-{
-    NodeData *data = DATA(node);
-    g_free(data->line);
-    g_free(data->label);
-    g_free(data->text_transcript);
-    g_free(data->text_expected);
-    g_free(data->id);
-    g_slice_free(NodeData, data);
-    
-    /* recurse */
-    g_node_children_foreach(node, G_TRAVERSE_ALL, (GNodeForeachFunc)free_node_data, NULL);
-    /* free the node itself */
-    g_node_destroy(node);
-}
-
-void
-node_destroy(GNode *node)
-{
-    free_node_data(node);
-}
-
-const gchar *
-node_get_line(GNode *node)
-{
-    return DATA(node)->line;
-}
-
-void
-node_set_line(GNode *node, const gchar *line)
-{
-    NodeData *data = DATA(node);
-    if(data->line)
-        g_free(data->line);
-    data->line = g_strdup(line);
-    data->width = -1.0;
-    data->linewidth = -1.0;
-    data->labelwidth = -1.0;
-}
-
-const gchar *
-node_get_label(GNode *node)
-{
-    return DATA(node)->label;
-}
-
-void
-node_set_label(GNode *node, const gchar *label)
-{
-    NodeData *data = DATA(node);
-    if(data->label)
-        g_free(data->label);
-    data->label = g_strdup(label);
-    data->width = -1.0;
-    data->linewidth = -1.0;
-    data->labelwidth = -1.0;
-}
-
-gboolean
-node_has_label(GNode *node)
-{
-    NodeData *data = DATA(node);
-    return (node->parent != NULL) && data->label && (strlen(data->label) > 0);
-}
-
-const gchar *
-node_get_expected_text(GNode *node)
-{
-    return DATA(node)->text_expected;
-}
-
-gboolean
-node_get_changed(GNode *node)
-{
-    return DATA(node)->changed;
-}
-
-gboolean
-node_get_temporary(GNode *node)
-{
-    return DATA(node)->temp;
-}
-
-void
-node_set_played(GNode *node)
-{
-    DATA(node)->played = TRUE;
-}
-
-void
-node_set_temporary(GNode *node, gboolean temp)
-{
-    DATA(node)->temp = temp;
-}
-
-void
-node_new_transcript_text(GNode *node, const gchar *transcript)
-{
-    NodeData *data = DATA(node);
-    if(data->text_transcript)
-        g_free(data->text_transcript);
-    data->text_transcript = g_strdup(transcript);
-    g_strdelimit(data->text_transcript, "\r", '\n');
-    data->changed = (strcmp(data->text_transcript, data->text_expected) != 0);
-    
-    /* clear diffs */
-    if(data->changed && data->text_expected && strlen(data->text_expected))
-        /* new diffs */;
-}
-
-void
-node_bless(GNode *node)
-{
-    NodeData *data = DATA(node);
-    if(data->text_expected)
-        g_free(data->text_expected);
-    data->text_expected = g_strdup(data->text_transcript);
-    data->changed = FALSE;
-    
-    /* clear diffs */
-}
-
-void
-node_set_expected_text(GNode *node, const gchar *text)
-{
-    NodeData *data = DATA(node);
-    if(data->text_expected)
-        g_free(data->text_expected);
-    data->text_expected = g_strdup(text);
-    g_strdelimit(data->text_transcript, "\r", '\n');
-    data->changed = (strcmp(data->text_transcript, data->text_expected) != 0);
-    
-    /* clear diffs */
-    
-    if(data->changed && data->text_expected && strlen(data->text_expected))
-        /* new diffs */;
-}
-
-static double
-text_pixel_width(PangoLayout *layout, const gchar *text)
-{
-    int textwidth = 0;
-	if(text && strlen(text)) {
-    	pango_layout_set_text(layout, text, -1);
-    	pango_layout_get_pixel_size(layout, &textwidth, NULL);
-	}
-    return (double)textwidth;
-}
-
-double
-node_get_line_width(GNode *node, PangoLayout *layout)
-{
-    NodeData *data = DATA(node);
-    if(data->width < 0.0) {
-    	if(layout) {
-		    double size = text_pixel_width(layout, data->line);
-		    data->width = size;
-		    data->linewidth = size;
-		    
-		    if(data->label && strlen(data->label) > 0)
-		        data->labelwidth = text_pixel_width(layout, data->label);
-		    else
-		        data->labelwidth = 0.0;
-        }
-        if(data->width < MIN_TEXT_WIDTH)
-            data->width = MIN_TEXT_WIDTH;
-        if(data->linewidth < MIN_TEXT_WIDTH)
-            data->linewidth = MIN_TEXT_WIDTH;
-        if(data->labelwidth < MIN_TEXT_WIDTH)
-            data->labelwidth = MIN_TEXT_WIDTH;
-    }
-    return data->width;
-}
-
-double
-node_get_line_text_width(GNode *node)
-{
-    return DATA(node)->linewidth;
-}
-
-double
-node_get_label_text_width(GNode *node)
-{
-    return DATA(node)->labelwidth;
-}
-
-double
-node_get_tree_width(GNode *node, PangoLayout *layout, double spacing)
-{
-    /* Get the tree width of all children */
-    int i;
-    double total = 0.0;
-    for(i = 0; i < g_node_n_children(node); i++) {
-        total += node_get_tree_width(g_node_nth_child(node,i), layout, spacing);
-        if(i > 0)
-            total += spacing;
-    }
-    /* Return the largest of the above, the width of this node's line and the
-    width of this node's label */
-    double linewidth = node_get_line_width(node, layout);
-    double labelwidth = node_get_label_text_width(node);
-    if(total > linewidth && total > labelwidth)
-        return total;
-    return max(linewidth, labelwidth);
-}    
-
-const gchar *
-node_get_unique_id(GNode *node)
-{
-    return DATA(node)->id;
-}
-
-double
-node_get_x(GNode *node)
-{
-    return DATA(node)->x;
-}
-
-gboolean
-node_in_thread(GNode *node, GNode *endnode)
-{
-    return (endnode == node) || g_node_is_ancestor(node, endnode);
-}
-
 /* DEBUG */
 static void 
 dump_node_data(GNode *node, gpointer foo) 
 {
-    g_printerr("(%s)", DATA(node)->line);
+    i7_node_dump(I7_NODE(node->data));
     if(g_node_n_children(node)) {
         g_printerr("->(");
         g_node_children_foreach(node, G_TRAVERSE_ALL, dump_node_data, foo);
@@ -1080,6 +794,6 @@ dump_node_data(GNode *node, gpointer foo)
 void 
 i7_skein_dump(I7Skein *skein) 
 {
-    dump_node_data(I7_SKEIN_PRIVATE(skein)->root, NULL);
+    dump_node_data(I7_SKEIN_PRIVATE(skein)->root->gnode, NULL);
     g_printerr("\n");
 }
