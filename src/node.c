@@ -5,6 +5,7 @@
 #include <goocanvas.h>
 
 #include "node.h"
+#include "skein.h"
 
 #define MIN_TEXT_WIDTH 25.0
 #define LABEL_MULTIPLIER 0.7
@@ -45,6 +46,7 @@ typedef struct _I7NodePrivate {
     GooCanvasItemModel *badge_item;
     GooCanvasItemModel *line_shape_item;
     GooCanvasItemModel *label_shape_item;
+    GooCanvasItemModel *tree_item;
 } I7NodePrivate;
 
 #define I7_NODE_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE((o), I7_TYPE_NODE, I7NodePrivate))
@@ -84,11 +86,14 @@ i7_node_init(I7Node *self)
     
     /* TODO diffs */
     
+    /* Create the canvas items, though some of them can't be drawn yet */
     priv->node_group = goo_canvas_group_model_new(NULL, NULL);
-    priv->line_item = goo_canvas_text_model_new(priv->node_group, "",
-    	0.0, 0.0, -1, GTK_ANCHOR_CENTER, NULL);
-	priv->label_item = goo_canvas_text_model_new(priv->node_group, "",
-	    0.0, 0.0, -1, GTK_ANCHOR_CENTER, NULL);
+    priv->line_item = goo_canvas_text_model_new(priv->node_group, "", 0.0, 0.0, -1, GTK_ANCHOR_CENTER, NULL);
+	priv->label_item = goo_canvas_text_model_new(priv->node_group, "", 0.0, 0.0, -1, GTK_ANCHOR_CENTER, NULL);
+	priv->badge_item = goo_canvas_image_model_new(priv->node_group, NULL, 0.0, 0.0, NULL);
+	priv->line_shape_item = goo_canvas_path_model_new(priv->node_group, "", NULL);
+    priv->label_shape_item = goo_canvas_path_model_new(priv->node_group, "", NULL);
+    goo_canvas_item_model_raise(priv->badge_item, NULL);
     
     /* Connect signals */
 	g_signal_connect(self, "notify::text-expected", G_CALLBACK(on_text_notify), NULL);
@@ -233,7 +238,8 @@ i7_node_class_init(I7NodeClass *klass)
 
 I7Node *
 i7_node_new(const gchar *line, const gchar *label, const gchar *transcript, 
-    const gchar *expected, gboolean played, gboolean changed, gboolean temp, int score)
+    const gchar *expected, gboolean played, gboolean changed, gboolean temp, 
+    int score, GooCanvasItemModel *skein_group)
 {
 	I7Node *retval = g_object_new(I7_TYPE_NODE, 
 	    "line", line, 
@@ -244,7 +250,9 @@ i7_node_new(const gchar *line, const gchar *label, const gchar *transcript,
 	    "temp", temp,
 	    "score", score,
 	    NULL);
-	I7_NODE_PRIVATE(retval)->played = played;
+	I7_NODE_USE_PRIVATE(retval, priv);
+	priv->played = played;
+	g_object_set(priv->node_group, "parent", skein_group, NULL);
 	retval->gnode = g_node_new(retval);
 	return retval;
 }
@@ -261,9 +269,15 @@ i7_node_set_line(I7Node *node, const gchar *line)
     I7_NODE_USE_PRIVATE(node, priv);
 	g_free(priv->line);
 	priv->line = g_strdup(line? line : ""); /* silently accept NULL */
+
+	/* Update the graphics */
+	g_object_set(priv->line_item, "text", priv->line, NULL);
+	
+	/* Update the layout */
     priv->width = -1.0;
     priv->linewidth = -1.0;
     priv->labelwidth = -1.0;
+	
 	g_object_notify(G_OBJECT(node), "line");
 }
 
@@ -279,9 +293,15 @@ i7_node_set_label(I7Node *node, const gchar *label)
     I7_NODE_USE_PRIVATE(node, priv);
     g_free(priv->label);
 	priv->label = g_strdup(label? label : ""); /* silently accept NULL */
+
+	/* Update the graphics */
+	g_object_set(priv->label_item, "text", priv->label, NULL);
+
+	/* Update the layout */
     priv->width = -1.0;
     priv->linewidth = -1.0;
     priv->labelwidth = -1.0;
+	
 	g_object_notify(G_OBJECT(node), "label");
 }
 
@@ -377,25 +397,24 @@ i7_node_bless(I7Node *node)
 	g_object_notify(G_OBJECT(node), "text-expected");
 }
 
-static gdouble
-text_pixel_width(const gchar *string)
-{
-	/* FIXME TODO */
-	return 0.0;
-}
-
 double
-i7_node_get_line_width(I7Node *node)
+i7_node_get_line_width(I7Node *node, GooCanvas *canvas)
 {
     I7_NODE_USE_PRIVATE(node, priv);
+    GooCanvasBounds size;
+    GooCanvasItem *item;
+    
     if(priv->width < 0.0) {
-		gdouble size = text_pixel_width(priv->line);
-	    priv->width = size;
-	    priv->linewidth = size;
+		item = goo_canvas_get_item(canvas, priv->line_item);
+		goo_canvas_item_get_bounds(item, &size);
+	    priv->width = size.x2 - size.x1;
+	    priv->linewidth = priv->width;
 	    
-	    if(priv->label && strlen(priv->label) > 0)
-	        priv->labelwidth = text_pixel_width(priv->label);
-	    else
+	    if(priv->label && strlen(priv->label) > 0) {
+	    	item = goo_canvas_get_item(canvas, priv->label_item);
+	    	goo_canvas_item_get_bounds(item, &size);
+	        priv->labelwidth = size.x2 - size.x1;
+	    } else
 	        priv->labelwidth = 0.0;
 
         if(priv->width < MIN_TEXT_WIDTH)
@@ -421,19 +440,19 @@ i7_node_get_label_text_width(I7Node *node)
 }
 
 gdouble
-i7_node_get_tree_width(I7Node *node, gdouble spacing)
+i7_node_get_tree_width(I7Node *node, GooCanvas *canvas, gdouble spacing)
 {
     /* Get the tree width of all children */
     int i;
     gdouble total = 0.0;
     for(i = 0; i < g_node_n_children(node->gnode); i++) {
-        total += i7_node_get_tree_width(g_node_nth_child(node->gnode, i)->data, spacing);
+        total += i7_node_get_tree_width(g_node_nth_child(node->gnode, i)->data, canvas, spacing);
         if(i > 0)
             total += spacing;
     }
     /* Return the largest of the above, the width of this node's line and the
     width of this node's label */
-    gdouble linewidth = i7_node_get_line_width(node);
+    gdouble linewidth = i7_node_get_line_width(node, canvas);
     gdouble labelwidth = i7_node_get_label_text_width(node);
     if(total > linewidth && total > labelwidth)
         return total;
@@ -502,24 +521,98 @@ i7_node_get_xml(I7Node *node)
 }
 
 void
-i7_node_layout(I7Node *node, double x, double spacing)
+i7_node_layout(I7Node *node, gpointer skeinptr, GooCanvas *canvas, gdouble x)
 {
 	I7_NODE_USE_PRIVATE(node, priv);
+	I7Skein *skein = I7_SKEIN(skeinptr);
+	GooCanvasBounds size;
+    GooCanvasItem *item;
+    gdouble width, height, hspacing, vspacing;
+	gchar *path;
+	
+	g_object_get(skein, 
+		"horizontal-spacing", &hspacing, 
+		"vertical-spacing", &vspacing,
+		NULL);
 	
     /* Store the centre x coordinate for this node */
     priv->x = x;
     
+    /* Move this node's item models to their proper places, now that we can use
+    the canvas to calculate them */
+    item = goo_canvas_get_item(canvas, priv->line_item);
+    goo_canvas_item_get_bounds(item, &size);
+    width = size.x2 - size.x1;
+    height = size.y2 - size.y1;
+    /* Move the label, its background, and the differs badge */
+    goo_canvas_item_model_translate(priv->label_item, 0, -height);
+    goo_canvas_item_model_translate(priv->label_shape_item, 0, -height);
+    goo_canvas_item_model_translate(priv->badge_item, width / 2, -height / 2);
+    
+    /* Draw the text background */
+    path = g_strdup_printf("M %.1f -%.1f "
+    	"a %.1f,%.1f 0 0,1 0,%.1f "
+    	"h -%.1f "
+    	"a %.1f,%.1f 0 0,1 0,-%.1f "
+    	"Z",
+    	width / 2, height / 2, height / 2, height / 2, height, width,
+    	height / 2, height / 2, height);
+    g_object_set(priv->line_shape_item, "data", path, NULL);
+    g_free(path);
+    
+    /* Draw the label background */
+    if(priv->label && *priv->label) {
+    	item = goo_canvas_get_item(canvas, priv->label_item);
+		goo_canvas_item_get_bounds(item, &size);
+		width = size.x2 - size.x1;
+		height = size.y2 - size.y1;
+		path = g_strdup_printf("M %.1f,%.1f "
+			"a %.1f,%.1f 0 0,0 -%.1f,-%.1f "
+			"h -%.1f "
+			"a %.1f,%.1f 0 0,0 -%.1f,%.1f "
+			"Z",
+			width / 2 + height, height / 2, height, height, height, height,
+			width, height, height, height, height);
+		g_object_set(priv->label_shape_item, 
+			"data", path, 
+			"visibility", GOO_CANVAS_ITEM_VISIBLE,
+			NULL);
+		g_free(path);
+    } else {
+    	g_object_set(priv->label_shape_item, 
+    		"data", "", 
+    		"visibility", GOO_CANVAS_ITEM_HIDDEN,
+    		NULL);
+    }
+    
+    /* Show or hide the differs badge */
+    if(priv->changed && priv->text_expected && *priv->text_expected)
+    	g_object_set(priv->badge_item, 
+    		"pixbuf", skein->differs_badge,
+    		"visibility", GOO_CANVAS_ITEM_VISIBLE, 
+    		NULL);
+    else
+    	g_object_set(priv->badge_item, 
+    		"pixbuf", skein->differs_badge,
+    		"visibility", GOO_CANVAS_ITEM_HIDDEN, 
+    		NULL);
+
+    
     /* Find the total width of all descendant nodes */
     int i;
-    gdouble total = i7_node_get_tree_width(node, spacing);
+    gdouble total = i7_node_get_tree_width(node, canvas, hspacing);
     /* Lay out each child node */
     gdouble child_x = 0.0;
     for(i = 0; i < g_node_n_children(node->gnode); i++) {
         I7Node *child = g_node_nth_child(node->gnode, i)->data;
-        gdouble treewidth = i7_node_get_tree_width(child, spacing);
-        i7_node_layout(child, x - total * 0.5 + child_x + treewidth * 0.5, spacing);
-        child_x += treewidth + spacing;
+        gdouble treewidth = i7_node_get_tree_width(child, canvas, hspacing);
+        i7_node_layout(child, skein, canvas, x - total * 0.5 + child_x + treewidth * 0.5);
+        child_x += treewidth + hspacing;
     }
+
+	/* Move the node's group to its proper place */
+	gdouble y = (gdouble)(g_node_depth(node->gnode) - 1) * vspacing;
+	goo_canvas_item_model_translate(priv->node_group, priv->x, y);
 }  
 
 /* DEBUG */

@@ -23,11 +23,13 @@ struct _I7NodeClass {
 struct _I7Node {
 	GObject parent_instance;
 	GNode *gnode;
+	GooCanvasItemModel *tree_item; /* The tree line associated with the node */
 };
 
 GType i7_node_get_type(void) G_GNUC_CONST;
 I7Node *i7_node_new(const gchar *line, const gchar *label, const gchar *transcript, 
-    const gchar *expected, gboolean played, gboolean changed, gboolean temp, int score);
+    const gchar *expected, gboolean played, gboolean changed, gboolean temp, int score,
+    GooCanvasItemModel *skein_group);
 gchar *i7_node_get_line(I7Node *node);
 void i7_node_set_line(I7Node *node, const gchar *line);
 gchar *i7_node_get_label(I7Node *node);
@@ -42,13 +44,14 @@ gboolean i7_node_get_temporary(I7Node *node);
 void i7_node_set_temporary(I7Node *node, gboolean temp);
 void i7_node_set_played(I7Node *node);
 void i7_node_bless(I7Node *node);
-gdouble i7_node_get_line_width(I7Node *node);
+gdouble i7_node_get_line_width(I7Node *node, GooCanvas *canvas);
 gdouble i7_node_get_line_text_width(I7Node *node);
 gdouble i7_node_get_label_text_width(I7Node *node);
-gdouble i7_node_get_tree_width(I7Node *node, gdouble spacing);
+gdouble i7_node_get_tree_width(I7Node *node, GooCanvas *canvas, gdouble spacing);
 const gchar *i7_node_get_unique_id(I7Node *node);
 gdouble i7_node_get_x(I7Node *node);
 gboolean i7_node_in_thread(I7Node *node, I7Node *endnode);
 gchar *i7_node_get_xml(I7Node *node);
+void i7_node_layout(I7Node *node, gpointer skeinptr, GooCanvas *canvas, gdouble x);
 
 #endif /* __NODE_H__ */

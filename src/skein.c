@@ -20,6 +20,7 @@
 #include <glib/gi18n.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include <goocanvas.h>
 
 #include "skein.h"
 #include "node.h"
@@ -31,6 +32,13 @@ typedef struct _SkeinPrivate
 	I7Node *played;
 	gboolean layout;
     gboolean modified;
+    
+    gdouble hspacing;
+    gdouble vspacing;
+
+	GooCanvasItemModel *skein_group;
+	GooCanvasLineDash *unlocked_dash;
+	GooCanvasLineDash *locked_dash;
 } I7SkeinPrivate;
 
 #define I7_SKEIN_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), I7_TYPE_SKEIN, I7SkeinPrivate))
@@ -47,6 +55,13 @@ enum
 	SHOW_NODE,
 
 	LAST_SIGNAL
+};
+
+enum
+{
+	PROP_0,
+	PROP_HORIZONTAL_SPACING,
+	PROP_VERTICAL_SPACING
 };
 
 static guint i7_skein_signals[LAST_SIGNAL] = { 0 };
@@ -86,18 +101,68 @@ static void
 i7_skein_init(I7Skein *self)
 {
 	I7_SKEIN_USE_PRIVATE(self, priv);
-    priv->root = i7_node_new(_("- start -"), "", "", "", FALSE, FALSE, FALSE, 0);
+	priv->skein_group = goo_canvas_group_model_new(NULL, NULL);
+    priv->root = i7_node_new(_("- start -"), "", "", "", FALSE, FALSE, FALSE, 0, priv->skein_group);
 	node_listen(self, priv->root);
     priv->current = priv->root;
     priv->played = priv->root;
     priv->layout = FALSE;
     priv->modified = TRUE;
+    priv->unlocked_dash = goo_canvas_line_dash_new(2, 2.0, 2.0);
+    priv->locked_dash = goo_canvas_line_dash_new(1, 1.0);
+    
+    /* Load the "differs badge" */
+    GError *err = NULL;
+    self->differs_badge = gdk_pixbuf_new_from_file("../pixmaps/SkeinDiffersBadge.png", &err);
+    if(!self->differs_badge) {
+    	g_warning(_("Could not load skein differs badge: %s"), err->message);
+    	g_error_free(err);
+    }
+}
+
+static void
+i7_skein_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
+{
+    I7_SKEIN_USE_PRIVATE(object, priv);
+    
+    switch(prop_id) {
+		case PROP_HORIZONTAL_SPACING:
+			priv->hspacing = g_value_get_double(value);
+			g_object_notify(object, "horizontal-spacing");
+			break;
+		case PROP_VERTICAL_SPACING:
+			priv->vspacing = g_value_get_double(value);
+			g_object_notify(object, "vertical-spacing");
+			break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+    }
+}
+
+static void
+i7_skein_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
+{
+    I7_SKEIN_USE_PRIVATE(object, priv);
+    
+    switch(prop_id) {
+		case PROP_HORIZONTAL_SPACING:
+			g_value_set_double(value, priv->hspacing);
+			break;
+		case PROP_VERTICAL_SPACING:
+			g_value_set_double(value, priv->vspacing);
+			break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+    }
 }
 
 static void
 i7_skein_finalize(GObject *object)
 {
-	g_object_unref(I7_SKEIN_PRIVATE(object)->root);
+	I7_SKEIN_USE_PRIVATE(object, priv);
+	g_object_unref(priv->root);
+	goo_canvas_line_dash_unref(priv->unlocked_dash);
+	goo_canvas_line_dash_unref(priv->locked_dash);
 	G_OBJECT_CLASS(i7_skein_parent_class)->finalize(object);
 }
 
@@ -105,6 +170,8 @@ static void
 i7_skein_class_init(I7SkeinClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS(klass);
+	object_class->set_property = i7_skein_set_property;
+	object_class->get_property = i7_skein_get_property;
 	object_class->finalize = i7_skein_finalize;
 
 	/* Signals */
@@ -144,6 +211,18 @@ i7_skein_class_init(I7SkeinClass *klass)
 	    G_STRUCT_OFFSET(I7SkeinClass, show_node), NULL, NULL,
 	    g_cclosure_marshal_VOID__UINT_POINTER, G_TYPE_NONE, 2, 
 	    G_TYPE_UINT, I7_TYPE_NODE);
+	    
+	/* Install properties */
+	GParamFlags flags = G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_LAX_VALIDATION | G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB;
+	/* SUCKY DEBIAN replace with G_PARAM_STATIC_STRINGS */
+	g_object_class_install_property(object_class, PROP_HORIZONTAL_SPACING,
+		g_param_spec_double("horizontal-spacing", _("Horizontal spacing"),
+		    _("Pixels of horizontal space between skein branches"),
+		    20.0, 100.0, 40.0, flags));
+	g_object_class_install_property(object_class, PROP_VERTICAL_SPACING,
+		g_param_spec_double("vertical-spacing", _("Vertical spacing"),
+			_("Pixels of vertical space between skein items"),
+			20.0, 100.0, 40.0, flags));
 
 	/* Add private data */
 	g_type_class_add_private(klass, sizeof(I7SkeinPrivate));
@@ -295,7 +374,7 @@ i7_skein_load(I7Skein *skein, const gchar *filename, GError **error)
             }
             id = get_property_from_node(item, "nodeId"); /* freed by table */
             
-            I7Node *skein_node = i7_node_new(command, label, result, commentary, played, changed, temp, score);
+            I7Node *skein_node = i7_node_new(command, label, result, commentary, played, changed, temp, score, priv->skein_group);
 			node_listen(skein, skein_node);
             g_hash_table_insert(nodetable, id, skein_node);
             g_free(command);
@@ -396,15 +475,62 @@ i7_skein_reset(I7Skein *skein, gboolean current)
     g_signal_emit_by_name(skein, "thread-changed");
     priv->modified = TRUE;
 }
-            
-void
-i7_skein_layout(I7Skein *skein, double spacing)
+
+static gboolean
+draw_tree(I7Skein *skein, I7Node *node, GooCanvas *canvas)
 {
 	I7_SKEIN_USE_PRIVATE(skein, priv);
+	
+	/* Draw a line from the node to its parent */
+	if(node->gnode->parent) {
+		/* Calculate the coordinates */
+		gdouble nodex = i7_node_get_x(node);
+		gdouble destx = i7_node_get_x(I7_NODE(node->gnode->parent->data));
+		gdouble nodey = (gdouble)(g_node_depth(node->gnode) - 1.0) * priv->vspacing;
+		gdouble desty = nodey - priv->vspacing;
+		
+		if(nodex == destx) {
+			node->tree_item = goo_canvas_polyline_model_new_line(priv->skein_group,
+				destx, desty, nodex, nodey,
+				"line-dash", i7_node_get_temporary(node)? priv->unlocked_dash : priv->locked_dash,
+				"line-width", i7_node_in_thread(node, priv->current)? 4.0 : 1.5,
+				NULL);
+		} else {
+			node->tree_item = goo_canvas_polyline_model_new(priv->skein_group, FALSE, 4,
+				destx, desty,
+				destx, desty + 0.2 * priv->vspacing,
+				nodex, nodey - 0.2 * priv->vspacing,
+				nodex, nodey,
+				"line-dash", i7_node_get_temporary(node)? priv->unlocked_dash : priv->locked_dash,
+				"line-width", i7_node_in_thread(node, priv->current)? 4.0 : 1.5,
+				NULL);
+		}
+		goo_canvas_item_model_lower(node->tree_item, NULL); /* put at bottom */
+	}
+	
+	/* Draw the children's lines to this node */
+	int i;
+	for(i = 0; i < g_node_n_children(node->gnode); i++) {
+        I7Node *child = g_node_nth_child(node->gnode, i)->data;
+        draw_tree(skein, child, canvas);
+    }
+}
+   
+void
+i7_skein_layout(I7Skein *skein, GooCanvas *canvas)
+{
+	I7_SKEIN_USE_PRIVATE(skein, priv);
+	gdouble treewidth;
+	
     if(!priv->layout) {
-        i7_node_layout(priv->root, 0.0, spacing);
+    	treewidth = i7_node_get_tree_width(priv->root, canvas, priv->hspacing);
+    	i7_node_layout(priv->root, skein, canvas, 0.0);
+        draw_tree(skein, priv->root, canvas);
     }
     priv->layout = TRUE;
+    goo_canvas_set_bounds(canvas, 
+    	-treewidth * 0.5 - priv->hspacing, -(priv->vspacing) * 0.5,
+    	treewidth * 0.5 + priv->hspacing, g_node_max_height(priv->root->gnode) * priv->vspacing);
 }
 
 void
@@ -437,7 +563,7 @@ i7_skein_new_line(I7Skein *skein, const gchar *line)
     }
     if(node == NULL) { 
 		/* Wasn't found, create new node */
-        node = i7_node_new(nodeline, "", "", "", TRUE, FALSE, TRUE, 0);
+        node = i7_node_new(nodeline, "", "", "", TRUE, FALSE, TRUE, 0, priv->skein_group);
 		node_listen(skein, node);
         g_node_append(priv->current->gnode, node->gnode);
         node_added = TRUE;
@@ -541,7 +667,7 @@ i7_skein_add_new(I7Skein *skein, I7Node *node)
 {
 	I7_SKEIN_USE_PRIVATE(skein, priv);
 	
-    I7Node *newnode = i7_node_new("", "", "", "", FALSE, FALSE, TRUE, 0);
+    I7Node *newnode = i7_node_new("", "", "", "", FALSE, FALSE, TRUE, 0, priv->skein_group);
 	node_listen(skein, newnode);
     g_node_append(node->gnode, newnode->gnode);
     
@@ -557,7 +683,7 @@ i7_skein_add_new_parent(I7Skein *skein, I7Node *node)
 {
 	I7_SKEIN_USE_PRIVATE(skein, priv);
 	
-    I7Node *newnode = i7_node_new("", "", "", "", FALSE, FALSE, TRUE, 0);
+    I7Node *newnode = i7_node_new("", "", "", "", FALSE, FALSE, TRUE, 0, priv->skein_group);
 	node_listen(skein, newnode);
     g_node_insert(node->gnode->parent, g_node_child_position(node->gnode->parent, node->gnode), newnode->gnode);
     g_node_unlink(node->gnode);
@@ -796,4 +922,10 @@ i7_skein_dump(I7Skein *skein)
 {
     dump_node_data(I7_SKEIN_PRIVATE(skein)->root->gnode, NULL);
     g_printerr("\n");
+}
+
+GooCanvasItemModel *
+i7_skein_get_root_group(I7Skein *skein)
+{
+	return I7_SKEIN_PRIVATE(skein)->skein_group;
 }

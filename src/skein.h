@@ -20,6 +20,8 @@
 
 #include <glib.h>
 #include <glib-object.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
+#include <goocanvas.h>
 #include "node.h"
 
 typedef struct {
@@ -62,6 +64,7 @@ struct _I7SkeinClass
 struct _I7Skein
 {
 	GObject parent_instance;
+	GdkPixbuf *differs_badge;
 };
 
 typedef enum _I7SkeinError {
@@ -83,7 +86,7 @@ I7Node *i7_skein_get_played_node(I7Skein *skein);
 gboolean i7_skein_load(I7Skein *skein, const gchar *filename, GError **error);
 gboolean i7_skein_save(I7Skein *skein, const gchar *filename, GError **error);
 void i7_skein_reset(I7Skein *skein, gboolean current);
-void i7_skein_layout(I7Skein *skein, double spacing);
+void i7_skein_layout(I7Skein *skein, GooCanvas *canvas);
 void i7_skein_invalidate_layout(I7Skein *skein);
 void i7_skein_new_line(I7Skein *skein, const gchar *line);
 gboolean i7_skein_next_line(I7Skein *skein, gchar **line);
@@ -104,6 +107,7 @@ gboolean i7_skein_can_bless(I7Skein *skein, I7Node *node, gboolean all);
 I7Node *i7_skein_get_thread_top(I7Skein *skein, I7Node *node);
 I7Node *i7_skein_get_thread_bottom(I7Skein *skein, I7Node *node);
 gboolean i7_skein_get_modified(I7Skein *skein);
+GooCanvasItemModel *i7_skein_get_root_group(I7Skein *skein);
 
 /* DEBUG */
 void i7_skein_dump(I7Skein *skein);
