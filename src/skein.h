@@ -22,6 +22,7 @@
 #include <glib-object.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <goocanvas.h>
+#include <cairo.h>
 #include "node.h"
 
 typedef struct {
@@ -81,7 +82,7 @@ I7Skein *i7_skein_new(void);
 I7Node *i7_skein_get_root_node(I7Skein *skein);
 I7Node *i7_skein_get_current_node(I7Skein *skein);
 void i7_skein_set_current_node(I7Skein *skein, I7Node *node);
-gboolean in_current_thread(I7Skein *skein, I7Node *node);
+gboolean i7_skein_is_node_in_current_thread(I7Skein *skein, I7Node *node);
 I7Node *i7_skein_get_played_node(I7Skein *skein);
 gboolean i7_skein_load(I7Skein *skein, const gchar *filename, GError **error);
 gboolean i7_skein_save(I7Skein *skein, const gchar *filename, GError **error);

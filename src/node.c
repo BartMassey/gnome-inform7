@@ -3,6 +3,7 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <goocanvas.h>
+#include <cairo.h>
 
 #include "node.h"
 #include "skein.h"
@@ -40,6 +41,11 @@ typedef struct _I7NodePrivate {
     gdouble x;
     
     /* Graphical goodness */
+   	cairo_pattern_t *label_pattern;
+   	cairo_pattern_t *node_unplayed_blessed_pattern;
+   	cairo_pattern_t *node_unplayed_normal_pattern;
+   	cairo_pattern_t *node_played_blessed_pattern;
+   	cairo_pattern_t *node_played_normal_pattern;
     GooCanvasItemModel *node_group;
     GooCanvasItemModel *line_item;
     GooCanvasItemModel *label_item;
@@ -73,6 +79,17 @@ on_text_notify(GObject *object, GParamSpec *pspec)
 
 /* TYPE SYSTEM */
 
+static cairo_pattern_t *
+create_node_pattern(double r, double g, double b)
+{
+	cairo_pattern_t *retval = cairo_pattern_create_radial(0.0, -0.33, 0.0, 0.0, 0.0, 1.0);
+	cairo_pattern_add_color_stop_rgb(retval, 0.0, MAX(1.0, r * 1.5), MAX(1.0, g * 1.5), MAX(1.0, b * 1.5));
+	cairo_pattern_add_color_stop_rgb(retval, 0.5, r, g, b);
+	cairo_pattern_add_color_stop_rgb(retval, 0.75, r * 0.5, g * 0.5, b * 0.5);
+	cairo_pattern_add_color_stop_rgb(retval, 1.0, r, g, b);
+	return retval;
+}
+
 static void
 i7_node_init(I7Node *self)
 {
@@ -86,14 +103,34 @@ i7_node_init(I7Node *self)
     
     /* TODO diffs */
     
+    /* Create the cairo gradients */
+    /* Label */
+    priv->label_pattern = cairo_pattern_create_linear(0.0, 0.0, 0.0, -1.0);
+    cairo_pattern_add_color_stop_rgba(priv->label_pattern, 0.0, 0.0, 0.33, 0.0, 0.1);
+    cairo_pattern_add_color_stop_rgba(priv->label_pattern, 0.33, 0.2, 0.5, 0.2, 0.5);
+    cairo_pattern_add_color_stop_rgba(priv->label_pattern, 0.67, 0.73, 0.84, 0.73, 0.5);
+    cairo_pattern_add_color_stop_rgba(priv->label_pattern, 1.0, 0.5, 0.85, 0.5, 0.16);
+    /* Node, unplayed, with blessed transcript text */
+    priv->node_unplayed_blessed_pattern = create_node_pattern(0.33, 0.7, 0.33);
+    /* Node, unplayed, without blessed transcript text */
+    priv->node_unplayed_normal_pattern = create_node_pattern(0.1, 0.21, 0.1);
+    /* Node, played, with blessed transcript text */
+    priv->node_played_blessed_pattern = create_node_pattern(0.72, 0.64, 0.21);
+    /* Node, played, without blessed transcript text */
+    priv->node_played_normal_pattern = create_node_pattern(0.22, 0.19, 0.06);
+    
     /* Create the canvas items, though some of them can't be drawn yet */
     priv->node_group = goo_canvas_group_model_new(NULL, NULL);
+    priv->line_shape_item = goo_canvas_path_model_new(priv->node_group, "", 
+    	"stroke-pattern", NULL,
+    	NULL);
+    priv->label_shape_item = goo_canvas_path_model_new(priv->node_group, "", 
+    	"stroke-pattern", NULL, 
+    	"fill-pattern", priv->label_pattern, 
+    	NULL);
     priv->line_item = goo_canvas_text_model_new(priv->node_group, "", 0.0, 0.0, -1, GTK_ANCHOR_CENTER, NULL);
 	priv->label_item = goo_canvas_text_model_new(priv->node_group, "", 0.0, 0.0, -1, GTK_ANCHOR_CENTER, NULL);
 	priv->badge_item = goo_canvas_image_model_new(priv->node_group, NULL, 0.0, 0.0, NULL);
-	priv->line_shape_item = goo_canvas_path_model_new(priv->node_group, "", NULL);
-    priv->label_shape_item = goo_canvas_path_model_new(priv->node_group, "", NULL);
-    goo_canvas_item_model_raise(priv->badge_item, NULL);
     
     /* Connect signals */
 	g_signal_connect(self, "notify::text-expected", G_CALLBACK(on_text_notify), NULL);
@@ -176,6 +213,11 @@ static void
 i7_node_finalize(GObject *object)
 {
 	I7_NODE_USE_PRIVATE(object, priv);
+	cairo_pattern_destroy(priv->label_pattern);
+	cairo_pattern_destroy(priv->node_unplayed_blessed_pattern);
+	cairo_pattern_destroy(priv->node_unplayed_normal_pattern);
+	cairo_pattern_destroy(priv->node_played_blessed_pattern);
+	cairo_pattern_destroy(priv->node_played_normal_pattern);
 	g_free(priv->line);
     g_free(priv->label);
     g_free(priv->text_transcript);
@@ -549,6 +591,10 @@ i7_node_layout(I7Node *node, gpointer skeinptr, GooCanvas *canvas, gdouble x)
     goo_canvas_item_model_translate(priv->label_shape_item, 0, -height);
     goo_canvas_item_model_translate(priv->badge_item, width / 2, -height / 2);
     
+    /* Calculate the scale for the pattern gradients */
+    cairo_matrix_t matrix;
+	cairo_matrix_init_scale(&matrix, 0.5 / width, 1.0 / height);
+	
     /* Draw the text background */
     path = g_strdup_printf("M %.1f -%.1f "
     	"a %.1f,%.1f 0 0,1 0,%.1f "
@@ -559,6 +605,21 @@ i7_node_layout(I7Node *node, gpointer skeinptr, GooCanvas *canvas, gdouble x)
     	height / 2, height / 2, height);
     g_object_set(priv->line_shape_item, "data", path, NULL);
     g_free(path);
+    
+    cairo_pattern_t *node_pattern;
+    if(i7_skein_is_node_in_current_thread(skein, node)) {
+    	if(priv->text_expected)
+    		node_pattern = priv->node_played_blessed_pattern;
+    	else
+    		node_pattern = priv->node_played_normal_pattern;
+    } else {
+    	if(priv->text_expected)
+    		node_pattern = priv->node_unplayed_blessed_pattern;
+    	else
+    		node_pattern = priv->node_unplayed_normal_pattern;
+    }		
+    cairo_pattern_set_matrix(node_pattern, &matrix);
+    g_object_set(priv->line_shape_item, "fill-pattern", node_pattern, NULL);
     
     /* Draw the label background */
     if(priv->label && *priv->label) {
@@ -573,6 +634,7 @@ i7_node_layout(I7Node *node, gpointer skeinptr, GooCanvas *canvas, gdouble x)
 			"Z",
 			width / 2 + height, height / 2, height, height, height, height,
 			width, height, height, height, height);
+		cairo_pattern_set_matrix(priv->label_pattern, &matrix);
 		g_object_set(priv->label_shape_item, 
 			"data", path, 
 			"visibility", GOO_CANVAS_ITEM_VISIBLE,

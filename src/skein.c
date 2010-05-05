@@ -113,9 +113,10 @@ i7_skein_init(I7Skein *self)
     
     /* Load the "differs badge" */
     GError *err = NULL;
-    self->differs_badge = gdk_pixbuf_new_from_file("../pixmaps/SkeinDiffersBadge.png", &err);
+    GtkIconTheme *icon_theme = gtk_icon_theme_get_default();
+    self->differs_badge = gtk_icon_theme_load_icon(icon_theme, "inform7-skein-differs-badge", 16, 0, &err);
     if(!self->differs_badge) {
-    	g_warning(_("Could not load skein differs badge: %s"), err->message);
+    	g_warning("Could not load differs badge: %s", err->message);
     	g_error_free(err);
     }
 }
@@ -159,10 +160,14 @@ i7_skein_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec 
 static void
 i7_skein_finalize(GObject *object)
 {
+	I7Skein *self = I7_SKEIN(object);
 	I7_SKEIN_USE_PRIVATE(object, priv);
+	
 	g_object_unref(priv->root);
 	goo_canvas_line_dash_unref(priv->unlocked_dash);
 	goo_canvas_line_dash_unref(priv->locked_dash);
+	g_object_unref(self->differs_badge);
+	
 	G_OBJECT_CLASS(i7_skein_parent_class)->finalize(object);
 }
 
