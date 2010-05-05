@@ -1,4 +1,4 @@
-themedir = $(pkgdatadir)/icons/hicolor
+themedir = $(datadir)/icons/hicolor
 size = 128x128
 context = mimetypes
 
