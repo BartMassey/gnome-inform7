@@ -100,6 +100,7 @@ i7_node_init(I7Node *self)
     priv->labelwidth = 0.0;
     priv->x = 0.0;
 	self->gnode = NULL;
+	self->tree_item = NULL;
     
     /* TODO diffs */
     
@@ -213,6 +214,8 @@ static void
 i7_node_finalize(GObject *object)
 {
 	I7_NODE_USE_PRIVATE(object, priv);
+	I7Node *self = I7_NODE(object);
+	
 	cairo_pattern_destroy(priv->label_pattern);
 	cairo_pattern_destroy(priv->node_unplayed_blessed_pattern);
 	cairo_pattern_destroy(priv->node_unplayed_normal_pattern);
@@ -225,11 +228,13 @@ i7_node_finalize(GObject *object)
 	g_free(priv->id);
     g_object_unref(priv->node_group);
     
+    if(self->tree_item)
+   		g_object_unref(self->tree_item);
+    
     /* recurse */
-	GNode *gnode = I7_NODE(object)->gnode;
-	g_node_children_foreach(gnode, G_TRAVERSE_ALL, (GNodeForeachFunc)unref_node, NULL);
+	g_node_children_foreach(self->gnode, G_TRAVERSE_ALL, (GNodeForeachFunc)unref_node, NULL);
     /* free the node itself */
-    g_node_destroy(gnode);
+    g_node_destroy(self->gnode);
 	
 	G_OBJECT_CLASS(i7_node_parent_class)->finalize(object);
 }

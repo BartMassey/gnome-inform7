@@ -35,6 +35,8 @@ typedef struct _SkeinPrivate
     
     gdouble hspacing;
     gdouble vspacing;
+    GdkColor locked;
+    GdkColor unlocked;
 
 	GooCanvasItemModel *skein_group;
 	GooCanvasLineDash *unlocked_dash;
@@ -61,7 +63,9 @@ enum
 {
 	PROP_0,
 	PROP_HORIZONTAL_SPACING,
-	PROP_VERTICAL_SPACING
+	PROP_VERTICAL_SPACING,
+	PROP_LOCKED_COLOR,
+	PROP_UNLOCKED_COLOR
 };
 
 static guint i7_skein_signals[LAST_SIGNAL] = { 0 };
@@ -111,6 +115,11 @@ i7_skein_init(I7Skein *self)
     priv->unlocked_dash = goo_canvas_line_dash_new(2, 2.0, 2.0);
     priv->locked_dash = goo_canvas_line_dash_new(1, 1.0);
     
+    priv->hspacing = 40.0;
+    priv->vspacing = 40.0;
+    gdk_color_parse("black", &priv->locked);
+    gdk_color_parse("black", &priv->unlocked);
+    
     /* Load the "differs badge" */
     GError *err = NULL;
     GtkIconTheme *icon_theme = gtk_icon_theme_get_default();
@@ -134,6 +143,14 @@ i7_skein_set_property(GObject *object, guint prop_id, const GValue *value, GPara
 		case PROP_VERTICAL_SPACING:
 			priv->vspacing = g_value_get_double(value);
 			g_object_notify(object, "vertical-spacing");
+			break;
+		case PROP_LOCKED_COLOR:
+			gdk_color_parse(g_value_get_string(value), &priv->locked);
+			g_object_notify(object, "locked-color");
+			break;
+		case PROP_UNLOCKED_COLOR:
+			gdk_color_parse(g_value_get_string(value), &priv->unlocked);
+			g_object_notify(object, "unlocked-color");
 			break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -218,16 +235,24 @@ i7_skein_class_init(I7SkeinClass *klass)
 	    G_TYPE_UINT, I7_TYPE_NODE);
 	    
 	/* Install properties */
-	GParamFlags flags = G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_LAX_VALIDATION | G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB;
+	GParamFlags flags = G_PARAM_CONSTRUCT | G_PARAM_LAX_VALIDATION | G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB;
 	/* SUCKY DEBIAN replace with G_PARAM_STATIC_STRINGS */
 	g_object_class_install_property(object_class, PROP_HORIZONTAL_SPACING,
 		g_param_spec_double("horizontal-spacing", _("Horizontal spacing"),
 		    _("Pixels of horizontal space between skein branches"),
-		    20.0, 100.0, 40.0, flags));
+		    20.0, 100.0, 40.0, G_PARAM_READWRITE | flags));
 	g_object_class_install_property(object_class, PROP_VERTICAL_SPACING,
 		g_param_spec_double("vertical-spacing", _("Vertical spacing"),
 			_("Pixels of vertical space between skein items"),
-			20.0, 100.0, 40.0, flags));
+			20.0, 100.0, 40.0, G_PARAM_READWRITE | flags));
+	g_object_class_install_property(object_class, PROP_LOCKED_COLOR,
+		g_param_spec_string("locked-color", _("Locked color"),
+			_("Color of locked threads"),
+			"black", G_PARAM_WRITABLE | flags));
+	g_object_class_install_property(object_class, PROP_UNLOCKED_COLOR,
+		g_param_spec_string("unlocked-color", _("Unlocked color"),
+			_("Color of unlocked threads"),
+			"black", G_PARAM_WRITABLE | flags));
 
 	/* Add private data */
 	g_type_class_add_private(klass, sizeof(I7SkeinPrivate));
@@ -481,6 +506,15 @@ i7_skein_reset(I7Skein *skein, gboolean current)
     priv->modified = TRUE;
 }
 
+static guint
+rgba_from_gdk_color(GdkColor *color)
+{
+	return (color->red >> 8) << 24
+		| (color->green >> 8) << 16
+		| (color->blue >> 8) << 8
+		| 0xFF;
+}
+
 static gboolean
 draw_tree(I7Skein *skein, I7Node *node, GooCanvas *canvas)
 {
@@ -494,11 +528,12 @@ draw_tree(I7Skein *skein, I7Node *node, GooCanvas *canvas)
 		gdouble nodey = (gdouble)(g_node_depth(node->gnode) - 1.0) * priv->vspacing;
 		gdouble desty = nodey - priv->vspacing;
 		
+		if(node->tree_item)
+			g_object_unref(node->tree_item);
+		
 		if(nodex == destx) {
 			node->tree_item = goo_canvas_polyline_model_new_line(priv->skein_group,
 				destx, desty, nodex, nodey,
-				"line-dash", i7_node_get_temporary(node)? priv->unlocked_dash : priv->locked_dash,
-				"line-width", i7_node_in_thread(node, priv->current)? 4.0 : 1.5,
 				NULL);
 		} else {
 			node->tree_item = goo_canvas_polyline_model_new(priv->skein_group, FALSE, 4,
@@ -506,10 +541,21 @@ draw_tree(I7Skein *skein, I7Node *node, GooCanvas *canvas)
 				destx, desty + 0.2 * priv->vspacing,
 				nodex, nodey - 0.2 * priv->vspacing,
 				nodex, nodey,
-				"line-dash", i7_node_get_temporary(node)? priv->unlocked_dash : priv->locked_dash,
-				"line-width", i7_node_in_thread(node, priv->current)? 4.0 : 1.5,
 				NULL);
 		}
+		
+		if(i7_node_get_temporary(node))
+			g_object_set(node->tree_item,
+				"stroke-color-rgba", rgba_from_gdk_color(&priv->unlocked),
+				"line-dash", priv->unlocked_dash,
+				"line-width", i7_node_in_thread(node, priv->current)? 4.0 : 1.5,
+				NULL);
+		else
+			g_object_set(node->tree_item,
+				"stroke-color-rgba", rgba_from_gdk_color(&priv->locked),
+				"line-width", i7_node_in_thread(node, priv->current)? 4.0 : 1.5,
+				NULL);
+		
 		goo_canvas_item_model_lower(node->tree_item, NULL); /* put at bottom */
 	}
 	

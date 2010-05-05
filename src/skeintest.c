@@ -34,15 +34,13 @@ main(int argc, char **argv)
 		g_error_free(error);
 	}
 	
-	g_object_set(skein, "vertical-spacing", 75.0, NULL);
+	g_object_set(skein, 
+		"vertical-spacing", 75.0, 
+		"unlocked-color", "#6865FF",
+		NULL);
 	
-	gdouble l, t, r, b;
-	goo_canvas_get_bounds(GOO_CANVAS(canvas), &l, &t, &r, &b);
-	g_printerr("L: %f T: %f R: %f B: %f\n", l, t, r, b);
 	goo_canvas_set_root_item_model(GOO_CANVAS(canvas), i7_skein_get_root_group(skein));
 	i7_skein_layout(skein, GOO_CANVAS(canvas));
-	goo_canvas_get_bounds(GOO_CANVAS(canvas), &l, &t, &r, &b);
-	g_printerr("L: %f T: %f R: %f B: %f\n", l, t, r, b);
 	
 	/* Display widgets */
 	gtk_widget_show_all(window);
