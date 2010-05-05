@@ -52,6 +52,6 @@ const gchar *i7_node_get_unique_id(I7Node *node);
 gdouble i7_node_get_x(I7Node *node);
 gboolean i7_node_in_thread(I7Node *node, I7Node *endnode);
 gchar *i7_node_get_xml(I7Node *node);
-void i7_node_layout(I7Node *node, gpointer skeinptr, GooCanvas *canvas, gdouble x);
+void i7_node_draw(I7Node *node, gpointer skeinptr, GooCanvas *canvas, gdouble x);
 
 #endif /* __NODE_H__ */

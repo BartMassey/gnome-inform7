@@ -53,6 +53,7 @@ struct _I7SkeinClass
 	GObjectClass parent_class;
 
 	/* Signals */
+	void(* redraw) (I7Skein *self);
 	void(* tree_changed) (I7Skein *self);
 	void(* thread_changed) (I7Skein *self);
 	void(* node_text_changed) (I7Skein *self);
@@ -87,8 +88,7 @@ I7Node *i7_skein_get_played_node(I7Skein *skein);
 gboolean i7_skein_load(I7Skein *skein, const gchar *filename, GError **error);
 gboolean i7_skein_save(I7Skein *skein, const gchar *filename, GError **error);
 void i7_skein_reset(I7Skein *skein, gboolean current);
-void i7_skein_layout(I7Skein *skein, GooCanvas *canvas);
-void i7_skein_invalidate_layout(I7Skein *skein);
+void i7_skein_draw(I7Skein *skein, GooCanvas *canvas);
 void i7_skein_new_line(I7Skein *skein, const gchar *line);
 gboolean i7_skein_next_line(I7Skein *skein, gchar **line);
 GSList *i7_skein_get_commands(I7Skein *skein);

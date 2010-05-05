@@ -30,7 +30,6 @@ typedef struct _SkeinPrivate
 	I7Node *root;
 	I7Node *current;
 	I7Node *played;
-	gboolean layout;
     gboolean modified;
     
     gdouble hspacing;
@@ -40,7 +39,6 @@ typedef struct _SkeinPrivate
 
 	GooCanvasItemModel *skein_group;
 	GooCanvasLineDash *unlocked_dash;
-	GooCanvasLineDash *locked_dash;
 } I7SkeinPrivate;
 
 #define I7_SKEIN_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), I7_TYPE_SKEIN, I7SkeinPrivate))
@@ -48,6 +46,7 @@ typedef struct _SkeinPrivate
 
 enum 
 {
+	REDRAW,
 	TREE_CHANGED,
 	THREAD_CHANGED,
 	NODE_TEXT_CHANGED,
@@ -78,7 +77,7 @@ static void
 on_node_text_notify(I7Node *node, GParamSpec *pspec, I7Skein *skein)
 {
 	I7_SKEIN_USE_PRIVATE(skein, priv);
-	priv->layout = FALSE;
+	g_signal_emit_by_name(skein, "redraw");
 	g_signal_emit_by_name(skein, "node-text-changed");
 	priv->modified = TRUE;
 }
@@ -110,10 +109,8 @@ i7_skein_init(I7Skein *self)
 	node_listen(self, priv->root);
     priv->current = priv->root;
     priv->played = priv->root;
-    priv->layout = FALSE;
     priv->modified = TRUE;
     priv->unlocked_dash = goo_canvas_line_dash_new(2, 2.0, 2.0);
-    priv->locked_dash = goo_canvas_line_dash_new(1, 1.0);
     
     priv->hspacing = 40.0;
     priv->vspacing = 40.0;
@@ -139,18 +136,22 @@ i7_skein_set_property(GObject *object, guint prop_id, const GValue *value, GPara
 		case PROP_HORIZONTAL_SPACING:
 			priv->hspacing = g_value_get_double(value);
 			g_object_notify(object, "horizontal-spacing");
+			g_signal_emit_by_name(object, "redraw");
 			break;
 		case PROP_VERTICAL_SPACING:
 			priv->vspacing = g_value_get_double(value);
 			g_object_notify(object, "vertical-spacing");
+			g_signal_emit_by_name(object, "redraw");
 			break;
 		case PROP_LOCKED_COLOR:
 			gdk_color_parse(g_value_get_string(value), &priv->locked);
 			g_object_notify(object, "locked-color");
+			/* TODO: Change the color of all the locked threads */
 			break;
 		case PROP_UNLOCKED_COLOR:
 			gdk_color_parse(g_value_get_string(value), &priv->unlocked);
 			g_object_notify(object, "unlocked-color");
+			/* TODO: Change the color of all the unlocked threads */
 			break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -182,7 +183,6 @@ i7_skein_finalize(GObject *object)
 	
 	g_object_unref(priv->root);
 	goo_canvas_line_dash_unref(priv->unlocked_dash);
-	goo_canvas_line_dash_unref(priv->locked_dash);
 	g_object_unref(self->differs_badge);
 	
 	G_OBJECT_CLASS(i7_skein_parent_class)->finalize(object);
@@ -197,6 +197,11 @@ i7_skein_class_init(I7SkeinClass *klass)
 	object_class->finalize = i7_skein_finalize;
 
 	/* Signals */
+	/* redraw */
+	i7_skein_signals[REDRAW] = g_signal_new("redraw",
+		G_OBJECT_CLASS_TYPE(klass), G_SIGNAL_NO_RECURSE,
+		G_STRUCT_OFFSET(I7SkeinClass, redraw), NULL, NULL,
+		g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 	/* tree-changed */
 	i7_skein_signals[TREE_CHANGED] = g_signal_new("tree-changed",
 	    G_OBJECT_CLASS_TYPE(klass), G_SIGNAL_NO_RECURSE,
@@ -288,6 +293,7 @@ i7_skein_set_current_node(I7Skein *skein, I7Node *node)
 	I7_SKEIN_USE_PRIVATE(skein, priv);
     priv->current = node;
     g_signal_emit_by_name(skein, "thread-changed");
+    /* TODO change colors of nodes */
     priv->modified = TRUE;
 }
 
@@ -441,8 +447,8 @@ i7_skein_load(I7Skein *skein, const gchar *filename, GError **error)
     priv->root = I7_NODE(g_hash_table_lookup(nodetable, root_id));
     priv->current = I7_NODE(g_hash_table_lookup(nodetable, active_id));
     priv->played = priv->root;
-    priv->layout = FALSE;
     g_signal_emit_by_name(skein, "tree-changed");
+    g_signal_emit_by_name(skein, "redraw");
     priv->modified = FALSE;
     
     g_free(root_id);
@@ -503,6 +509,7 @@ i7_skein_reset(I7Skein *skein, gboolean current)
         priv->current = priv->root;
     priv->played = priv->root;
     g_signal_emit_by_name(skein, "thread-changed");
+    /* TODO modify the node colors */
     priv->modified = TRUE;
 }
 
@@ -529,7 +536,8 @@ draw_tree(I7Skein *skein, I7Node *node, GooCanvas *canvas)
 		gdouble desty = nodey - priv->vspacing;
 		
 		if(node->tree_item)
-			g_object_unref(node->tree_item);
+			goo_canvas_item_model_remove_child(priv->skein_group,
+				goo_canvas_item_model_find_child(priv->skein_group, node->tree_item));
 		
 		if(nodex == destx) {
 			node->tree_item = goo_canvas_polyline_model_new_line(priv->skein_group,
@@ -568,27 +576,18 @@ draw_tree(I7Skein *skein, I7Node *node, GooCanvas *canvas)
 }
    
 void
-i7_skein_layout(I7Skein *skein, GooCanvas *canvas)
+i7_skein_draw(I7Skein *skein, GooCanvas *canvas)
 {
 	I7_SKEIN_USE_PRIVATE(skein, priv);
 	gdouble treewidth;
 	
-    if(!priv->layout) {
-    	treewidth = i7_node_get_tree_width(priv->root, canvas, priv->hspacing);
-    	i7_node_layout(priv->root, skein, canvas, 0.0);
-        draw_tree(skein, priv->root, canvas);
-    }
-    priv->layout = TRUE;
+	treewidth = i7_node_get_tree_width(priv->root, canvas, priv->hspacing);
+	i7_node_draw(priv->root, skein, canvas, 0.0);
+    draw_tree(skein, priv->root, canvas);
+
     goo_canvas_set_bounds(canvas, 
     	-treewidth * 0.5 - priv->hspacing, -(priv->vspacing) * 0.5,
     	treewidth * 0.5 + priv->hspacing, g_node_max_height(priv->root->gnode) * priv->vspacing);
-}
-
-void
-i7_skein_invalidate_layout(I7Skein *skein)
-{
-	I7_SKEIN_PRIVATE(skein)->layout = FALSE;
-    g_signal_emit_by_name(skein, "tree-changed");
 }
 
 void
@@ -627,10 +626,12 @@ i7_skein_new_line(I7Skein *skein, const gchar *line)
 
     /* Send signals */
     if(node_added) {
-        priv->layout = FALSE;
         g_signal_emit_by_name(skein, "tree-changed");
-    } else
+        g_signal_emit_by_name(skein, "redraw");
+    } else {
+    	/* TODO: change node colors */
         g_signal_emit_by_name(skein, "thread-changed");
+    }
     g_signal_emit_by_name(skein, "show-node", GOT_LINE, node);
     priv->modified = TRUE;
 }
@@ -652,7 +653,7 @@ i7_skein_next_line(I7Skein *skein, gchar **line)
 	gchar *temp = i7_node_get_line(next);
     *line = g_strcompress(temp);
 	g_free(temp);
-    g_signal_emit_by_name(skein, "thread-changed");
+    g_signal_emit_by_name(skein, "thread-changed"); /* TODO really? */
     g_signal_emit_by_name(skein, "show-node", GOT_LINE, next);
     return TRUE;
 }
@@ -722,8 +723,8 @@ i7_skein_add_new(I7Skein *skein, I7Node *node)
 	node_listen(skein, newnode);
     g_node_append(node->gnode, newnode->gnode);
     
-    priv->layout = FALSE;
     g_signal_emit_by_name(skein, "tree-changed");
+    g_signal_emit_by_name(skein, "redraw");
     priv->modified = TRUE;
     
     return newnode;
@@ -740,8 +741,8 @@ i7_skein_add_new_parent(I7Skein *skein, I7Node *node)
     g_node_unlink(node->gnode);
     g_node_append(newnode->gnode, node->gnode);
     
-    priv->layout = FALSE;
     g_signal_emit_by_name(skein, "tree-changed");
+    g_signal_emit_by_name(skein, "redraw");
     priv->modified = TRUE;
     
     return newnode;
@@ -755,6 +756,7 @@ i7_skein_remove_all(I7Skein *skein, I7Node *node, gboolean notify)
     if(G_NODE_IS_ROOT(node->gnode))
 		return FALSE;
 	
+	/* FIXME something's wrong here */
     gboolean in_current = i7_skein_is_node_in_current_thread(skein, node);
     g_object_unref(node);
     
@@ -763,11 +765,11 @@ i7_skein_remove_all(I7Skein *skein, I7Node *node, gboolean notify)
         priv->played = priv->root;
     }
     
-    priv->layout = FALSE;
     if(notify)
         g_signal_emit_by_name(skein, "tree-changed");
+        
+    g_signal_emit_by_name(skein, "redraw");
     priv->modified = TRUE;
-    
     return TRUE;
 }
 
@@ -796,8 +798,8 @@ i7_skein_remove_single(I7Skein *skein, I7Node *node)
         priv->played = priv->root;
     }
     
-    priv->layout = FALSE;
     g_signal_emit_by_name(skein, "tree-changed");
+    g_signal_emit_by_name(skein, "redraw");
     priv->modified = TRUE;
     return TRUE;
 }
@@ -810,6 +812,7 @@ i7_skein_lock(I7Skein *skein, I7Node *node)
         i7_node_set_temporary(I7_NODE(iter->data), FALSE);
     
     g_signal_emit_by_name(skein, "lock-changed");
+    /* TODO change thread colors */
     I7_SKEIN_PRIVATE(skein)->modified = TRUE;
 }
 
@@ -823,6 +826,7 @@ i7_skein_unlock(I7Skein *skein, I7Node *node, gboolean notify)
     
     if(notify)
         g_signal_emit_by_name(skein, "lock-changed");
+    /* TODO change thread colors */
     I7_SKEIN_PRIVATE(skein)->modified = TRUE;
 }
 
@@ -850,6 +854,7 @@ i7_skein_trim(I7Skein *skein, I7Node *node, int minScore, gboolean notify)
     
     if(notify)
         g_signal_emit_by_name(skein, "tree-changed");
+    g_signal_emit_by_name(skein, "redraw");
     priv->modified = TRUE;
 }
 
@@ -902,6 +907,7 @@ i7_skein_bless(I7Skein *skein, I7Node *node, gboolean all)
         i7_node_bless(I7_NODE(iter->data));
 
     g_signal_emit_by_name(skein, "node-color-changed");
+    /* TODO change node color */
     I7_SKEIN_PRIVATE(skein)->modified = TRUE;
 }
 

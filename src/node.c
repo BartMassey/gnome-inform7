@@ -228,9 +228,6 @@ i7_node_finalize(GObject *object)
 	g_free(priv->id);
     g_object_unref(priv->node_group);
     
-    if(self->tree_item)
-   		g_object_unref(self->tree_item);
-    
     /* recurse */
 	g_node_children_foreach(self->gnode, G_TRAVERSE_ALL, (GNodeForeachFunc)unref_node, NULL);
     /* free the node itself */
@@ -568,7 +565,7 @@ i7_node_get_xml(I7Node *node)
 }
 
 void
-i7_node_layout(I7Node *node, gpointer skeinptr, GooCanvas *canvas, gdouble x)
+i7_node_draw(I7Node *node, gpointer skeinptr, GooCanvas *canvas, gdouble x)
 {
 	I7_NODE_USE_PRIVATE(node, priv);
 	I7Skein *skein = I7_SKEIN(skeinptr);
@@ -592,9 +589,11 @@ i7_node_layout(I7Node *node, gpointer skeinptr, GooCanvas *canvas, gdouble x)
     width = size.x2 - size.x1;
     height = size.y2 - size.y1;
     /* Move the label, its background, and the differs badge */
-    goo_canvas_item_model_translate(priv->label_item, 0, -height);
-    goo_canvas_item_model_translate(priv->label_shape_item, 0, -height);
-    goo_canvas_item_model_translate(priv->badge_item, width / 2, -height / 2);
+    /* SUCKY DEBIAN we have to do this with set_simple_transform, because x and 
+    y properties don't yet exist */
+    goo_canvas_item_model_set_simple_transform(priv->label_item, 0.0, -height, 1.0, 0.0);
+    goo_canvas_item_model_set_simple_transform(priv->label_shape_item, 0.0, -height, 1.0, 0.0);
+    goo_canvas_item_model_set_simple_transform(priv->badge_item, width / 2, -height / 2, 1.0, 0.0);
     
     /* Calculate the scale for the pattern gradients */
     cairo_matrix_t matrix;
@@ -673,13 +672,14 @@ i7_node_layout(I7Node *node, gpointer skeinptr, GooCanvas *canvas, gdouble x)
     for(i = 0; i < g_node_n_children(node->gnode); i++) {
         I7Node *child = g_node_nth_child(node->gnode, i)->data;
         gdouble treewidth = i7_node_get_tree_width(child, canvas, hspacing);
-        i7_node_layout(child, skein, canvas, x - total * 0.5 + child_x + treewidth * 0.5);
+        i7_node_draw(child, skein, canvas, x - total * 0.5 + child_x + treewidth * 0.5);
         child_x += treewidth + hspacing;
     }
 
 	/* Move the node's group to its proper place */
 	gdouble y = (gdouble)(g_node_depth(node->gnode) - 1) * vspacing;
-	goo_canvas_item_model_translate(priv->node_group, priv->x, y);
+	/* SUCKY DEBIAN set_simple_transform -> x,y properties */
+	goo_canvas_item_model_set_simple_transform(priv->node_group, priv->x, y, 1.0, 0.0);
 }  
 
 /* DEBUG */
