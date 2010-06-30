@@ -196,6 +196,7 @@ delete_build_files(I7Story *story)
         delete_from_project_dir(story, storyname, "Build", "gameinfo.dbg");
         delete_from_project_dir(story, storyname, "Build", "temporary file.inf");
         delete_from_project_dir(story, storyname, "Build", "temporary file 2.inf");
+        delete_from_project_dir(story, storyname, "Build", "StatusCblorb.html");
         
         if(config_file_get_bool(PREFS_CLEAN_INDEX_FILES)) {
             delete_from_project_dir(story, storyname, "Index", "Actions.html");

@@ -497,9 +497,7 @@ finish_cblorb_compiler(GPid pid, gint status, CompilerData *data)
     int exit_code = WIFEXITED(status)? WEXITSTATUS(status) : -1;
     
     /* Display the appropriate HTML page */
-    gchar *file = i7_app_get_datafile_path_va(i7_app_get(),
-	    "Documentation", "Sections",
-	    (exit_code == 0)? "GoodCblorb.html" : "ErrorCblorb.html", NULL);
+    gchar *file = g_build_filename(data->input_file, "Build", "StatusCblorb.html", NULL);
     html_load_file(WEBKIT_WEB_VIEW(data->story->panel[LEFT]->errors_tabs[I7_ERRORS_TAB_PROBLEMS]), file);
     html_load_file(WEBKIT_WEB_VIEW(data->story->panel[RIGHT]->errors_tabs[I7_ERRORS_TAB_PROBLEMS]), file);
     g_free(file);
