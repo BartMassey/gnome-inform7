@@ -4,10 +4,15 @@
 #include "builder.h"
 #include "error.h"
 
+/* Miscellaneous GtkBuilder-related functions and macros; also, the arbitrary
+ home of the START_TIMER and STOP_TIMER macros */
+
 /* SUCKY DEBIAN: When Debian updates to GTK 2.14, then move all the GtkBuilder
  interface definitions into one file and use gtk_builder_add_objects_from_file()
  to build the appropriate ones */
 
+/* Create a new GtkBuilder from an interface definition file and connect its
+ signals */
 GtkBuilder *
 create_new_builder(const gchar *filename, gpointer data)
 {
@@ -22,6 +27,7 @@ create_new_builder(const gchar *filename, gpointer data)
 	return builder;
 }
 
+/* Return a pointer to the object called @name constructed by @builder */
 GObject *
 load_object(GtkBuilder *builder, const gchar *name)
 {
@@ -31,6 +37,11 @@ load_object(GtkBuilder *builder, const gchar *name)
     return retval;
 }
 
+/* Add actions constructed by @builder to an empty action group also constructed
+ by @builder. @group_name is the name of the action group, and @action_names is
+ an array of strings: alternating action names and accelerators. @action_names
+ must also be terminated by NULL. A pointer to the action group is placed into
+ @group. */
 void
 add_actions(GtkBuilder *builder, GtkActionGroup **group, const gchar *group_name, const gchar **action_names)
 {

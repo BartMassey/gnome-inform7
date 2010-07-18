@@ -57,7 +57,9 @@ typedef struct {
 typedef struct {
 	GObject parent_instance;
 
+	/* Public preferences dialog */
 	I7PrefsWidgets *prefs;
+	/* Already-compiled regices */
 	GRegex *regices[I7_APP_NUM_REGICES];
 } I7App;
 
