@@ -175,6 +175,7 @@
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
                 <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -262,6 +263,7 @@
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
                 <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -290,6 +292,7 @@
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
                 <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -322,6 +325,7 @@
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
                 <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -354,6 +358,7 @@
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
                 <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -386,6 +391,7 @@
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
                 <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -418,6 +424,7 @@
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
                 <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -450,6 +457,7 @@
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
                 <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -570,6 +578,7 @@
             <signal name="window_object_cleared" handler="on_documentation_window_object_cleared"/>
             <signal name="navigation_requested" handler="on_navigation_requested"/>
             <signal name="navigation_requested" handler="after_documentation_navigation_requested" after="yes"/>
+            <signal name="resource_request_starting" handler="on_resource_request_starting"/>
             <child>
               <placeholder/>
             </child>
