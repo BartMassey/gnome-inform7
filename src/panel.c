@@ -104,6 +104,65 @@ js_paste_code(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, si
 	return NULL;
 }
 
+static JSValueRef 
+js_open_file(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
+{
+	GError *error = NULL;
+	
+	if(argumentCount != 1)
+		return NULL;
+	if(!JSValueIsString(ctx, arguments[0]))
+		return NULL;
+	
+	JSStringRef arg_js = JSValueToStringCopy(ctx, arguments[0], exception);
+	if(*exception != NULL)
+		return NULL;
+	size_t bufsize = JSStringGetMaximumUTF8CStringSize(arg_js);
+	gchar *file = g_new0(gchar, bufsize);
+	JSStringGetUTF8CString(arg_js, file, bufsize);
+
+	gchar *uri = g_filename_to_uri(file, NULL, &error);
+	if(!uri) {
+		error_dialog(NULL, error, _("Error converting '%s' to URI: "), file);
+		goto finally;
+	}
+	/* SUCKY DEBIAN replace with gtk_show_uri() */
+	if(!g_app_info_launch_default_for_uri(uri, NULL, &error))
+		error_dialog(NULL, error, _("Error opening external viewer for %s: "), uri);
+
+	g_free(uri);
+finally:
+	g_free(file);
+	JSStringRelease(arg_js);
+	return NULL;
+}
+
+static JSValueRef 
+js_open_url(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
+{
+	GError *error = NULL;
+	
+	if(argumentCount != 1)
+		return NULL;
+	if(!JSValueIsString(ctx, arguments[0]))
+		return NULL;
+	
+	JSStringRef arg_js = JSValueToStringCopy(ctx, arguments[0], exception);
+	if(*exception != NULL)
+		return NULL;
+	size_t bufsize = JSStringGetMaximumUTF8CStringSize(arg_js);
+	gchar *uri = g_new0(gchar, bufsize);
+	JSStringGetUTF8CString(arg_js, uri, bufsize);
+
+	/* SUCKY DEBIAN replace with gtk_show_uri() */
+	if(!g_app_info_launch_default_for_uri(uri, NULL, &error))
+		error_dialog(NULL, error, _("Error opening external viewer for %s: "), uri);
+
+	g_free(uri);
+	JSStringRelease(arg_js);
+	return NULL;
+}
+
 /* ACTIONS */
 
 void
@@ -270,6 +329,8 @@ i7_panel_init(I7Panel *self)
 	JSStaticFunction project_class_functions[] = {
 		{ "selectView", js_select_view, kJSPropertyAttributeDontDelete | kJSPropertyAttributeReadOnly },
 		{ "pasteCode", js_paste_code, kJSPropertyAttributeDontDelete | kJSPropertyAttributeReadOnly },
+		{ "openFile", js_open_file, kJSPropertyAttributeDontDelete | kJSPropertyAttributeReadOnly },
+		{ "openUrl", js_open_url, kJSPropertyAttributeDontDelete | kJSPropertyAttributeReadOnly },
 		{ NULL, NULL, 0 }
 	};
 	JSClassDefinition project_class_definition = {
@@ -463,7 +524,8 @@ replace_images(const GMatchInfo *match, GString *result, gchar *data_uri)
 	/* These are the only files used in the Index pages */
 	if(strcmp(filename, "Reveal.png") == 0
 		|| strcmp(filename, "help.png") == 0
-		|| strcmp(filename, "Below.png") == 0)
+		|| strcmp(filename, "Below.png") == 0
+	    || strcmp(filename, "Revealext.png") == 0)
 	{
 		g_string_append_printf(result, "src=\"%s/Documentation/doc_images/%s\"%s", data_uri, filename, delimiter);
 		g_free(filename);
@@ -475,11 +537,13 @@ replace_images(const GMatchInfo *match, GString *result, gchar *data_uri)
 	    || strcmp(filename, "extra.png") == 0
 	    || strcmp(filename, "noextra.png") == 0
 	    || strcmp(filename, "deprecated.png") == 0
+	    || strcmp(filename, "launch.png") == 0
 		|| g_str_has_prefix(filename, "map_icons")
 		|| g_str_has_prefix(filename, "scene_icons")
 		|| strstr(filename, "succeeded")
 		|| strstr(filename, "failed")
-		|| strstr(filename, "crash"))
+		|| strstr(filename, "crash")
+	    || strstr(filename, "folder"))
 	{
 		g_string_append_printf(result, "src=\"%s/Documentation/%s\"%s", data_uri, filename, delimiter);
 		g_free(filename);
