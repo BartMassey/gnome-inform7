@@ -64,9 +64,9 @@
 			<menuitem action="enable_elastic_tabs"/>
 		</menu>
 		<menu action="help_menu">
-			<menuitem action="report_bug"/>
-			<separator/>
 			<menuitem action="visit_inform7_com"/>
+			<menuitem action="suggest_feature"/>
+			<menuitem action="report_bug"/>
 			<separator/>
 			<menuitem action="about"/>
 		</menu>

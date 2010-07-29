@@ -117,12 +117,13 @@
 		<menu action="help_menu">
 			<menuitem action="help_contents"/>
 			<menuitem action="help_license"/>
-			<menuitem action="report_bug"/>
 			<separator/>
 			<menuitem action="help_extensions"/>
 			<menuitem action="help_recipe_book"/>
 			<separator/>
 			<menuitem action="visit_inform7_com"/>
+			<menuitem action="suggest_feature"/>
+			<menuitem action="report_bug"/>
 			<separator/>
 			<menuitem action="about"/>
 		</menu>

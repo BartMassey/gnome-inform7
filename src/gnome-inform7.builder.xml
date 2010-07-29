@@ -1176,8 +1176,8 @@
   <object class="GtkRecentAction" id="open_recent">
     <property name="label">Open Recen_t</property>
     <property name="tooltip">Open a recently opened story</property>
-    <property name="limit">10</property>
     <property name="sort_type">mru</property>
+    <property name="limit">10</property>
     <signal name="item_activated" handler="action_open_recent"/>
   </object>
   <object class="GtkSourceBuffer" id="tab_buffer">
@@ -1194,12 +1194,19 @@ The Customs Wharf is a room. [change the description if the cask is open] "Amid 
     <property name="max_undo_levels">-1</property>
   </object>
   <object class="GtkAction" id="report_bug">
-    <property name="label">Report a _Bug</property>
-    <property name="tooltip">Go to the bug report form on the Inform website</property>
+    <property name="label">Report a _Bug...</property>
+    <property name="short_label">Report a _Bug</property>
+    <property name="tooltip">Open the Inform 7 bug tracker in the browser</property>
     <signal name="activate" handler="action_report_bug"/>
   </object>
   <object class="GtkAction" id="visit_inform7_com">
     <property name="label">_Visit Inform7.com</property>
     <property name="tooltip">Go to the Inform 7 website in your web browser</property>
+  </object>
+  <object class="GtkAction" id="suggest_feature">
+    <property name="label">Suggest a _Feature...</property>
+    <property name="short_label">Suggest a _Feature</property>
+    <property name="tooltip">Open the Inform 7 suggestions forum in the browser</property>
+    <signal name="activate" handler="action_suggest_feature"/>
   </object>
 </interface>

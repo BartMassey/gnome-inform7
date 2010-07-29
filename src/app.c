@@ -81,9 +81,10 @@ i7_app_init(I7App *self)
 		"open_extension", "",
 		"preferences", "",
 		"quit", NULL,
+		"visit_inform7_com", "",
+		"suggest_feature", "",
 		"report_bug", "",
 		"about", "",
-		"visit_inform7_com", "",
 		NULL
 	};
 	add_actions(builder, &(priv->app_action_group), "app_actions", actions);

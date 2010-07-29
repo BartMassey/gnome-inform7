@@ -1126,18 +1126,6 @@ action_help_license(GtkAction *action, I7Story *story)
 	g_free(file);
 }
 
-/* Help->Report a Bug */
-void
-action_report_bug(GtkAction *action, I7App *app)
-{
-	GError *err = NULL;
-	/* SUCKY DEBIAN replace with gtk_show_uri() */
-	if(!g_app_info_launch_default_for_uri("http://inform7.com/contribute/report", NULL, &err))
-		error_dialog(NULL, err, 
-			_("The page \"http://inform7.com/contribute/report\" should have "
-			"opened in your browser:"));
-}
-
 /* Help->Help on Installed Extensions */
 void
 action_help_extensions(GtkAction *action, I7Story *story)
@@ -1154,6 +1142,30 @@ action_help_recipe_book(GtkAction *action, I7Story *story)
 	gchar *file = i7_app_get_datafile_path_va(i7_app_get(), "Documentation", "Rindex.html", NULL);
 	i7_story_show_docpage(story, file);
 	g_free(file);
+}
+
+/* Internal function: open a page in a browser and show error dialog if fail */
+static void
+open_page_in_browser(const gchar *uri)
+{
+	GError *err = NULL;
+	/* SUCKY DEBIAN replace with gtk_show_uri() */
+	if(!g_app_info_launch_default_for_uri(uri, NULL, &err))
+		error_dialog(NULL, err, _("The page \"%s\" should have opened in your browser:"), uri);
+}
+
+/* Help->Suggest a Feature */
+void
+action_suggest_feature(GtkAction *action, I7App *app)
+{
+	open_page_in_browser("http://inform7.uservoice.com/");
+}
+
+/* Help->Report a Bug */
+void
+action_report_bug(GtkAction *action, I7App *app)
+{
+	open_page_in_browser("http://inform7.com/mantis");
 }
 
 /* Help->About */
