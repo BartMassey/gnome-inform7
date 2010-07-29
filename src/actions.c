@@ -1154,6 +1154,13 @@ open_page_in_browser(const gchar *uri)
 		error_dialog(NULL, err, _("The page \"%s\" should have opened in your browser:"), uri);
 }
 
+/* Help->Visit Inform7.com */
+void
+action_visit_inform7_com(GtkAction *action, I7App *app)
+{
+	open_page_in_browser("http://inform7.com/");
+}
+
 /* Help->Suggest a Feature */
 void
 action_suggest_feature(GtkAction *action, I7App *app)

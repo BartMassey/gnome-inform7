@@ -1202,6 +1202,7 @@ The Customs Wharf is a room. [change the description if the cask is open] "Amid 
   <object class="GtkAction" id="visit_inform7_com">
     <property name="label">_Visit Inform7.com</property>
     <property name="tooltip">Go to the Inform 7 website in your web browser</property>
+    <signal name="activate" handler="action_visit_inform7_com"/>
   </object>
   <object class="GtkAction" id="suggest_feature">
     <property name="label">Suggest a _Feature...</property>
