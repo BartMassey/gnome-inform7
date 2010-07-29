@@ -81,6 +81,10 @@ i7_document_init(I7Document *self)
 
 	/* Set the icon */
 	gtk_window_set_icon_name(GTK_WINDOW(self), "inform7");
+
+	/* Set the minimum size so that the window can be sized smaller than the
+	 widgets inside it */
+	gtk_widget_set_size_request(GTK_WIDGET(self), 200, 100);
 	
 	/* Build the interface */
 	GtkBuilder *builder = create_new_builder("document.builder.xml", self);
