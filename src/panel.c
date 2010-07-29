@@ -475,15 +475,25 @@ find_real_filename_for_inform_protocol(const gchar *uri)
 	const gchar *rest = uri + 7; /* strlen("inform:") */
 	if(*rest == '/' && *++rest == '/')
 		rest++;
-	
-	gchar **elements = g_strsplit(rest, "/", -1);
-	gchar *tail = g_build_filenamev(elements);
+
+	/* Remove %xx escapes */
+	gchar *unescaped = g_uri_unescape_string(rest, "");
+
+	/* Replace the slashes by platform-dependent path separators */
+	gchar **elements = g_strsplit(unescaped, "/", -1);
+	g_free(unescaped);
+	gchar *tail;
+	if(elements[0] && strcmp(elements[0], "Extensions") == 0) {
+		/* inform://Extensions is an exception; change it so it will be picked
+		 up by the third tryloc below */
+		tail = g_build_filenamev(elements + 1);
+	} else
+		tail = g_build_filenamev(elements);
 	g_strfreev(elements);	
 
 	gchar *real_filename = NULL;
 	
-	gchar *
-	tryloc = g_build_filename("Documentation", "Sections", tail, NULL);
+	gchar *tryloc = g_build_filename("Documentation", "Sections", tail, NULL);
 	if(i7_app_check_datafile(theapp, tryloc)) {
 		real_filename = i7_app_get_datafile_path(theapp, tryloc);
 		goto finally;
