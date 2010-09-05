@@ -6,9 +6,10 @@ gcc -o skeintest skeintest.c skein.c node.c `pkg-config --cflags --libs gtk+-2.0
 #include <gtk/gtk.h>
 #include <goocanvas.h>
 #include "skein.h"
+#include "skein-view.h"
 
 typedef struct {
-	GtkWidget *canvas;
+	GtkWidget *view;
 	I7Skein *skein;
 } Widgets;
 
@@ -34,7 +35,7 @@ main(int argc, char **argv)
 	/* Create widgets */
 	Widgets *w = g_slice_new0(Widgets);
 	w->skein = i7_skein_new();
-	w->canvas = goo_canvas_new();
+	w->view = i7_skein_view_new();
 	GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
 	GtkWidget *vbox = gtk_vbox_new(FALSE, 0);
@@ -53,22 +54,22 @@ main(int argc, char **argv)
 		"vertical-spacing", 75.0, 
 		"unlocked-color", "#6865FF",
 		NULL);
-	goo_canvas_set_root_item_model(GOO_CANVAS(w->canvas), i7_skein_get_root_group(w->skein));
-	g_signal_connect(w->skein, "redraw", G_CALLBACK(i7_skein_draw), w->canvas);
 	
 	/* Assemble widgets */
 	gtk_box_pack_start(GTK_BOX(hbox), hspacing, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vspacing, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-	gtk_container_add(GTK_CONTAINER(scroll), w->canvas);
+	gtk_container_add(GTK_CONTAINER(scroll), w->view);
 	gtk_box_pack_start(GTK_BOX(vbox), scroll, TRUE, TRUE, 0);
 	gtk_container_add(GTK_CONTAINER(window), vbox);
 	
 	/* Read skein */
-	if(!i7_skein_load(w->skein, "/home/fliep/Documents/writing/if/Poop.inform/Skein.skein", &error)) {
+	if(!i7_skein_load(w->skein, "/home/fliep/Documents/if/Blood.inform/Skein.skein", &error)) {
 		g_printerr("Error: %s\n", error->message);
 		g_error_free(error);
 	}
+
+	i7_skein_view_set_skein(I7_SKEIN_VIEW(w->view), w->skein);
 	
 	/* Display widgets */
 	gtk_widget_show_all(window);
@@ -76,4 +77,6 @@ main(int argc, char **argv)
 	
 	g_object_unref(w->skein);
 	g_slice_free(Widgets, w);
+
+	return 0;
 }

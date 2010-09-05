@@ -169,6 +169,7 @@ PKG_CHECK_MODULES([INFORM7], [
 	webkit-1.0 >= 1.0
 	gtkspell-2.0
 	libxml-2.0
+	goocanvas
 	$UUID_MODULE
 ])
 PKG_CHECK_MODULES([OSXCART], [

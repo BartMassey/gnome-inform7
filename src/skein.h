@@ -31,7 +31,7 @@ typedef struct {
 } NodeLabel;
 
 enum {
-    GOT_LINE,
+    GOT_COMMAND,
     GOT_TRANSCRIPT,
     GOT_USER_ACTION
 };
@@ -50,22 +50,16 @@ typedef struct _I7Skein I7Skein;
 
 struct _I7SkeinClass
 {
-	GObjectClass parent_class;
+	GooCanvasGroupModelClass parent_class;
 
 	/* Signals */
-	void(* redraw) (I7Skein *self);
-	void(* tree_changed) (I7Skein *self);
-	void(* thread_changed) (I7Skein *self);
-	void(* node_text_changed) (I7Skein *self);
-	void(* node_color_changed) (I7Skein *self);
-	void(* lock_changed) (I7Skein *self);
-	void(* transcript_thread_changed) (I7Skein *self);
+	void(* needs_layout) (I7Skein *self);
 	void(* show_node) (I7Skein *self, guint why, gpointer node);
 };
 
 struct _I7Skein
 {
-	GObject parent_instance;
+	GooCanvasGroupModel parent_instance;
 	GdkPixbuf *differs_badge;
 };
 
@@ -80,38 +74,37 @@ GQuark i7_skein_error_quark(void);
 GType i7_skein_get_type(void) G_GNUC_CONST;
 I7Skein *i7_skein_new(void);
 
-I7Node *i7_skein_get_root_node(I7Skein *skein);
-I7Node *i7_skein_get_current_node(I7Skein *skein);
-void i7_skein_set_current_node(I7Skein *skein, I7Node *node);
-gboolean i7_skein_is_node_in_current_thread(I7Skein *skein, I7Node *node);
-I7Node *i7_skein_get_played_node(I7Skein *skein);
-gboolean i7_skein_load(I7Skein *skein, const gchar *filename, GError **error);
-gboolean i7_skein_save(I7Skein *skein, const gchar *filename, GError **error);
-void i7_skein_reset(I7Skein *skein, gboolean current);
-void i7_skein_draw(I7Skein *skein, GooCanvas *canvas);
-void i7_skein_new_line(I7Skein *skein, const gchar *line);
-gboolean i7_skein_next_line(I7Skein *skein, gchar **line);
-GSList *i7_skein_get_commands(I7Skein *skein);
-void i7_skein_update_after_playing(I7Skein *skein, const gchar *transcript);
-gboolean i7_skein_get_line_from_history(I7Skein *skein, gchar **line, int history);
-I7Node *i7_skein_add_new(I7Skein *skein, I7Node *node);
-I7Node *i7_skein_add_new_parent(I7Skein *skein, I7Node *node);
-gboolean i7_skein_remove_all(I7Skein *skein, I7Node *node, gboolean notify);
-gboolean i7_skein_remove_single(I7Skein *skein, I7Node *node);
-void i7_skein_lock(I7Skein *skein, I7Node *node);
-void i7_skein_unlock(I7Skein *skein, I7Node *node, gboolean notify);
-void i7_skein_trim(I7Skein *skein, I7Node *node, int minScore, gboolean notify);
-GSList *i7_skein_get_labels(I7Skein *skein);
-gboolean i7_skein_has_labels(I7Skein *skein);
-void i7_skein_bless(I7Skein *skein, I7Node *node, gboolean all);
-gboolean i7_skein_can_bless(I7Skein *skein, I7Node *node, gboolean all);
-I7Node *i7_skein_get_thread_top(I7Skein *skein, I7Node *node);
-I7Node *i7_skein_get_thread_bottom(I7Skein *skein, I7Node *node);
-gboolean i7_skein_get_modified(I7Skein *skein);
-GooCanvasItemModel *i7_skein_get_root_group(I7Skein *skein);
+I7Node *i7_skein_get_root_node(I7Skein *self);
+I7Node *i7_skein_get_current_node(I7Skein *self);
+void i7_skein_set_current_node(I7Skein *self, I7Node *node);
+gboolean i7_skein_is_node_in_current_thread(I7Skein *self, I7Node *node);
+I7Node *i7_skein_get_played_node(I7Skein *self);
+gboolean i7_skein_load(I7Skein *self, const gchar *filename, GError **error);
+gboolean i7_skein_save(I7Skein *self, const gchar *filename, GError **error);
+void i7_skein_reset(I7Skein *self, gboolean current);
+void i7_skein_draw(I7Skein *self, GooCanvas *canvas);
+void i7_skein_new_line(I7Skein *self, const gchar *line);
+gboolean i7_skein_next_line(I7Skein *self, gchar **line);
+GSList *i7_skein_get_commands(I7Skein *self);
+void i7_skein_update_after_playing(I7Skein *self, const gchar *transcript);
+gboolean i7_skein_get_line_from_history(I7Skein *self, gchar **line, int history);
+I7Node *i7_skein_add_new(I7Skein *self, I7Node *node);
+I7Node *i7_skein_add_new_parent(I7Skein *self, I7Node *node);
+gboolean i7_skein_remove_all(I7Skein *self, I7Node *node);
+gboolean i7_skein_remove_single(I7Skein *self, I7Node *node);
+void i7_skein_lock(I7Skein *self, I7Node *node);
+void i7_skein_unlock(I7Skein *self, I7Node *node);
+void i7_skein_trim(I7Skein *self, I7Node *node, int minScore);
+GSList *i7_skein_get_labels(I7Skein *self);
+gboolean i7_skein_has_labels(I7Skein *self);
+void i7_skein_bless(I7Skein *self, I7Node *node, gboolean all);
+gboolean i7_skein_can_bless(I7Skein *self, I7Node *node, gboolean all);
+I7Node *i7_skein_get_thread_top(I7Skein *self, I7Node *node);
+I7Node *i7_skein_get_thread_bottom(I7Skein *self, I7Node *node);
+gboolean i7_skein_get_modified(I7Skein *self);
 
 /* DEBUG */
-void i7_skein_dump(I7Skein *skein);
+void i7_skein_dump(I7Skein *self);
 
 G_END_DECLS
 

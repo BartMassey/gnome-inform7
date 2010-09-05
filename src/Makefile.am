@@ -33,7 +33,7 @@ gnome_inform7_SOURCES = \
 	story-source.c story-errors.c story-index.c story-settings.c \
 	story-compile.c story-game.c \
 	welcomedialog.c welcomedialog.h \
-	main.c 
+	main.c
 gnome_inform7_CPPFLAGS = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_LIBEXEC_DIR=\""$(pkglibexecdir)"\" \
@@ -42,3 +42,8 @@ gnome_inform7_CFLAGS = @INFORM7_CFLAGS@ $(AM_CFLAGS)
 gnome_inform7_LDADD = @INFORM7_LIBS@ $(INTLLIBS) osxcart/libosxcart.a
 gnome_inform7_LDFLAGS = \
 	-Wl,--export-dynamic
+
+noinst_PROGRAMS = skeintest
+skeintest_SOURCES = skeintest.c skein.c skein.h node.c node.h skein-view.c skein-view.h
+skeintest_CFLAGS = @INFORM7_CFLAGS@ $(AM_CFLAGS)
+skeintest_LDADD = @INFORM7_LIBS@

@@ -13,68 +13,116 @@
 
 enum {
     PROP_0,
-    PROP_LINE,
+    PROP_COMMAND,
     PROP_LABEL,
-    PROP_TEXT_TRANSCRIPT,
-    PROP_TEXT_EXPECTED,
-    PROP_CHANGED,
-    PROP_TEMP,
+    PROP_TRANSCRIPT_TEXT,
+    PROP_EXPECTED_TEXT,
+	PROP_CHANGED,
+	PROP_BLESSED,
+    PROP_LOCKED,
+	PROP_PLAYED,
     PROP_SCORE
 };
 
+enum {
+	NODE_UNPLAYED_UNBLESSED,
+	NODE_UNPLAYED_BLESSED,
+	NODE_PLAYED_UNBLESSED,
+	NODE_PLAYED_BLESSED,
+	NODE_NUM_PATTERNS
+};
+#define SELECT_PATTERN(played,blessed) (((played? 1:0) << 1) | (blessed? 1:0))
+
 typedef struct _I7NodePrivate {
-	gchar *line;
+	gchar *id;
+	gchar *command;
     gchar *label;
-    gchar *id;
-    
-    gchar *text_transcript;
-    gchar *text_expected;
-    
+    gchar *transcript_text;
+    gchar *expected_text;
+	gboolean changed;
+	gboolean blessed;
     gboolean played;
-    gboolean changed;
-    gboolean temp;
+    gboolean locked;
     gint score;
-    
-    gdouble width;
-    gdouble linewidth;
-    gdouble labelwidth;
-    gdouble x;
     
     /* Graphical goodness */
    	cairo_pattern_t *label_pattern;
-   	cairo_pattern_t *node_unplayed_blessed_pattern;
-   	cairo_pattern_t *node_unplayed_normal_pattern;
-   	cairo_pattern_t *node_played_blessed_pattern;
-   	cairo_pattern_t *node_played_normal_pattern;
-    GooCanvasItemModel *node_group;
-    GooCanvasItemModel *line_item;
+   	cairo_pattern_t *node_pattern[NODE_NUM_PATTERNS];
+    GooCanvasItemModel *command_item;
     GooCanvasItemModel *label_item;
     GooCanvasItemModel *badge_item;
-    GooCanvasItemModel *line_shape_item;
+    GooCanvasItemModel *command_shape_item;
     GooCanvasItemModel *label_shape_item;
     GooCanvasItemModel *tree_item;
+
+	/* x-coordinate */
+	gdouble x;
+	
+	/* Cached values; initialize to -1 */
+	gdouble command_width;
+	gdouble command_height;
+	gdouble label_width;
+	gdouble label_height;
 } I7NodePrivate;
 
 #define I7_NODE_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE((o), I7_TYPE_NODE, I7NodePrivate))
-#define I7_NODE_USE_PRIVATE(o,n) I7NodePrivate *n = I7_NODE_PRIVATE(o)
+#define I7_NODE_USE_PRIVATE I7NodePrivate *priv = I7_NODE_PRIVATE(self)
 
-G_DEFINE_TYPE(I7Node, i7_node, G_TYPE_OBJECT);
+G_DEFINE_TYPE(I7Node, i7_node, GOO_TYPE_CANVAS_GROUP_MODEL);
 
-/* SIGNAL HANDLERS */
+/* STATIC FUNCTIONS */
+
 static void
-on_text_notify(GObject *object, GParamSpec *pspec)
+update_node_background(I7Node *self)
 {
-	I7_NODE_USE_PRIVATE(object, priv);
+	I7_NODE_USE_PRIVATE;
+	g_object_set(priv->command_shape_item, 
+		"fill-pattern", priv->node_pattern[SELECT_PATTERN(priv->played, priv->blessed)], 
+	    NULL);
+}
 
+static void
+transcript_modified(I7Node *self)
+{
+	I7_NODE_USE_PRIVATE;
+	
 	gboolean old_changed_status = priv->changed;
-	priv->changed = (strcmp(priv->text_transcript, priv->text_expected) != 0);
+	priv->changed = (strcmp(priv->transcript_text? priv->transcript_text : "", 
+	                        priv->expected_text? priv->expected_text : "") != 0);
 	if(priv->changed != old_changed_status)
-		g_object_notify(object, "changed");
+		g_object_notify(G_OBJECT(self), "changed");
     
     /* TODO clear diffs */
     
-    if(priv->changed && priv->text_expected && strlen(priv->text_expected))
+    if(priv->changed && priv->expected_text && strlen(priv->expected_text))
         /* TODO new diffs */;
+
+	update_node_background(self);
+}
+
+static void
+i7_node_set_expected_text(I7Node *self, const gchar *text)
+{
+    I7_NODE_USE_PRIVATE;
+
+    g_free(priv->expected_text);
+	priv->expected_text = g_strdup(text? text : ""); /* silently accept NULL */
+	
+	/* Change newline separators to \n */
+	if(strstr(priv->expected_text, "\r\n")) {
+		gchar **lines = g_strsplit(priv->expected_text, "\r\n", 0);
+		g_free(priv->expected_text);
+		priv->expected_text = g_strjoinv("\n", lines);
+		g_strfreev(lines);
+	}
+	priv->expected_text = g_strdelimit(priv->expected_text, "\r", '\n');
+
+	if(strlen(priv->expected_text) == 0)
+		priv->blessed = FALSE;
+
+	transcript_modified(self);
+	
+	g_object_notify(G_OBJECT(self), "expected-text");
 }
 
 /* TYPE SYSTEM */
@@ -93,12 +141,8 @@ create_node_pattern(double r, double g, double b)
 static void
 i7_node_init(I7Node *self)
 {
-	I7_NODE_USE_PRIVATE(self, priv);
+	I7_NODE_USE_PRIVATE;
 	priv->id = g_strdup_printf("node-%p", self);
-    priv->width = -1.0;
-    priv->linewidth = -1.0;
-    priv->labelwidth = 0.0;
-    priv->x = 0.0;
 	self->gnode = NULL;
 	self->tree_item = NULL;
     
@@ -111,96 +155,103 @@ i7_node_init(I7Node *self)
     cairo_pattern_add_color_stop_rgba(priv->label_pattern, 0.33, 0.2, 0.5, 0.2, 0.5);
     cairo_pattern_add_color_stop_rgba(priv->label_pattern, 0.67, 0.73, 0.84, 0.73, 0.5);
     cairo_pattern_add_color_stop_rgba(priv->label_pattern, 1.0, 0.5, 0.85, 0.5, 0.16);
-    /* Node, unplayed, with blessed transcript text */
-    priv->node_unplayed_blessed_pattern = create_node_pattern(0.33, 0.7, 0.33);
     /* Node, unplayed, without blessed transcript text */
-    priv->node_unplayed_normal_pattern = create_node_pattern(0.1, 0.21, 0.1);
-    /* Node, played, with blessed transcript text */
-    priv->node_played_blessed_pattern = create_node_pattern(0.72, 0.64, 0.21);
+    priv->node_pattern[NODE_UNPLAYED_UNBLESSED] = create_node_pattern(0.26, 0.56, 0.26);
+    /* Node, unplayed, with blessed transcript text */
+    priv->node_pattern[NODE_UNPLAYED_BLESSED] = create_node_pattern(0.33, 0.7, 0.33);
     /* Node, played, without blessed transcript text */
-    priv->node_played_normal_pattern = create_node_pattern(0.22, 0.19, 0.06);
-    
+    priv->node_pattern[NODE_PLAYED_UNBLESSED] = create_node_pattern(0.56, 0.51, 0.17);
+    /* Node, played, with blessed transcript text */
+    priv->node_pattern[NODE_PLAYED_BLESSED] = create_node_pattern(0.72, 0.64, 0.21);
+	
     /* Create the canvas items, though some of them can't be drawn yet */
-    priv->node_group = goo_canvas_group_model_new(NULL, NULL);
-    priv->line_shape_item = goo_canvas_path_model_new(priv->node_group, "", 
+    priv->command_shape_item = goo_canvas_path_model_new(GOO_CANVAS_ITEM_MODEL(self), "", 
     	"stroke-pattern", NULL,
+	    "fill-pattern", priv->node_pattern[NODE_UNPLAYED_UNBLESSED],
     	NULL);
-    priv->label_shape_item = goo_canvas_path_model_new(priv->node_group, "", 
+    priv->label_shape_item = goo_canvas_path_model_new(GOO_CANVAS_ITEM_MODEL(self), "", 
     	"stroke-pattern", NULL, 
     	"fill-pattern", priv->label_pattern, 
     	NULL);
-    priv->line_item = goo_canvas_text_model_new(priv->node_group, "", 0.0, 0.0, -1, GTK_ANCHOR_CENTER, NULL);
-	priv->label_item = goo_canvas_text_model_new(priv->node_group, "", 0.0, 0.0, -1, GTK_ANCHOR_CENTER, NULL);
-	priv->badge_item = goo_canvas_image_model_new(priv->node_group, NULL, 0.0, 0.0, NULL);
-    
-    /* Connect signals */
-	g_signal_connect(self, "notify::text-expected", G_CALLBACK(on_text_notify), NULL);
-	g_signal_connect(self, "notify::text-transcript", G_CALLBACK(on_text_notify), NULL);
+    priv->command_item = goo_canvas_text_model_new(GOO_CANVAS_ITEM_MODEL(self), "", 0.0, 0.0, -1, GTK_ANCHOR_CENTER, NULL);
+	priv->label_item = goo_canvas_text_model_new(GOO_CANVAS_ITEM_MODEL(self), "", 0.0, 0.0, -1, GTK_ANCHOR_CENTER, NULL);
+	priv->badge_item = goo_canvas_image_model_new(GOO_CANVAS_ITEM_MODEL(self), NULL, 0.0, 0.0, NULL);
+
+	priv->x = 0.0;
+	priv->command_width = -1.0;
+	priv->command_height = -1.0;
+	priv->label_width = -1.0;
+	priv->label_height = -1.0;
 }
 
 static void
-i7_node_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
+i7_node_set_property(GObject *self, guint prop_id, const GValue *value, GParamSpec *pspec)
 {
-    I7Node *node = I7_NODE(object);
-    
+	I7_NODE_USE_PRIVATE;
+	
     switch(prop_id) {
-		case PROP_LINE:
-			i7_node_set_line(node, g_value_get_string(value));
+		case PROP_COMMAND:
+			i7_node_set_command(I7_NODE(self), g_value_get_string(value));
 			break;
 		case PROP_LABEL:
-			i7_node_set_label(node, g_value_get_string(value));
+			i7_node_set_label(I7_NODE(self), g_value_get_string(value));
 			break;
-		case PROP_TEXT_TRANSCRIPT:
-			i7_node_set_transcript_text(node, g_value_get_string(value));
+		case PROP_TRANSCRIPT_TEXT:
+			i7_node_set_transcript_text(I7_NODE(self), g_value_get_string(value));
 			break;
-		case PROP_TEXT_EXPECTED:
-			i7_node_set_expected_text(node, g_value_get_string(value));
+		case PROP_EXPECTED_TEXT: /* Construct only */
+			i7_node_set_expected_text(I7_NODE(self), g_value_get_string(value));
 			break;
-		case PROP_CHANGED: /* Construct only */
-			I7_NODE_PRIVATE(node)->changed = g_value_get_boolean(value);
-			g_object_notify(object, "changed");
+		case PROP_LOCKED:
+			i7_node_set_locked(I7_NODE(self), g_value_get_boolean(value));
 			break;
-		case PROP_TEMP:
-			i7_node_set_temporary(node, g_value_get_boolean(value));
+		case PROP_PLAYED:
+			i7_node_set_played(I7_NODE(self), g_value_get_boolean(value));
 			break;
 		case PROP_SCORE: /* Construct only */
-			I7_NODE_PRIVATE(node)->score = g_value_get_int(value);
-			g_object_notify(object, "changed");
+			priv->score = g_value_get_int(value);
+			g_object_notify(self, "score");
 			break;
         default:
-            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-    }
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(self, prop_id, pspec);
+	}
 }
 
 static void
-i7_node_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
+i7_node_get_property(GObject *self, guint prop_id, GValue *value, GParamSpec *pspec)
 {
-    I7_NODE_USE_PRIVATE(object, priv);
+    I7_NODE_USE_PRIVATE;
     
     switch(prop_id) {
-		case PROP_LINE:
-			g_value_set_string(value, priv->line);
+		case PROP_COMMAND:
+			g_value_set_string(value, priv->command);
 			break;
 		case PROP_LABEL:
 			g_value_set_string(value, priv->label);
 			break;
-		case PROP_TEXT_TRANSCRIPT:
-			g_value_set_string(value, priv->text_transcript);
+		case PROP_TRANSCRIPT_TEXT:
+			g_value_set_string(value, priv->transcript_text);
 			break;
-		case PROP_TEXT_EXPECTED:
-			g_value_set_string(value, priv->text_expected);
+		case PROP_EXPECTED_TEXT:
+			g_value_set_string(value, priv->expected_text);
 			break;
 		case PROP_CHANGED:
 			g_value_set_boolean(value, priv->changed);
 			break;
-		case PROP_TEMP:
-			g_value_set_boolean(value, priv->temp);
+		case PROP_BLESSED:
+			g_value_set_boolean(value, priv->blessed);
+			break;
+		case PROP_LOCKED:
+			g_value_set_boolean(value, priv->locked);
+			break;
+		case PROP_PLAYED:
+			g_value_set_boolean(value, priv->played);
 			break;
 		case PROP_SCORE:
 			g_value_set_int(value, priv->score);
 			break;
         default:
-            G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+            G_OBJECT_WARN_INVALID_PROPERTY_ID(self, prop_id, pspec);
     }
 }
 
@@ -211,29 +262,27 @@ unref_node(GNode *gnode)
 }
 
 static void
-i7_node_finalize(GObject *object)
+i7_node_finalize(GObject *self)
 {
-	I7_NODE_USE_PRIVATE(object, priv);
-	I7Node *self = I7_NODE(object);
+	I7_NODE_USE_PRIVATE;
 	
 	cairo_pattern_destroy(priv->label_pattern);
-	cairo_pattern_destroy(priv->node_unplayed_blessed_pattern);
-	cairo_pattern_destroy(priv->node_unplayed_normal_pattern);
-	cairo_pattern_destroy(priv->node_played_blessed_pattern);
-	cairo_pattern_destroy(priv->node_played_normal_pattern);
-	g_free(priv->line);
+	cairo_pattern_destroy(priv->node_pattern[NODE_UNPLAYED_UNBLESSED]);
+	cairo_pattern_destroy(priv->node_pattern[NODE_UNPLAYED_BLESSED]);
+	cairo_pattern_destroy(priv->node_pattern[NODE_PLAYED_UNBLESSED]);
+	cairo_pattern_destroy(priv->node_pattern[NODE_PLAYED_BLESSED]);
+	g_free(priv->command);
     g_free(priv->label);
-    g_free(priv->text_transcript);
-    g_free(priv->text_expected);
+    g_free(priv->transcript_text);
+    g_free(priv->expected_text);
 	g_free(priv->id);
-    g_object_unref(priv->node_group);
     
     /* recurse */
-	g_node_children_foreach(self->gnode, G_TRAVERSE_ALL, (GNodeForeachFunc)unref_node, NULL);
+	g_node_children_foreach(I7_NODE(self)->gnode, G_TRAVERSE_ALL, (GNodeForeachFunc)unref_node, NULL);
     /* free the node itself */
-    g_node_destroy(self->gnode);
+    g_node_destroy(I7_NODE(self)->gnode);
 	
-	G_OBJECT_CLASS(i7_node_parent_class)->finalize(object);
+	G_OBJECT_CLASS(i7_node_parent_class)->finalize(self);
 }
 
 static void
@@ -247,30 +296,38 @@ i7_node_class_init(I7NodeClass *klass)
 	/* Install properties */
 	GParamFlags flags = G_PARAM_LAX_VALIDATION | G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB;
 	/* SUCKY DEBIAN replace with G_PARAM_STATIC_STRINGS */
-	g_object_class_install_property(object_class, PROP_LINE,
-		g_param_spec_string("line", _("Line text"),
+	g_object_class_install_property(object_class, PROP_COMMAND,
+		g_param_spec_string("command", _("Command"),
 		    _("The command entered in the game"),
 		    "", flags | G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
 	g_object_class_install_property(object_class, PROP_LABEL,
 		g_param_spec_string("label", _("Label"),
 		    _("The text this node has been labelled with"),
 		    "", flags | G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
-	g_object_class_install_property(object_class, PROP_TEXT_TRANSCRIPT,
-	    g_param_spec_string("text-transcript", _("Transcript text"),
+	g_object_class_install_property(object_class, PROP_TRANSCRIPT_TEXT,
+	    g_param_spec_string("transcript-text", _("Transcript text"),
 		    _("The text produced by the command on the last play-through"),
 		    "", flags | G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
-	g_object_class_install_property(object_class, PROP_TEXT_EXPECTED,
-	    g_param_spec_string("text-expected", _("Expected text"),
+	g_object_class_install_property(object_class, PROP_EXPECTED_TEXT,
+	    g_param_spec_string("expected-text", _("Expected text"),
 		    _("The text this command should produce"),
 		    "", flags | G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
 	g_object_class_install_property(object_class, PROP_CHANGED,
 	    g_param_spec_boolean("changed", _("Changed"),
 		    _("Whether the transcript text and expected text differ in this node"),
-		    FALSE, flags | G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
-	g_object_class_install_property(object_class, PROP_TEMP,
-	    g_param_spec_boolean("temp", _("Unlocked"),
-		    _("Whether this node is unlocked"),
-		    TRUE, flags | G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
+		    FALSE, flags | G_PARAM_READABLE));
+	g_object_class_install_property(object_class, PROP_BLESSED,
+	    g_param_spec_boolean("blessed", _("Blessed"),
+		    _("Whether this node has expected text"),
+		    FALSE, flags | G_PARAM_READABLE));
+	g_object_class_install_property(object_class, PROP_LOCKED,
+	    g_param_spec_boolean("locked", _("Locked"),
+		    _("Whether this node is locked"),
+		    FALSE, flags | G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
+	g_object_class_install_property(object_class, PROP_PLAYED,
+	    g_param_spec_boolean("played", _("Played"),
+		    _("Whether this node is in the currently playing thread"),
+		    FALSE, flags | G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
 	g_object_class_install_property(object_class, PROP_SCORE,
 	    g_param_spec_int("score", _("Score"),
 		    _("This node's score, used for cleaning up the skein"),
@@ -281,244 +338,191 @@ i7_node_class_init(I7NodeClass *klass)
 }
 
 I7Node *
-i7_node_new(const gchar *line, const gchar *label, const gchar *transcript, 
-    const gchar *expected, gboolean played, gboolean changed, gboolean temp, 
-    int score, GooCanvasItemModel *skein_group)
+i7_node_new(const gchar *command, const gchar *label, const gchar *transcript, 
+    const gchar *expected, gboolean played, gboolean locked, int score, 
+    GooCanvasItemModel *skein)
 {
-	I7Node *retval = g_object_new(I7_TYPE_NODE, 
-	    "line", line, 
+	I7Node *self = g_object_new(I7_TYPE_NODE, 
+	    "command", command, 
 	    "label", label, 
-	    "text-transcript", transcript,
-	    "text-expected", expected,
-	    "changed", changed,
-	    "temp", temp,
+	    "transcript-text", transcript,
+	    "expected-text", expected,
+	    "locked", locked,
+	    "played", played,
 	    "score", score,
 	    NULL);
-	I7_NODE_USE_PRIVATE(retval, priv);
-	priv->played = played;
-	g_object_set(priv->node_group, "parent", skein_group, NULL);
-	retval->gnode = g_node_new(retval);
-	return retval;
+	g_object_set(self, "parent", skein, NULL);
+	self->gnode = g_node_new(self);
+	return self;
 }
 
 gchar *
-i7_node_get_line(I7Node *node)
+i7_node_get_command(I7Node *self)
 {
-    return g_strdup(I7_NODE_PRIVATE(node)->line);
+	I7_NODE_USE_PRIVATE;
+    return g_strdup(priv->command);
 }
 
 void
-i7_node_set_line(I7Node *node, const gchar *line)
+i7_node_set_command(I7Node *self, const gchar *command)
 {
-    I7_NODE_USE_PRIVATE(node, priv);
-	g_free(priv->line);
-	priv->line = g_strdup(line? line : ""); /* silently accept NULL */
+    I7_NODE_USE_PRIVATE;
+	g_free(priv->command);
+	priv->command = g_strdup(command? command : ""); /* silently accept NULL */
 
 	/* Update the graphics */
-	g_object_set(priv->line_item, "text", priv->line, NULL);
+	g_object_set(priv->command_item, "text", priv->command, NULL);;
 	
-	/* Update the layout */
-    priv->width = -1.0;
-    priv->linewidth = -1.0;
-    priv->labelwidth = -1.0;
-	
-	g_object_notify(G_OBJECT(node), "line");
+	g_object_notify(G_OBJECT(self), "command");
 }
 
 gchar *
-i7_node_get_label(I7Node *node)
+i7_node_get_label(I7Node *self)
 {
-    return g_strdup(I7_NODE_PRIVATE(node)->label);
+	I7_NODE_USE_PRIVATE;
+    return g_strdup(priv->label);
 }
 
 void
-i7_node_set_label(I7Node *node, const gchar *label)
+i7_node_set_label(I7Node *self, const gchar *label)
 {
-    I7_NODE_USE_PRIVATE(node, priv);
+    I7_NODE_USE_PRIVATE;
     g_free(priv->label);
 	priv->label = g_strdup(label? label : ""); /* silently accept NULL */
 
 	/* Update the graphics */
 	g_object_set(priv->label_item, "text", priv->label, NULL);
-
-	/* Update the layout */
-    priv->width = -1.0;
-    priv->linewidth = -1.0;
-    priv->labelwidth = -1.0;
 	
-	g_object_notify(G_OBJECT(node), "label");
+	g_object_notify(G_OBJECT(self), "label");
 }
 
 gboolean
-i7_node_has_label(I7Node *node)
+i7_node_has_label(I7Node *self)
 {
-	I7_NODE_USE_PRIVATE(node, priv);
-    return (node->gnode->parent != NULL) && priv->label && (strlen(priv->label) > 0);
+	I7_NODE_USE_PRIVATE;
+    return (self->gnode->parent != NULL) && priv->label && (strlen(priv->label) > 0);
 }
 
 gchar *
-i7_node_get_expected_text(I7Node *node)
+i7_node_get_transcript_text(I7Node *self)
 {
-    return g_strdup(I7_NODE_PRIVATE(node)->text_expected);
+	I7_NODE_USE_PRIVATE;
+    return g_strdup(priv->transcript_text);
 }
 
 void
-i7_node_set_expected_text(I7Node *node, const gchar *text)
+i7_node_set_transcript_text(I7Node *self, const gchar *transcript)
 {
-    I7_NODE_USE_PRIVATE(node, priv);
+    I7_NODE_USE_PRIVATE;
+    g_free(priv->transcript_text);
+    priv->transcript_text = g_strdup(transcript? transcript : ""); /* silently accept NULL */
 
-    g_free(priv->text_expected);
-	priv->text_expected = g_strdup(text? text : ""); /* silently accept NULL */
-	
 	/* Change newline separators to \n */
-	if(strstr(priv->text_expected, "\r\n")) {
-		gchar **lines = g_strsplit(priv->text_expected, "\r\n", 0);
-		g_free(priv->text_expected);
-		priv->text_expected = g_strjoinv("\n", lines);
+	if(strstr(priv->transcript_text, "\r\n")) {
+		gchar **lines = g_strsplit(priv->transcript_text, "\r\n", 0);
+		g_free(priv->transcript_text);
+		priv->transcript_text = g_strjoinv("\n", lines);
 		g_strfreev(lines);
 	}
-	priv->text_expected = g_strdelimit(priv->text_expected, "\r", '\n');
+	priv->transcript_text = g_strdelimit(priv->transcript_text, "\r", '\n');
+
+	transcript_modified(self);
 	
-	g_object_notify(G_OBJECT(node), "text-expected");
-}
-
-gboolean
-i7_node_get_changed(I7Node *node)
-{
-    return I7_NODE_PRIVATE(node)->changed;
-}
-
-gboolean
-i7_node_get_temporary(I7Node *node)
-{
-    return I7_NODE_PRIVATE(node)->temp;
-}
-
-void
-i7_node_set_temporary(I7Node *node, gboolean temp)
-{
-    I7_NODE_PRIVATE(node)->temp = temp;
-	g_object_notify(G_OBJECT(node), "temp");
-}
-
-void
-i7_node_set_played(I7Node *node)
-{
-    I7_NODE_PRIVATE(node)->played = TRUE;
+	g_object_notify(G_OBJECT(self), "transcript-text");
 }
 
 gchar *
-i7_node_get_transcript_text(I7Node *node)
+i7_node_get_expected_text(I7Node *self)
 {
-    return g_strdup(I7_NODE_PRIVATE(node)->text_transcript);
+	I7_NODE_USE_PRIVATE;
+    return g_strdup(priv->expected_text);
+}
+
+gboolean
+i7_node_get_changed(I7Node *self)
+{
+	I7_NODE_USE_PRIVATE;
+    return priv->changed;
+}
+
+gboolean
+i7_node_get_locked(I7Node *self)
+{
+	I7_NODE_USE_PRIVATE;
+    return priv->locked;
 }
 
 void
-i7_node_set_transcript_text(I7Node *node, const gchar *transcript)
+i7_node_set_locked(I7Node *self, gboolean locked)
 {
-    I7_NODE_USE_PRIVATE(node, priv);
-    g_free(priv->text_transcript);
-    priv->text_transcript = g_strdup(transcript? transcript : ""); /* silently accept NULL */
+	I7_NODE_USE_PRIVATE;
+    priv->locked = locked;
+	g_object_notify(G_OBJECT(self), "locked");
+}
 
-	/* Change newline separators to \n */
-	if(strstr(priv->text_transcript, "\r\n")) {
-		gchar **lines = g_strsplit(priv->text_transcript, "\r\n", 0);
-		g_free(priv->text_transcript);
-		priv->text_transcript = g_strjoinv("\n", lines);
-		g_strfreev(lines);
-	}
-	priv->text_transcript = g_strdelimit(priv->text_transcript, "\r", '\n');
+gboolean
+i7_node_get_played(I7Node *self)
+{
+	I7_NODE_USE_PRIVATE;
+	return priv->played;
+}
+
+void
+i7_node_set_played(I7Node *self, gboolean played)
+{
+	I7_NODE_USE_PRIVATE;
+    priv->played = played;
+	update_node_background(self);
+	g_object_notify(G_OBJECT(self), "played");
+}
+
+gboolean
+i7_node_get_blessed(I7Node *self)
+{
+	I7_NODE_USE_PRIVATE;
+	return priv->blessed;
+}
+
+void
+i7_node_bless(I7Node *self)
+{
+	I7_NODE_USE_PRIVATE;
+    i7_node_set_expected_text(self, priv->transcript_text);
+}
+
+gdouble
+i7_node_get_tree_width(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canvas)
+{
+	I7_NODE_USE_PRIVATE;
+	gdouble spacing;
+	g_object_get(skein, "horizontal-spacing", &spacing, NULL);
 	
-	g_object_notify(G_OBJECT(node), "text-transcript");
-}
-
-void
-i7_node_bless(I7Node *node)
-{
-    I7_NODE_USE_PRIVATE(node, priv);
-    g_free(priv->text_expected);
-    priv->text_expected = g_strdup(priv->text_transcript);
-	g_object_notify(G_OBJECT(node), "text-expected");
-}
-
-double
-i7_node_get_line_width(I7Node *node, GooCanvas *canvas)
-{
-    I7_NODE_USE_PRIVATE(node, priv);
-    GooCanvasBounds size;
-    GooCanvasItem *item;
-    
-    if(priv->width < 0.0) {
-		item = goo_canvas_get_item(canvas, priv->line_item);
-		goo_canvas_item_get_bounds(item, &size);
-	    priv->width = size.x2 - size.x1;
-	    priv->linewidth = priv->width;
-	    
-	    if(priv->label && strlen(priv->label) > 0) {
-	    	item = goo_canvas_get_item(canvas, priv->label_item);
-	    	goo_canvas_item_get_bounds(item, &size);
-	        priv->labelwidth = size.x2 - size.x1;
-	    } else
-	        priv->labelwidth = 0.0;
-
-        if(priv->width < MIN_TEXT_WIDTH)
-            priv->width = MIN_TEXT_WIDTH;
-        if(priv->linewidth < MIN_TEXT_WIDTH)
-            priv->linewidth = MIN_TEXT_WIDTH;
-        if(priv->labelwidth < MIN_TEXT_WIDTH)
-            priv->labelwidth = MIN_TEXT_WIDTH;
-    }
-    return priv->width;
-}
-
-gdouble
-i7_node_get_line_text_width(I7Node *node)
-{
-    return I7_NODE_PRIVATE(node)->linewidth;
-}
-
-gdouble
-i7_node_get_label_text_width(I7Node *node)
-{
-    return I7_NODE_PRIVATE(node)->labelwidth;
-}
-
-gdouble
-i7_node_get_tree_width(I7Node *node, GooCanvas *canvas, gdouble spacing)
-{
     /* Get the tree width of all children */
     int i;
     gdouble total = 0.0;
-    for(i = 0; i < g_node_n_children(node->gnode); i++) {
-        total += i7_node_get_tree_width(g_node_nth_child(node->gnode, i)->data, canvas, spacing);
+    for(i = 0; i < g_node_n_children(self->gnode); i++) {
+        total += i7_node_get_tree_width(g_node_nth_child(self->gnode, i)->data, skein, canvas);
         if(i > 0)
             total += spacing;
     }
-    /* Return the largest of the above, the width of this node's line and the
-    width of this node's label */
-    gdouble linewidth = i7_node_get_line_width(node, canvas);
-    gdouble labelwidth = i7_node_get_label_text_width(node);
-    if(total > linewidth && total > labelwidth)
-        return total;
-    return MAX(linewidth, labelwidth);
+	/* Return whichever is larger, that or the node width */
+	if(priv->command_width < 0.0)
+		i7_node_calculate_size(self, skein, canvas);
+    gdouble width = MAX(priv->command_width, priv->label_width);
+    return MAX(total, width);
 }    
 
 const gchar *
-i7_node_get_unique_id(I7Node *node)
+i7_node_get_unique_id(I7Node *self)
 {
-    return I7_NODE_PRIVATE(node)->id;
-}
-
-gdouble
-i7_node_get_x(I7Node *node)
-{
-    return I7_NODE_PRIVATE(node)->x;
+	I7_NODE_USE_PRIVATE;
+    return priv->id;
 }
 
 gboolean
-i7_node_in_thread(I7Node *node, I7Node *endnode)
+i7_node_in_thread(I7Node *self, I7Node *endnode)
 {
-    return (endnode == node) || g_node_is_ancestor(node->gnode, endnode->gnode);
+    return (endnode == self) || g_node_is_ancestor(self->gnode, endnode->gnode);
 }
 
 static void
@@ -528,122 +532,157 @@ write_child_pointer(GNode *gnode, GString *string)
 }
 
 gchar *
-i7_node_get_xml(I7Node *node)
+i7_node_get_xml(I7Node *self)
 {
-	I7_NODE_USE_PRIVATE(node, priv);
+	I7_NODE_USE_PRIVATE;
 	
     /* Escape the following strings if necessary */
-    gchar *line = g_markup_escape_text(priv->line, -1);
-    gchar *text_transcript = g_markup_escape_text(priv->text_transcript, -1);
-    gchar *text_expected = g_markup_escape_text(priv->text_expected, -1);
+    gchar *command = g_markup_escape_text(priv->command, -1);
+    gchar *transcript_text = g_markup_escape_text(priv->transcript_text, -1);
+    gchar *expected_text = g_markup_escape_text(priv->expected_text, -1);
     gchar *label = g_markup_escape_text(priv->label, -1);
 
 	GString *string = g_string_new("");
 	g_string_append_printf(string, "  <item nodeId=\"%s\">\n", priv->id);
-	g_string_append_printf(string, "    <command xml:space=\"preserve\">%s</command>\n", line);
-	g_string_append_printf(string, "    <result xml:space=\"preserve\">%s</result>\n", text_transcript);
-	g_string_append_printf(string, "    <commentary xml:space=\"preserve\">%s</commentary>\n", text_expected);
+	g_string_append_printf(string, "    <command xml:space=\"preserve\">%s</command>\n", command);
+	g_string_append_printf(string, "    <result xml:space=\"preserve\">%s</result>\n", transcript_text);
+	g_string_append_printf(string, "    <commentary xml:space=\"preserve\">%s</commentary>\n", expected_text);
     g_string_append_printf(string, "    <played>%s</played>\n", priv->played? "YES" : "NO");
 	g_string_append_printf(string, "    <changed>%s</changed>\n", priv->changed? "YES" : "NO");
-	g_string_append_printf(string, "    <temporary score=\"%d\">%s</temporary>\n", priv->score, priv->temp? "YES" : "NO");
+	g_string_append_printf(string, "    <temporary score=\"%d\">%s</temporary>\n", priv->score, priv->locked? "NO" : "YES");
 	
     if(label)
         g_string_append_printf(string, "    <annotation xml:space=\"preserve\">%s</annotation>\n", label);
-    if(node->gnode->children) {
+    if(self->gnode->children) {
         g_string_append(string, "    <children>\n");
-        g_node_children_foreach(node->gnode, G_TRAVERSE_ALL, (GNodeForeachFunc)write_child_pointer, string);
+        g_node_children_foreach(self->gnode, G_TRAVERSE_ALL, (GNodeForeachFunc)write_child_pointer, string);
         g_string_append(string, "    </children>\n");
     }
     g_string_append(string, "  </item>\n");
     /* Free strings if necessary */
-    g_free(line);
-	g_free(text_transcript);
-    g_free(text_expected);
+    g_free(command);
+	g_free(transcript_text);
+    g_free(expected_text);
     g_free(label);
 	
 	return g_string_free(string, FALSE); /* return cstr */
 }
 
-void
-i7_node_draw(I7Node *node, gpointer skeinptr, GooCanvas *canvas, gdouble x)
+gdouble
+i7_node_get_x(I7Node *self)
 {
-	I7_NODE_USE_PRIVATE(node, priv);
-	I7Skein *skein = I7_SKEIN(skeinptr);
+	I7_NODE_USE_PRIVATE;
+	return priv->x;
+}
+
+void
+i7_node_layout(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canvas, gdouble x)
+{
+	I7_NODE_USE_PRIVATE;
+	
+	gdouble hspacing, vspacing;
+	g_object_get(skein,
+	    "horizontal-spacing", &hspacing,
+	    "vertical-spacing", &vspacing,
+	    NULL);
+	
+	/* Find the total width of all descendant nodes */
+    gdouble total = i7_node_get_tree_width(self, skein, canvas);
+    /* Lay out each child node */
+	GNode *child; 
+    gdouble child_x = 0.0;
+    for(child = self->gnode->children; child; child = child->next) {
+        gdouble treewidth = i7_node_get_tree_width(child->data, skein, canvas);
+        i7_node_layout(child->data, skein, canvas, x - total * 0.5 + child_x + treewidth * 0.5);
+        child_x += treewidth + hspacing;
+    }
+
+	/* Move the node's group to its proper place */
+	gdouble y = (gdouble)(g_node_depth(self->gnode) - 1.0) * vspacing;
+	/* SUCKY DEBIAN set_simple_transform -> x,y properties */
+	goo_canvas_item_model_set_simple_transform(GOO_CANVAS_ITEM_MODEL(self), x, y, 1.0, 0.0);
+
+	/* Cache the x coordinate */
+	priv->x = x;
+}
+
+void
+i7_node_calculate_size(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canvas)
+{
+	I7_NODE_USE_PRIVATE;	
 	GooCanvasBounds size;
     GooCanvasItem *item;
-    gdouble width, height, hspacing, vspacing;
+    gdouble width, height;
 	gchar *path;
-	
-	g_object_get(skein, 
-		"horizontal-spacing", &hspacing, 
-		"vertical-spacing", &vspacing,
-		NULL);
-	
-    /* Store the centre x coordinate for this node */
-    priv->x = x;
-    
-    /* Move this node's item models to their proper places, now that we can use
+	cairo_matrix_t matrix;
+	gboolean size_changed = FALSE;
+
+	/* Move this node's item models to their proper places, now that we can use
     the canvas to calculate them */
-    item = goo_canvas_get_item(canvas, priv->line_item);
+	item = goo_canvas_get_item(canvas, priv->command_item);
     goo_canvas_item_get_bounds(item, &size);
     width = size.x2 - size.x1;
     height = size.y2 - size.y1;
-    /* Move the label, its background, and the differs badge */
-    /* SUCKY DEBIAN we have to do this with set_simple_transform, because x and 
-    y properties don't yet exist */
-    goo_canvas_item_model_set_simple_transform(priv->label_item, 0.0, -height, 1.0, 0.0);
-    goo_canvas_item_model_set_simple_transform(priv->label_shape_item, 0.0, -height, 1.0, 0.0);
-    goo_canvas_item_model_set_simple_transform(priv->badge_item, width / 2, -height / 2, 1.0, 0.0);
-    
-    /* Calculate the scale for the pattern gradients */
-    cairo_matrix_t matrix;
-	cairo_matrix_init_scale(&matrix, 0.5 / width, 1.0 / height);
+
+	if((width != 0.0 && priv->command_width != width) || (height != 0.0 && priv->command_height != height)) {
+		/* Move the label, its background, and the differs badge */
+		/* SUCKY DEBIAN we have to do this with set_simple_transform, because x and 
+		y properties don't yet exist */
+		goo_canvas_item_model_set_simple_transform(priv->label_item, 0.0, -height, 1.0, 0.0);
+		goo_canvas_item_model_set_simple_transform(priv->label_shape_item, 0.0, -height, 1.0, 0.0);
+		goo_canvas_item_model_set_simple_transform(priv->badge_item, width / 2, 0.0, 1.0, 0.0);
+		
+		/* Calculate the scale for the pattern gradients */
+		cairo_matrix_init_scale(&matrix, 0.5 / width, 1.0 / height);
+		cairo_pattern_set_matrix(priv->node_pattern[NODE_UNPLAYED_UNBLESSED], &matrix);
+		cairo_pattern_set_matrix(priv->node_pattern[NODE_UNPLAYED_BLESSED], &matrix);
+		cairo_pattern_set_matrix(priv->node_pattern[NODE_PLAYED_UNBLESSED], &matrix);
+		cairo_pattern_set_matrix(priv->node_pattern[NODE_PLAYED_BLESSED], &matrix);
 	
-    /* Draw the text background */
-    path = g_strdup_printf("M %.1f -%.1f "
-    	"a %.1f,%.1f 0 0,1 0,%.1f "
-    	"h -%.1f "
-    	"a %.1f,%.1f 0 0,1 0,-%.1f "
-    	"Z",
-    	width / 2, height / 2, height / 2, height / 2, height, width,
-    	height / 2, height / 2, height);
-    g_object_set(priv->line_shape_item, "data", path, NULL);
-    g_free(path);
-    
-    cairo_pattern_t *node_pattern;
-    if(i7_skein_is_node_in_current_thread(skein, node)) {
-    	if(priv->text_expected)
-    		node_pattern = priv->node_played_blessed_pattern;
-    	else
-    		node_pattern = priv->node_played_normal_pattern;
-    } else {
-    	if(priv->text_expected)
-    		node_pattern = priv->node_unplayed_blessed_pattern;
-    	else
-    		node_pattern = priv->node_unplayed_normal_pattern;
-    }		
-    cairo_pattern_set_matrix(node_pattern, &matrix);
-    g_object_set(priv->line_shape_item, "fill-pattern", node_pattern, NULL);
-    
+		/* Draw the text background */
+		path = g_strdup_printf("M %.1f -%.1f "
+			"a %.1f,%.1f 0 0,1 0,%.1f "
+			"h -%.1f "
+			"a %.1f,%.1f 0 0,1 0,-%.1f "
+			"Z",
+			width / 2, height / 2, height / 2, height / 2, height, width,
+			height / 2, height / 2, height);
+		g_object_set(priv->command_shape_item, "data", path, NULL);
+		g_free(path);
+
+		/* If the size of the node has changed, we need to relayout the skein */
+		size_changed = TRUE;
+		priv->command_width = width;
+		priv->command_height = height;
+	}
+	
     /* Draw the label background */
     if(priv->label && *priv->label) {
-    	item = goo_canvas_get_item(canvas, priv->label_item);
+		item = goo_canvas_get_item(canvas, priv->label_item);
 		goo_canvas_item_get_bounds(item, &size);
 		width = size.x2 - size.x1;
 		height = size.y2 - size.y1;
-		path = g_strdup_printf("M %.1f,%.1f "
-			"a %.1f,%.1f 0 0,0 -%.1f,-%.1f "
-			"h -%.1f "
-			"a %.1f,%.1f 0 0,0 -%.1f,%.1f "
-			"Z",
-			width / 2 + height, height / 2, height, height, height, height,
-			width, height, height, height, height);
-		cairo_pattern_set_matrix(priv->label_pattern, &matrix);
-		g_object_set(priv->label_shape_item, 
-			"data", path, 
-			"visibility", GOO_CANVAS_ITEM_VISIBLE,
-			NULL);
-		g_free(path);
+
+		if((width != 0.0 && priv->label_width != width) || (height != 0.0 && priv->label_height != height)) {
+			path = g_strdup_printf("M %.1f,%.1f "
+				"a %.1f,%.1f 0 0,0 -%.1f,-%.1f "
+				"h -%.1f "
+				"a %.1f,%.1f 0 0,0 -%.1f,%.1f "
+				"Z",
+				width / 2 + height, height / 2, height, height, height, height,
+				width, height, height, height, height);
+			cairo_pattern_set_matrix(priv->label_pattern, &matrix);
+			g_object_set(priv->label_shape_item, 
+				"data", path, 
+				"visibility", GOO_CANVAS_ITEM_VISIBLE,
+				NULL);
+			g_free(path);
+
+			/* Again, if the label size has changed, we need to relayout the skein */
+			size_changed = TRUE;
+			priv->label_width = width;
+			priv->label_height = height;
+		}
     } else {
     	g_object_set(priv->label_shape_item, 
     		"data", "", 
@@ -652,39 +691,17 @@ i7_node_draw(I7Node *node, gpointer skeinptr, GooCanvas *canvas, gdouble x)
     }
     
     /* Show or hide the differs badge */
-    if(priv->changed && priv->text_expected && *priv->text_expected)
+    if(priv->changed && priv->expected_text && *priv->expected_text)
     	g_object_set(priv->badge_item, 
-    		"pixbuf", skein->differs_badge,
+    		"pixbuf", I7_SKEIN(skein)->differs_badge,
     		"visibility", GOO_CANVAS_ITEM_VISIBLE, 
     		NULL);
     else
     	g_object_set(priv->badge_item, 
-    		"pixbuf", skein->differs_badge,
+    		"pixbuf", I7_SKEIN(skein)->differs_badge,
     		"visibility", GOO_CANVAS_ITEM_HIDDEN, 
     		NULL);
 
-    
-    /* Find the total width of all descendant nodes */
-    int i;
-    gdouble total = i7_node_get_tree_width(node, canvas, hspacing);
-    /* Lay out each child node */
-    gdouble child_x = 0.0;
-    for(i = 0; i < g_node_n_children(node->gnode); i++) {
-        I7Node *child = g_node_nth_child(node->gnode, i)->data;
-        gdouble treewidth = i7_node_get_tree_width(child, canvas, hspacing);
-        i7_node_draw(child, skein, canvas, x - total * 0.5 + child_x + treewidth * 0.5);
-        child_x += treewidth + hspacing;
-    }
-
-	/* Move the node's group to its proper place */
-	gdouble y = (gdouble)(g_node_depth(node->gnode) - 1) * vspacing;
-	/* SUCKY DEBIAN set_simple_transform -> x,y properties */
-	goo_canvas_item_model_set_simple_transform(priv->node_group, priv->x, y, 1.0, 0.0);
-}  
-
-/* DEBUG */
-void
-i7_node_dump(I7Node *node)
-{
-	g_printerr("(%s)", I7_NODE_PRIVATE(node)->line);
+	if(size_changed)
+		g_signal_emit_by_name(skein, "needs-layout");
 }
