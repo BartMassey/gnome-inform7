@@ -100,6 +100,23 @@ transcript_modified(I7Node *self)
 	update_node_background(self);
 }
 
+/*
+static gboolean
+on_node_group_button_press(GooCanvasItem *item, GooCanvasItem  *target_item, GdkEventButton *event, I7Node *node)
+{
+	I7_NODE_USE_PRIVATE(node, priv);
+	
+	if(event->type == GDK_2BUTTON_PRESS && event->button == 1) {
+		g_signal_emit_by_name(priv->skein, "node-activate", node);
+		return TRUE;
+	} else if(event->type == GDK_BUTTON_PRESS && event->button == 3) {
+		g_signal_emit_by_name(priv->skein, "node-menu-popup", node);
+		return TRUE;
+	}
+	return FALSE;
+}
+*/
+
 static void
 i7_node_set_expected_text(I7Node *self, const gchar *text)
 {
@@ -125,7 +142,7 @@ i7_node_set_expected_text(I7Node *self, const gchar *text)
 	g_object_notify(G_OBJECT(self), "expected-text");
 }
 
-/* TYPE SYSTEM */
+/* GENERAL STATIC FUNCTIONS */
 
 static cairo_pattern_t *
 create_node_pattern(double r, double g, double b)
@@ -137,6 +154,8 @@ create_node_pattern(double r, double g, double b)
 	cairo_pattern_add_color_stop_rgb(retval, 1.0, r, g, b);
 	return retval;
 }
+
+/* TYPE SYSTEM */
 
 static void
 i7_node_init(I7Node *self)

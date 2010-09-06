@@ -25,6 +25,25 @@ vspacing_changed(GtkRange *vspacing, Widgets *w)
 	g_object_set(w->skein, "vertical-spacing", gtk_range_get_value(vspacing), NULL);
 }
 
+static void
+on_node_activate(I7Skein *skein, I7Node *node)
+{
+	gchar *text = i7_node_get_command(node);
+	g_printerr("Activated node: '%s'\n", text);
+	g_free(text);
+}
+
+static void
+on_node_popup(I7Skein *skein, I7Node *node)
+{
+	GtkWidget *menu = gtk_menu_new();
+	GtkWidget *menuitem = gtk_menu_item_new_with_label("Do something");
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+    g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(gtk_widget_destroy), menu);
+    gtk_widget_show_all(menu);
+    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, 3, gtk_get_current_event_time());
+}
+
 int
 main(int argc, char **argv)
 {
@@ -54,6 +73,8 @@ main(int argc, char **argv)
 		"vertical-spacing", 75.0, 
 		"unlocked-color", "#6865FF",
 		NULL);
+	g_signal_connect(w->skein, "node-activate", G_CALLBACK(on_node_activate), NULL);
+	g_signal_connect(w->skein, "node-menu-popup", G_CALLBACK(on_node_popup), NULL);
 	
 	/* Assemble widgets */
 	gtk_box_pack_start(GTK_BOX(hbox), hspacing, TRUE, TRUE, 0);
@@ -64,7 +85,7 @@ main(int argc, char **argv)
 	gtk_container_add(GTK_CONTAINER(window), vbox);
 	
 	/* Read skein */
-	if(!i7_skein_load(w->skein, "/home/fliep/Documents/if/Blood.inform/Skein.skein", &error)) {
+	if(!i7_skein_load(w->skein, "/home/fliep/Documents/writing/if/Blood.inform/Skein.skein", &error)) {
 		g_printerr("Error: %s\n", error->message);
 		g_error_free(error);
 	}
