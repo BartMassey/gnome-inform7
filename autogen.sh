@@ -14,7 +14,7 @@ patch -N -r - src/osxcart/Makefile.am src/osxcart.Makefile.am.patch
 ### AUTOTOOLS #######################################################
 # Runs autoconf, autoheader, aclocal, automake, autopoint, libtoolize
 echo "Regenerating autotools files"
-autoreconf --install --symlink || exit 1
+autoreconf --install --force --symlink || exit 1
 
 ### INTLTOOL ########################################################
 # Run after autopoint or glib-gettextize
