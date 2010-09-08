@@ -36,6 +36,9 @@
 #include "history.h"
 #include "html.h"
 
+/* Forward declarations */
+gboolean on_documentation_scrollbar_policy_changed(WebKitWebFrame *frame);
+
 /* JAVASCRIPT METHODS */
 
 static JSValueRef 
@@ -302,7 +305,7 @@ i7_panel_init(I7Panel *self)
 		self->index_tabs[foo] = GTK_WIDGET(load_object(builder, index_tab_names[foo]));
 	}	
 
-	/* Update the web settings for this pane */
+	/* Update the web settings for this panel */
 	priv->websettings = WEBKIT_WEB_SETTINGS(load_object(builder, "websettings"));
 	/* Parse the font descriptions */
 	gchar *font = config_file_get_string(DESKTOP_PREFS_STANDARD_FONT);
@@ -321,6 +324,10 @@ i7_panel_init(I7Panel *self)
 		NULL);
 	pango_font_description_free(stdfont);
 	pango_font_description_free(monofont);
+
+	/* Make sure the scrollbars are always visible in the documentation pane */
+	WebKitWebFrame *frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(self->tabs[I7_PANE_DOCUMENTATION]));
+	g_signal_connect(frame, "scrollbars-policy-changed", G_CALLBACK(on_documentation_scrollbar_policy_changed), NULL);
 
 	/* Builder object not needed anymore */
 	g_object_unref(builder);
@@ -804,6 +811,12 @@ on_documentation_window_object_cleared(WebKitWebView *webview, WebKitWebFrame *f
 		&exception);
     g_assert(exception == NULL);
     JSStringRelease(varname);
+}
+
+gboolean
+on_documentation_scrollbar_policy_changed(WebKitWebFrame *frame)
+{
+	return TRUE; /* Ignore scrollbar policy change */
 }
 
 /* PUBLIC FUNCTIONS */
