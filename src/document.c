@@ -592,8 +592,7 @@ i7_document_update_source_highlight(I7Document *document)
 void
 i7_document_refresh_elastic_tabs(I7Document *document)
 {
-	I7_DOCUMENT_USE_PRIVATE(document, priv);
-	elastic_refresh(GTK_TEXT_BUFFER(priv->buffer), i7_document_get_default_view(document));
+	elastic_recalculate_view(i7_document_get_default_view(document));
 }
 
 void

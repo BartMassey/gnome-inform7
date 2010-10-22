@@ -190,8 +190,8 @@ void
 i7_source_view_set_elastic_tabs(I7SourceView *self, gboolean elastic)
 {
 	if(elastic) {
-		elastic_setup(gtk_text_view_get_buffer(GTK_TEXT_VIEW(self->source)), GTK_TEXT_VIEW(self->source));
-		elastic_refresh(gtk_text_view_get_buffer(GTK_TEXT_VIEW(self->source)), GTK_TEXT_VIEW(self->source));
+		add_elastic_tabstops_to_view(GTK_TEXT_VIEW(self->source));
+		elastic_recalculate_view(GTK_TEXT_VIEW(self->source));
 	} else
-		elastic_remove(GTK_SOURCE_BUFFER(gtk_text_view_get_buffer(GTK_TEXT_VIEW(self->source))));
+		remove_elastic_tabstops_from_view(GTK_TEXT_VIEW(self->source));
 }
