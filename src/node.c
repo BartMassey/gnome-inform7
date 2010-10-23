@@ -100,22 +100,21 @@ transcript_modified(I7Node *self)
 	update_node_background(self);
 }
 
-/*
-static gboolean
-on_node_group_button_press(GooCanvasItem *item, GooCanvasItem  *target_item, GdkEventButton *event, I7Node *node)
+
+gboolean
+on_node_button_press(GooCanvasItem *item, GooCanvasItem *target_item, GdkEventButton *event, I7Node *self)
 {
-	I7_NODE_USE_PRIVATE(node, priv);
-	
+	I7Skein *skein = I7_SKEIN(goo_canvas_item_model_get_parent(GOO_CANVAS_ITEM_MODEL(self)));
 	if(event->type == GDK_2BUTTON_PRESS && event->button == 1) {
-		g_signal_emit_by_name(priv->skein, "node-activate", node);
+		g_signal_emit_by_name(skein, "node-activate", self);
 		return TRUE;
 	} else if(event->type == GDK_BUTTON_PRESS && event->button == 3) {
-		g_signal_emit_by_name(priv->skein, "node-menu-popup", node);
+		g_signal_emit_by_name(skein, "node-menu-popup", self);
 		return TRUE;
 	}
 	return FALSE;
 }
-*/
+
 
 static void
 i7_node_set_expected_text(I7Node *self, const gchar *text)

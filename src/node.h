@@ -60,5 +60,6 @@ gdouble i7_node_get_x(I7Node *self);
 gdouble i7_node_get_tree_width(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canvas);
 void i7_node_layout(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canvas, gdouble x);
 void i7_node_calculate_size(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canvas);
+gboolean on_node_button_press(GooCanvasItem *item, GooCanvasItem *target_item, GdkEventButton *event, I7Node *self);
 
 #endif /* __NODE_H__ */

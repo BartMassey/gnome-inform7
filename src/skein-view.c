@@ -38,7 +38,7 @@ on_item_created(I7SkeinView *view, GooCanvasItem *item, GooCanvasItemModel *mode
 {
 	if(I7_IS_NODE(model)) {
 		i7_node_calculate_size(I7_NODE(model), GOO_CANVAS_ITEM_MODEL(*skeinptr), GOO_CANVAS(view));
-		/* TODO connect button press signals */
+		g_signal_connect(item, "button-press-event", G_CALLBACK(on_node_button_press), model);
 	}
 }
 
