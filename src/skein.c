@@ -86,7 +86,7 @@ on_node_color_notify(I7Node *node, GParamSpec *pspec, I7Skein *self)
 static void
 node_listen(I7Skein *self, I7Node *node)
 {
-	g_signal_connect(node, "notify::line", G_CALLBACK(on_node_text_notify), self);
+	g_signal_connect(node, "notify::command", G_CALLBACK(on_node_text_notify), self);
 	g_signal_connect(node, "notify::label", G_CALLBACK(on_node_text_notify), self);
 	g_signal_connect(node, "notify::text-expected", G_CALLBACK(on_node_color_notify), self);
 }

@@ -39,32 +39,11 @@
 #define VERTICAL_NODE_FILL_FACTOR 2.0
 #define LABEL_MULTIPLIER 0.7
 
-typedef struct {
-    Story *story;
-    GNode *node;
-    GnomeCanvasGroup *nodegroup;
-} ClickedNode;
-
-static void
-clicked_node_free(gpointer data, GClosure *closure)
-{
-    g_free(data);
-}
-
 static void
 skein_popup_play_to_here(GtkMenuItem *menuitem, ClickedNode *clickednode)
 {
     play_to_node(clickednode->story->theskein, clickednode->node, 
                  clickednode->story);
-}
-
-static void
-finished_editing_node(GtkEntry *entry, ClickedNode *clicked)
-{
-    clicked->story->editingskein = FALSE;
-	skein_set_line(clicked->story->theskein, clicked->node, 
-				   gtk_entry_get_text(entry));
-	/* The Entry is destroyed in the redraw */
 }
 
 static void
@@ -78,79 +57,6 @@ finished_editing_label(GtkEntry *entry, ClickedNode *clicked)
 			   skein_get_thread_bottom(clicked->story->theskein,
 									   clicked->node));
 	/* The Entry is destroyed in the redraw */
-}
-
-static gboolean
-editing_lose_focus(GtkWidget *entry, GdkEventFocus *event, Story *thestory)
-{
-    thestory->editingskein = FALSE;
-    skein_schedule_redraw(thestory->theskein, thestory);
-    return FALSE; /* do  not interrupt event */
-}
-
-static gboolean
-cancel_editing(GtkWidget *entry, GdkEventKey *event, Story *thestory)
-{
-    if(event->keyval != GDK_Escape)
-        return FALSE; /* propagate further */
-    thestory->editingskein = FALSE;
-    skein_schedule_redraw(thestory->theskein, thestory);
-    return TRUE;
-}
-
-static void
-edit_node(Skein *skein, gboolean label, Story *thestory, GNode *thenode,
-		  int whichcanvas)
-{
-    double vertical_spacing = (double)config_file_get_int("SkeinSettings",
-                                                          "VerticalSpacing");
-	show_node(skein, GOT_USER_ACTION, thenode, thestory);
-    thestory->editingskein = TRUE;
-    GtkWidget *entry = gtk_entry_new();
-    gtk_entry_set_text(GTK_ENTRY(entry), 
-                       label? 
-                       (node_has_label(thenode)? node_get_label(thenode) : "")
-					   : node_get_line(thenode));
-    gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
-    
-	double x = node_get_x(thenode);
-	double y = vertical_spacing * (double)(g_node_depth(thenode) - 1);
-	GtkRequisition req = { 0, 0 };
-	gtk_widget_size_request(entry, &req);
-    GnomeCanvasItem *editbox = 
-        gnome_canvas_item_new(thestory->skeingroup[whichcanvas], 
-							  gnome_canvas_widget_get_type(),
-                              "anchor", GTK_ANCHOR_CENTER,
-							  "x", x, "y", y,
-							  "width", (double)(req.width),
-							  "height", (double)(req.height),
-                              "widget", entry,
-                              NULL);
-	if(label) {
-		double height = 0.0;
-		g_object_get(G_OBJECT(editbox), "height", &height, NULL);
-    	gnome_canvas_item_set(editbox, 
-							  "y", y - height * VERTICAL_NODE_FILL_FACTOR * 
-							  	   LABEL_MULTIPLIER,
-							  NULL);
-	}
-    gtk_widget_show(entry);
-    gtk_widget_grab_focus(entry);
-	
-	/* This is so ugly. But the old clickednode structure doesn't persist
-    into this function call */
-    ClickedNode *nodedata = g_new0(ClickedNode, 1);
-    nodedata->story = thestory;
-    nodedata->node = thenode;
-    nodedata->nodegroup = NULL;
-    g_signal_connect_data(G_OBJECT(entry), "activate", 
-                          G_CALLBACK(label? finished_editing_label : 
-									 finished_editing_node),
-						  nodedata, clicked_node_free, 0);
-    g_signal_connect(G_OBJECT(entry), "focus-out-event",
-                     G_CALLBACK(editing_lose_focus), thestory);
-    g_signal_connect(G_OBJECT(entry), "key-press-event",
-                     G_CALLBACK(cancel_editing), thestory);
 }
 
 static void

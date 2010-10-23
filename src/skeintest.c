@@ -26,15 +26,13 @@ vspacing_changed(GtkRange *vspacing, Widgets *w)
 }
 
 static void
-on_node_activate(I7Skein *skein, I7Node *node)
+on_node_activate(I7Skein *skein, I7Node *node, I7SkeinView *view)
 {
-	gchar *text = i7_node_get_command(node);
-	g_printerr("Activated node: '%s'\n", text);
-	g_free(text);
+	i7_skein_view_edit_node(view, node);
 }
 
 static void
-on_node_popup(I7Skein *skein, I7Node *node)
+on_node_popup(I7Skein *skein, I7Node *node, I7SkeinView *view)
 {
 	GtkWidget *menu = gtk_menu_new();
 	GtkWidget *menuitem = gtk_menu_item_new_with_label("Do something");
@@ -73,8 +71,8 @@ main(int argc, char **argv)
 		"vertical-spacing", 75.0, 
 		"unlocked-color", "#6865FF",
 		NULL);
-	g_signal_connect(w->skein, "node-activate", G_CALLBACK(on_node_activate), NULL);
-	g_signal_connect(w->skein, "node-menu-popup", G_CALLBACK(on_node_popup), NULL);
+	g_signal_connect(w->skein, "node-activate", G_CALLBACK(on_node_activate), w->view);
+	g_signal_connect(w->skein, "node-menu-popup", G_CALLBACK(on_node_popup), w->view);
 	
 	/* Assemble widgets */
 	gtk_box_pack_start(GTK_BOX(hbox), hspacing, TRUE, TRUE, 0);

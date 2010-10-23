@@ -17,6 +17,7 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <gdk/gdkkeysyms.h>
 #include <goocanvas.h>
 #include "skein-view.h"
 #include "skein.h"
@@ -117,3 +118,61 @@ i7_skein_view_get_skein(I7SkeinView *self)
 	I7_SKEIN_VIEW_USE_PRIVATE(self, priv);
 	return priv->skein;
 }
+
+static gboolean
+on_edit_popup_key_press(GtkWidget *entry, GdkEventKey *event, GtkWidget *edit_popup)
+{
+	switch(event->keyval) {
+	case GDK_Escape:
+		gtk_widget_destroy(edit_popup);
+		return TRUE;
+	case GDK_Return:
+	case GDK_KP_Enter:
+		{
+			I7Node *node = I7_NODE(g_object_get_data(G_OBJECT(edit_popup), "node"));
+			i7_node_set_command(node, gtk_entry_get_text(GTK_ENTRY(entry)));
+			gtk_widget_destroy(edit_popup);
+			return TRUE;
+		}
+	}
+	return FALSE; /* event not handled */
+}
+
+void
+i7_skein_view_edit_node(I7SkeinView *self, I7Node *node)
+{
+	GtkWidget *parent = gtk_widget_get_toplevel(GTK_WIDGET(self));
+	
+	GtkWidget *edit_popup = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	/* stackoverflow.com/questions/1925568/how-to-give-keyboard-focus-to-a-pop-up-gtk-window */
+	GTK_WIDGET_SET_FLAGS(edit_popup, GTK_CAN_FOCUS);
+	gtk_window_set_decorated(GTK_WINDOW(edit_popup), FALSE);
+	gtk_window_set_has_frame(GTK_WINDOW(edit_popup), FALSE);
+	gtk_window_set_type_hint(GTK_WINDOW(edit_popup), GDK_WINDOW_TYPE_HINT_POPUP_MENU);
+	gtk_window_set_transient_for(GTK_WINDOW(edit_popup), GTK_WINDOW(parent));
+	gtk_window_set_gravity(GTK_WINDOW(edit_popup), GDK_GRAVITY_CENTER);
+	/* Associate this window with the node we are editing */
+	g_object_set_data(G_OBJECT(edit_popup), "node", node);
+
+	GtkWidget *entry = gtk_entry_new();
+	gtk_widget_add_events(entry, GDK_FOCUS_CHANGE_MASK);
+	gchar *command = i7_node_get_command(node);
+	gtk_entry_set_text(GTK_ENTRY(entry), command);
+	g_free(command);
+	gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
+	gtk_container_add(GTK_CONTAINER(edit_popup), entry);
+	g_signal_connect_swapped(entry, "focus-out-event", G_CALLBACK(gtk_widget_destroy), edit_popup);
+	g_signal_connect(entry, "key-press-event", G_CALLBACK(on_edit_popup_key_press), edit_popup);
+	
+	gtk_widget_show_all(edit_popup);
+
+	gint x, y, px, py;
+	if(!i7_node_get_command_coordinates(node, &x, &y, GOO_CANVAS(self)))
+		return;
+	gdk_window_get_origin(gtk_widget_get_window(parent), &px, &py);
+
+	gtk_window_move(GTK_WINDOW(edit_popup), x + px, y + py);
+	/* GDK_GRAVITY_CENTER seems to have no effect? */
+	gtk_widget_grab_focus(entry);
+	gtk_window_present(GTK_WINDOW(edit_popup));
+}	

@@ -389,7 +389,8 @@ i7_node_set_command(I7Node *self, const gchar *command)
 	priv->command = g_strdup(command? command : ""); /* silently accept NULL */
 
 	/* Update the graphics */
-	g_object_set(priv->command_item, "text", priv->command, NULL);;
+	g_object_set(priv->command_item, "text", priv->command, NULL);
+	priv->command_width = priv->command_height = -1.0;
 	
 	g_object_notify(G_OBJECT(self), "command");
 }
@@ -410,6 +411,7 @@ i7_node_set_label(I7Node *self, const gchar *label)
 
 	/* Update the graphics */
 	g_object_set(priv->label_item, "text", priv->label, NULL);
+	priv->label_width = priv->label_height = -1.0;
 	
 	g_object_notify(G_OBJECT(self), "label");
 }
@@ -722,4 +724,55 @@ i7_node_calculate_size(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canva
 
 	if(size_changed)
 		g_signal_emit_by_name(skein, "needs-layout");
+}
+
+static gboolean
+i7_goo_canvas_item_get_onscreen_coordinates(GooCanvasItem *item, GooCanvas *canvas, gint *x, gint *y)
+{
+	GooCanvasBounds bounds;
+	GtkAllocation allocation;
+	gdouble canvas_x, canvas_y;
+	gdouble top, bottom, left, right, item_x, item_y;
+
+	/* Find out the size and coordinates of the current viewport */
+	goo_canvas_get_bounds(canvas, &canvas_x, &canvas_y, NULL, NULL);
+	GtkWidget *scrolled_window = gtk_widget_get_parent(GTK_WIDGET(canvas));
+	g_assert(GTK_IS_SCROLLED_WINDOW(scrolled_window));
+	GtkAdjustment *adj = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(scrolled_window));
+	left = canvas_x + gtk_adjustment_get_value(adj);
+	right = left + gtk_adjustment_get_page_size(adj);
+	adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scrolled_window));
+	top = canvas_y + gtk_adjustment_get_value(adj);
+	bottom = top + gtk_adjustment_get_page_size(adj);
+
+	/* Make sure item is currently displayed */
+	goo_canvas_item_get_bounds(item, &bounds);
+	if(bounds.x1 > right || bounds.x2 < left || bounds.y1 > bottom || bounds.y2 < top) {
+		g_warning("Node not onscreen in canvas");
+		return FALSE;
+	}
+
+	/* Find out the onscreen coordinates of the canvas viewport */
+	gtk_widget_get_allocation(GTK_WIDGET(canvas), &allocation);
+		
+	if(x) {
+		item_x = 0.5 * (bounds.x1 + bounds.x2);
+		*x = (gint)(item_x - left) + allocation.x;
+	}
+	if(y) {
+		item_y = 0.5 * (bounds.y1 + bounds.y2);
+		*y = (gint)(item_y - top) + allocation.y;
+	}
+	return TRUE;
+}
+
+gboolean
+i7_node_get_command_coordinates(I7Node *self, gint *x, gint *y, GooCanvas *canvas)
+{
+	g_return_val_if_fail(self || I7_IS_NODE(self), FALSE);
+	g_return_val_if_fail(canvas || GOO_IS_CANVAS(canvas), FALSE);
+
+	I7_NODE_USE_PRIVATE;
+
+	return i7_goo_canvas_item_get_onscreen_coordinates(goo_canvas_get_item(canvas, GOO_CANVAS_ITEM_MODEL(priv->command_item)), canvas, x, y);
 }

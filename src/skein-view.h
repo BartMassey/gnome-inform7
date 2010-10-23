@@ -22,6 +22,7 @@
 
 #include <glib-object.h>
 #include "skein.h"
+#include "node.h"
 
 G_BEGIN_DECLS
 
@@ -49,6 +50,7 @@ GType i7_skein_view_get_type(void) G_GNUC_CONST;
 GtkWidget *i7_skein_view_new(void);
 void i7_skein_view_set_skein(I7SkeinView *self, I7Skein *skein);
 I7Skein *i7_skein_view_get_skein(I7SkeinView *self);
+void i7_skein_view_edit_node(I7SkeinView *self, I7Node *node);
 
 G_END_DECLS
 
