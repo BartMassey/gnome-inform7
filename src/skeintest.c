@@ -28,7 +28,7 @@ vspacing_changed(GtkRange *vspacing, Widgets *w)
 static void
 on_node_activate(I7Skein *skein, I7Node *node, I7SkeinView *view)
 {
-	i7_skein_view_edit_node(view, node);
+	i7_skein_view_edit_label(view, node);
 }
 
 static void

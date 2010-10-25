@@ -47,37 +47,6 @@ skein_popup_play_to_here(GtkMenuItem *menuitem, ClickedNode *clickednode)
 }
 
 static void
-finished_editing_label(GtkEntry *entry, ClickedNode *clicked)
-{
-	clicked->story->editingskein = FALSE;
-	skein_set_label(clicked->story->theskein, clicked->node,
-					gtk_entry_get_text(entry));
-	/* Lock the thread containing the affected node */
-	skein_lock(clicked->story->theskein, 
-			   skein_get_thread_bottom(clicked->story->theskein,
-									   clicked->node));
-	/* The Entry is destroyed in the redraw */
-}
-
-static void
-skein_popup_edit(GtkMenuItem *menuitem, ClickedNode *clickednode)
-{
-	int which = find_out_what_canvas_this_group_is_on(clickednode->story, 
-													  clickednode->nodegroup);
-    edit_node(clickednode->story->theskein, FALSE, clickednode->story,
-			  clickednode->node, which);
-}
-
-static void
-skein_popup_add_label(GtkMenuItem *menuitem, ClickedNode *clickednode)
-{
-	int which = find_out_what_canvas_this_group_is_on(clickednode->story, 
-													  clickednode->nodegroup);
-    edit_node(clickednode->story->theskein, TRUE, clickednode->story,
-			  clickednode->node, which);
-}
-
-static void
 skein_popup_lock(GtkMenuItem *menuitem, ClickedNode *clickednode)
 {
     if(node_get_temporary(clickednode->node))
@@ -306,15 +275,6 @@ skein_layout_and_redraw(Skein *skein, Story *thestory)
 							 labels);
 	gtk_widget_set_sensitive(lookup_widget(thestory->window, "skein_labels_r"),
 							 labels);
-}
-
-void
-skein_schedule_redraw(Skein *skein, Story *thestory)
-{
-    if(thestory->redrawingskein == FALSE) {
-        thestory->redrawingskein = TRUE;
-        g_idle_add((GSourceFunc)skein_redraw, thestory);
-    }
 }
 
 void

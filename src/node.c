@@ -410,8 +410,10 @@ i7_node_set_label(I7Node *self, const gchar *label)
 	priv->label = g_strdup(label? label : ""); /* silently accept NULL */
 
 	/* Update the graphics */
+	
 	g_object_set(priv->label_item, "text", priv->label, NULL);
 	priv->label_width = priv->label_height = -1.0;
+	priv->command_width = priv->command_height = -1.0;
 	
 	g_object_notify(G_OBJECT(self), "label");
 }
@@ -756,11 +758,11 @@ i7_goo_canvas_item_get_onscreen_coordinates(GooCanvasItem *item, GooCanvas *canv
 	gtk_widget_get_allocation(GTK_WIDGET(canvas), &allocation);
 		
 	if(x) {
-		item_x = 0.5 * (bounds.x1 + bounds.x2);
+		item_x = bounds.x1;
 		*x = (gint)(item_x - left) + allocation.x;
 	}
 	if(y) {
-		item_y = 0.5 * (bounds.y1 + bounds.y2);
+		item_y = bounds.y1;
 		*y = (gint)(item_y - top) + allocation.y;
 	}
 	return TRUE;
@@ -775,4 +777,15 @@ i7_node_get_command_coordinates(I7Node *self, gint *x, gint *y, GooCanvas *canva
 	I7_NODE_USE_PRIVATE;
 
 	return i7_goo_canvas_item_get_onscreen_coordinates(goo_canvas_get_item(canvas, GOO_CANVAS_ITEM_MODEL(priv->command_item)), canvas, x, y);
+}
+
+gboolean
+i7_node_get_label_coordinates(I7Node *self, gint *x, gint *y, GooCanvas *canvas)
+{
+	g_return_val_if_fail(self || I7_IS_NODE(self), FALSE);
+	g_return_val_if_fail(canvas || GOO_IS_CANVAS(canvas), FALSE);
+
+	I7_NODE_USE_PRIVATE;
+
+	return i7_goo_canvas_item_get_onscreen_coordinates(goo_canvas_get_item(canvas, GOO_CANVAS_ITEM_MODEL(priv->label_item)), canvas, x, y);
 }

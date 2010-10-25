@@ -77,6 +77,14 @@ on_node_text_notify(I7Node *node, GParamSpec *pspec, I7Skein *self)
 }
 
 static void
+on_node_label_notify(I7Node *node, GParamSpec *pspec, I7Skein *self)
+{
+	if(i7_node_has_label(node))
+		i7_skein_lock(self, i7_skein_get_thread_bottom(self, node));
+	on_node_text_notify(node, pspec, self);
+}
+
+static void
 on_node_color_notify(I7Node *node, GParamSpec *pspec, I7Skein *self)
 {
 	I7_SKEIN_USE_PRIVATE;
@@ -87,7 +95,7 @@ static void
 node_listen(I7Skein *self, I7Node *node)
 {
 	g_signal_connect(node, "notify::command", G_CALLBACK(on_node_text_notify), self);
-	g_signal_connect(node, "notify::label", G_CALLBACK(on_node_text_notify), self);
+	g_signal_connect(node, "notify::label", G_CALLBACK(on_node_label_notify), self);
 	g_signal_connect(node, "notify::text-expected", G_CALLBACK(on_node_color_notify), self);
 }
 

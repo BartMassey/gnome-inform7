@@ -130,7 +130,8 @@ on_edit_popup_key_press(GtkWidget *entry, GdkEventKey *event, GtkWidget *edit_po
 	case GDK_KP_Enter:
 		{
 			I7Node *node = I7_NODE(g_object_get_data(G_OBJECT(edit_popup), "node"));
-			i7_node_set_command(node, gtk_entry_get_text(GTK_ENTRY(entry)));
+			void (*func)(I7Node *, const gchar *) = g_object_get_data(G_OBJECT(edit_popup), "callback");
+			func(node, gtk_entry_get_text(GTK_ENTRY(entry)));
 			gtk_widget_destroy(edit_popup);
 			return TRUE;
 		}
@@ -138,10 +139,11 @@ on_edit_popup_key_press(GtkWidget *entry, GdkEventKey *event, GtkWidget *edit_po
 	return FALSE; /* event not handled */
 }
 
-void
-i7_skein_view_edit_node(I7SkeinView *self, I7Node *node)
+static GtkWidget *
+popup_edit_window(GtkWidget *parent, gint x, gint y, const gchar *text)
 {
-	GtkWidget *parent = gtk_widget_get_toplevel(GTK_WIDGET(self));
+	gint px, py;
+	gdk_window_get_origin(gtk_widget_get_window(parent), &px, &py);
 	
 	GtkWidget *edit_popup = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	/* stackoverflow.com/questions/1925568/how-to-give-keyboard-focus-to-a-pop-up-gtk-window */
@@ -151,28 +153,53 @@ i7_skein_view_edit_node(I7SkeinView *self, I7Node *node)
 	gtk_window_set_type_hint(GTK_WINDOW(edit_popup), GDK_WINDOW_TYPE_HINT_POPUP_MENU);
 	gtk_window_set_transient_for(GTK_WINDOW(edit_popup), GTK_WINDOW(parent));
 	gtk_window_set_gravity(GTK_WINDOW(edit_popup), GDK_GRAVITY_CENTER);
-	/* Associate this window with the node we are editing */
-	g_object_set_data(G_OBJECT(edit_popup), "node", node);
 
 	GtkWidget *entry = gtk_entry_new();
 	gtk_widget_add_events(entry, GDK_FOCUS_CHANGE_MASK);
-	gchar *command = i7_node_get_command(node);
-	gtk_entry_set_text(GTK_ENTRY(entry), command);
-	g_free(command);
+	gtk_entry_set_text(GTK_ENTRY(entry), text);
+
 	gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
 	gtk_container_add(GTK_CONTAINER(edit_popup), entry);
 	g_signal_connect_swapped(entry, "focus-out-event", G_CALLBACK(gtk_widget_destroy), edit_popup);
 	g_signal_connect(entry, "key-press-event", G_CALLBACK(on_edit_popup_key_press), edit_popup);
 	
 	gtk_widget_show_all(edit_popup);
-
-	gint x, y, px, py;
-	if(!i7_node_get_command_coordinates(node, &x, &y, GOO_CANVAS(self)))
-		return;
-	gdk_window_get_origin(gtk_widget_get_window(parent), &px, &py);
-
 	gtk_window_move(GTK_WINDOW(edit_popup), x + px, y + py);
 	/* GDK_GRAVITY_CENTER seems to have no effect? */
 	gtk_widget_grab_focus(entry);
 	gtk_window_present(GTK_WINDOW(edit_popup));
-}	
+
+	return edit_popup;
+}
+
+void
+i7_skein_view_edit_node(I7SkeinView *self, I7Node *node)
+{
+	gint x, y;
+	if(!i7_node_get_command_coordinates(node, &x, &y, GOO_CANVAS(self)))
+		return;
+	GtkWidget *parent = gtk_widget_get_toplevel(GTK_WIDGET(self));
+	gchar *command = i7_node_get_command(node);
+	GtkWidget *edit_popup = popup_edit_window(parent, x, y, command);
+	g_free(command);
+	
+	/* Associate this window with the node we are editing */
+	g_object_set_data(G_OBJECT(edit_popup), "node", node);
+	g_object_set_data(G_OBJECT(edit_popup), "callback", i7_node_set_command);
+}
+
+void
+i7_skein_view_edit_label(I7SkeinView *self, I7Node *node)
+{
+	gint x, y;
+	if(!i7_node_get_label_coordinates(node, &x, &y, GOO_CANVAS(self)))
+		return;
+	GtkWidget *parent = gtk_widget_get_toplevel(GTK_WIDGET(self));
+	gchar *label = i7_node_get_label(node);
+	GtkWidget *edit_popup = popup_edit_window(parent, x, y, label);
+	g_free(label);
+	
+	/* Associate this window with the node we are editing */
+	g_object_set_data(G_OBJECT(edit_popup), "node", node);
+	g_object_set_data(G_OBJECT(edit_popup), "callback", i7_node_set_label);
+}
