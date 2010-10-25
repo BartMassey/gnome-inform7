@@ -48,6 +48,13 @@ on_node_activate(I7Skein *skein, I7Node *node, I7SkeinView *view)
 }
 
 static void
+on_differs_badge_activate(I7Skein *skein, I7Node *node, I7SkeinView *view)
+{
+	g_printerr("Differs badge activated! Of node: ");
+	play_to_here(skein, node);
+}
+
+static void
 on_popup_menu_play_to_here(GtkMenuItem *menuitem, CallbackData *data)
 {
 	play_to_here(data->skein, data->node);
@@ -268,6 +275,7 @@ main(int argc, char **argv)
 		NULL);
 	g_signal_connect(w->skein, "node-activate", G_CALLBACK(on_node_activate), w->view);
 	g_signal_connect(w->skein, "node-menu-popup", G_CALLBACK(on_node_popup), w->view);
+	g_signal_connect(w->skein, "differs-badge-activate", G_CALLBACK(on_differs_badge_activate), w->view);
 	
 	/* Assemble widgets */
 	gtk_box_pack_start(GTK_BOX(hbox), hspacing, TRUE, TRUE, 0);

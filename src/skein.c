@@ -47,6 +47,7 @@ enum
 {
 	NEEDS_LAYOUT,
 	NODE_ACTIVATE,
+	DIFFERS_BADGE_ACTIVATE,
 	NODE_MENU_POPUP,
 	TRANSCRIPT_THREAD_CHANGED,
 	SHOW_NODE,
@@ -215,6 +216,11 @@ i7_skein_class_init(I7SkeinClass *klass)
 		G_OBJECT_CLASS_TYPE(klass), 0,
 		G_STRUCT_OFFSET(I7SkeinClass, node_activate), NULL, NULL,
 		g_cclosure_marshal_VOID__OBJECT, G_TYPE_NONE, 1, I7_TYPE_NODE);
+	/* differs-badge-activate - user double-clicked on a differs badge */
+	i7_skein_signals[DIFFERS_BADGE_ACTIVATE] = g_signal_new("differs-badge-activate",
+	    G_OBJECT_CLASS_TYPE(klass), 0,
+	    G_STRUCT_OFFSET(I7SkeinClass, differs_badge_activate), NULL, NULL,
+	    g_cclosure_marshal_VOID__OBJECT, G_TYPE_NONE, 1, I7_TYPE_NODE);
 	/* node-popup-menu - user right-clicked on a node */
 	i7_skein_signals[NODE_MENU_POPUP] = g_signal_new("node-menu-popup",
 		G_OBJECT_CLASS_TYPE(klass), 0,

@@ -41,6 +41,10 @@ on_item_created(I7SkeinView *view, GooCanvasItem *item, GooCanvasItemModel *mode
 		i7_node_calculate_size(I7_NODE(model), GOO_CANVAS_ITEM_MODEL(*skeinptr), GOO_CANVAS(view));
 		g_signal_connect(item, "button-press-event", G_CALLBACK(on_node_button_press), model);
 	}
+	else if(GOO_IS_CANVAS_IMAGE_MODEL(model)) {
+		/* Right now, the only image model is the differs badge */
+		g_signal_connect(item, "button-press-event", G_CALLBACK(on_differs_badge_button_press), model);
+	}
 }
 
 static void

@@ -99,7 +99,6 @@ transcript_modified(I7Node *self)
 	update_node_background(self);
 }
 
-
 gboolean
 on_node_button_press(GooCanvasItem *item, GooCanvasItem *target_item, GdkEventButton *event, I7Node *self)
 {
@@ -114,6 +113,17 @@ on_node_button_press(GooCanvasItem *item, GooCanvasItem *target_item, GdkEventBu
 	return FALSE;
 }
 
+gboolean
+on_differs_badge_button_press(GooCanvasItem *item, GooCanvasItem *target_item, GdkEventButton *event, GooCanvasItemModel *model)
+{
+	I7Node *self = I7_NODE(goo_canvas_item_model_get_parent(GOO_CANVAS_ITEM_MODEL(model)));
+	I7Skein *skein = I7_SKEIN(goo_canvas_item_model_get_parent(GOO_CANVAS_ITEM_MODEL(self)));
+	if(event->type == GDK_2BUTTON_PRESS && event->button == 1) {
+		g_signal_emit_by_name(skein, "differs-badge-activate", self);
+		return TRUE;
+	}
+	return FALSE;
+}
 
 static void
 i7_node_set_expected_text(I7Node *self, const gchar *text)
