@@ -92,11 +92,20 @@ on_node_color_notify(I7Node *node, GParamSpec *pspec, I7Skein *self)
 }
 
 static void
+on_node_lock_notify(I7Node *node, GParamSpec *pspec, I7Skein *self)
+{
+	I7_SKEIN_USE_PRIVATE;
+	g_signal_emit_by_name(self, "needs-layout");
+	priv->modified = TRUE;
+}
+
+static void
 node_listen(I7Skein *self, I7Node *node)
 {
 	g_signal_connect(node, "notify::command", G_CALLBACK(on_node_text_notify), self);
 	g_signal_connect(node, "notify::label", G_CALLBACK(on_node_label_notify), self);
 	g_signal_connect(node, "notify::text-expected", G_CALLBACK(on_node_color_notify), self);
+	g_signal_connect(node, "notify::locked", G_CALLBACK(on_node_lock_notify), self);
 }
 
 /* TYPE SYSTEM */
@@ -747,7 +756,8 @@ i7_skein_remove_all(I7Skein *self, I7Node *node)
 	
 	/* FIXME something's wrong here */
     gboolean in_current = i7_skein_is_node_in_current_thread(self, node);
-    g_object_unref(node);
+	goo_canvas_item_model_remove_child(GOO_CANVAS_ITEM_MODEL(self), goo_canvas_item_model_find_child(GOO_CANVAS_ITEM_MODEL(self), node->tree_item));
+    goo_canvas_item_model_remove_child(GOO_CANVAS_ITEM_MODEL(self), goo_canvas_item_model_find_child(GOO_CANVAS_ITEM_MODEL(self), GOO_CANVAS_ITEM_MODEL(node)));
     
     if(in_current) {
         priv->current = priv->root;
@@ -776,8 +786,10 @@ i7_skein_remove_single(I7Skein *self, I7Node *node)
 			g_node_unlink(iter);
 			g_node_insert_after(node->gnode->parent, node->gnode, iter);
 		}
-	}	
-    g_object_unref(node);
+	}
+	g_node_unlink(node->gnode);
+	goo_canvas_item_model_remove_child(GOO_CANVAS_ITEM_MODEL(self), goo_canvas_item_model_find_child(GOO_CANVAS_ITEM_MODEL(self), node->tree_item));
+    goo_canvas_item_model_remove_child(GOO_CANVAS_ITEM_MODEL(self), goo_canvas_item_model_find_child(GOO_CANVAS_ITEM_MODEL(self), GOO_CANVAS_ITEM_MODEL(node)));
 	
     if(in_current) {
         priv->current = priv->root;

@@ -53,7 +53,6 @@ typedef struct _I7NodePrivate {
     GooCanvasItemModel *badge_item;
     GooCanvasItemModel *command_shape_item;
     GooCanvasItemModel *label_shape_item;
-    GooCanvasItemModel *tree_item;
 
 	/* x-coordinate */
 	gdouble x;
@@ -545,6 +544,12 @@ gboolean
 i7_node_in_thread(I7Node *self, I7Node *endnode)
 {
     return (endnode == self) || g_node_is_ancestor(self->gnode, endnode->gnode);
+}
+
+gboolean
+i7_node_is_root(I7Node *self)
+{
+	return self->gnode->parent == NULL;
 }
 
 static void

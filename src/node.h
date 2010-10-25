@@ -50,6 +50,7 @@ void i7_node_bless(I7Node *self);
 
 /* Tree functions */
 gboolean i7_node_in_thread(I7Node *self, I7Node *endnode);
+gboolean i7_node_is_root(I7Node *self);
 
 /* Serialization */
 const gchar *i7_node_get_unique_id(I7Node *self);
