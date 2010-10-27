@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
-  <requires lib="sourceview" version="2473.34008"/>
+  <requires lib="gtksourceview" version="2473.34008"/>
   <!-- interface-naming-policy project-wide -->
   <object class="GtkTreeStore" id="installed_extensions_store">
     <columns>

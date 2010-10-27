@@ -35,7 +35,7 @@ i7_source_view_init(I7SourceView *self)
 	priv->spell = NULL;
 	
 	/* Build the interface */
-	GtkBuilder *builder = create_new_builder("source.builder.xml", self);
+	GtkBuilder *builder = create_new_builder("source.ui", self);
 
 	/* Make our base-class frame invisible */
 	gtk_frame_set_label(GTK_FRAME(self), NULL);

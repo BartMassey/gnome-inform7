@@ -15,37 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <gnome.h>
-#include <math.h>
-#include <libgnomecanvas/libgnomecanvas.h>
-#include "gtkterp/gtkterp.h"
 
-#include "interface.h"
-#include "support.h"
 
-#include "appmenu.h"
-#include "appwindow.h"
-#include "colorscheme.h"
-#include "configfile.h"
-#include "datafile.h"
-#include "error.h"
-#include "prefs.h"
-#include "skein.h"
-#include "story.h"
-#include "tabgame.h"
-#include "tabskein.h"
-
-#define max(a, b) (((a) > (b))? (a) : (b))
-#define VERTICAL_NODE_FILL_FACTOR 2.0
-#define LABEL_MULTIPLIER 0.7
-
-static gboolean
-on_canvas_item_event(GnomeCanvasItem *item, GdkEvent *event, 
-                     ClickedNode *clickednode)
-{
-    /* TODO: trap clicking on the "differs badge" and show the transcript */
-}
-
+#if 0
 void
 skein_layout_and_redraw(Skein *skein, Story *thestory)
 {
@@ -284,3 +256,4 @@ on_skein_trim_ok_clicked(GtkButton *button, Story *thestory)
 			   -1, TRUE);
     gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
 }
+#endif

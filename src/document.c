@@ -87,7 +87,7 @@ i7_document_init(I7Document *self)
 	gtk_widget_set_size_request(GTK_WIDGET(self), 200, 100);
 	
 	/* Build the interface */
-	GtkBuilder *builder = create_new_builder("document.builder.xml", self);
+	GtkBuilder *builder = create_new_builder("document.ui", self);
 	
 	/* Create the private properties */
 	priv->filename = NULL;

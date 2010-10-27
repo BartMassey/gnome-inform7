@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glade-catalog name="webkit" library="libwebkit-1.0.so" depends="gtk+">
+    <glade-widget-classes>
+        <glade-widget-class name="WebKitWebView"
+            get-type-function="webkit_web_view_get_type"
+            generic-name="webkitwebview" title="WebKit Web View" />
+        <glade-widget-class name="WebKitWebFrame"
+            get-type-function="webkit_web_frame_get_type"
+            generic-name="webkitwebframe"
+            title="WebKit Web Frame" />
+        <glade-widget-class name="WebKitWebSettings"
+            get-type-function="webkit_web_settings_get_type"
+            generic-name="webkitwebsettings"
+            title="WebKit Web Settings" />
+        <glade-widget-class name="WebKitWebBackForwardList"
+            get-type-function="webkit_web_back_forward_list_get_type"
+            generic-name="webkitwebbackforwardlist"
+            title="WebKit Web Back Forward List" />
+        <glade-widget-class name="WebKitWebHistoryItem"
+            get-type-function="webkit_web_history_item_get_type"
+            generic-name="webkitwebhistoryitem"
+            title="WebKit Web History Item" />
+        <glade-widget-class name="WebKitWebNavigationAction"
+            get-type-function="webkit_web_navigation_action_get_type"
+            generic-name="webkitwebnavigationaction"
+            title="WebKit Web Navigation Action" />
+        <glade-widget-class name="WebKitWebPolicyDecision"
+            get-type-function="webkit_web_policy_decision_get_type"
+            generic-name="webkitwebpolicydecision"
+            title="WebKit Web Policy Decision" />
+        <glade-widget-class name="WebKitWebWindowFeatures"
+            get-type-function="webkit_web_window_features_get_type"
+            generic-name="webkitwebwindowfeatures"
+            title="WebKit Web Window Features" />
+    </glade-widget-classes>
+    <glade-widget-group name="webkit" title="WebKit">
+        <glade-widget-class-ref name="WebKitWebView" />
+        <glade-widget-class-ref name="WebKitWebFrame" />
+        <glade-widget-class-ref name="WebKitWebSettings" />
+        <glade-widget-class-ref name="WebKitWebBackForwardList" />
+        <glade-widget-class-ref name="WebKitWebHistoryItem" />
+        <glade-widget-class-ref name="WebKitWebNavigationAction" />
+        <glade-widget-class-ref name="WebKitWebPolicyDecision" />
+        <glade-widget-class-ref name="WebKitWebWindowFeatures" />
+    </glade-widget-group>
+</glade-catalog>

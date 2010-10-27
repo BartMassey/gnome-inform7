@@ -571,7 +571,7 @@ i7_story_init(I7Story *self)
 	GError *error = NULL;
 
 	/* Build the interface */
-	GtkBuilder *builder = create_new_builder("story.builder.xml", self);
+	GtkBuilder *builder = create_new_builder("story.ui", self);
 
 	/* Make the action groups. This for-loop is a temporary fix
 	and can be removed once Glade supports adding actions and accelerators to an

@@ -236,7 +236,7 @@ i7_panel_init(I7Panel *self)
 	priv->current = 0;
 	
 	/* Build the interface */
-	GtkBuilder *builder = create_new_builder("panel.builder.xml", self);
+	GtkBuilder *builder = create_new_builder("panel.ui", self);
 
 	/* Make the action groups */
 	const gchar *panel_actions[] = { "back", "", "forward", "", NULL };

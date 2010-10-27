@@ -65,7 +65,7 @@ i7_app_init(I7App *self)
 	I7_APP_USE_PRIVATE(self, priv);
 	
 	GError *error = NULL;
-	GtkBuilder *builder = create_new_builder("gnome-inform7.builder.xml", self);
+	GtkBuilder *builder = create_new_builder("gnome-inform7.ui", self);
 
 	/* Make the action groups. This for-loop is a temporary fix
 	and can be removed once Glade supports adding actions and accelerators to an

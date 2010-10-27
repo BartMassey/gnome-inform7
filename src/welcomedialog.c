@@ -93,7 +93,7 @@ GtkWidget *
 create_welcome_dialog(void)
 {
 	I7App *theapp = i7_app_get();
-	GtkBuilder *builder = create_new_builder("welcomedialog.builder.xml", theapp);
+	GtkBuilder *builder = create_new_builder("welcomedialog.ui", theapp);
 	GtkWidget *retval = GTK_WIDGET(load_object(builder, "welcomedialog"));
 	
 	/* Set the background pixmap for this window */

@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
-  <requires lib="webkit" version="2274.64904"/>
-  <requires lib="sourceview" version="2274.64904"/>
+  <requires lib="webkit" version="1.0"/>
+  <requires lib="gtksourceview" version="2.0"/>
   <!-- interface-naming-policy project-wide -->
   <object class="GtkActionGroup" id="panel_actions"/>
   <object class="GtkActionGroup" id="skein_actions">
@@ -82,7 +82,7 @@
     <property name="is_important">True</property>
     <signal name="activate" handler="action_contents"/>
   </object>
-  <object class="WebkitWebSettings" id="websettings">
+  <object class="WebKitWebSettings" id="websettings" type-func="webkit_web_settings_get_type">
     <property name="default_encoding">utf8</property>
     <property name="enable_plugins">False</property>
     <property name="resizable_text_areas">False</property>
@@ -170,13 +170,13 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebkitWebView" id="problems">
+              <object class="WebKitWebView" id="problems" type-func="webkit_web_view_get_type">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
                 <signal name="window_object_cleared" handler="on_documentation_window_object_cleared"/>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <signal name="resource_request_starting" handler="on_resource_request_starting"/>
+                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -259,12 +259,12 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebkitWebView" id="actions">
+              <object class="WebKitWebView" id="actions" type-func="webkit_web_view_get_type">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <signal name="resource_request_starting" handler="on_resource_request_starting"/>
+                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -288,12 +288,12 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebkitWebView" id="contents">
+              <object class="WebKitWebView" id="contents" type-func="webkit_web_view_get_type">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <signal name="resource_request_starting" handler="on_resource_request_starting"/>
+                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -321,12 +321,12 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebkitWebView" id="kinds">
+              <object class="WebKitWebView" id="kinds" type-func="webkit_web_view_get_type">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <signal name="resource_request_starting" handler="on_resource_request_starting"/>
+                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -354,12 +354,12 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebkitWebView" id="phrasebook">
+              <object class="WebKitWebView" id="phrasebook" type-func="webkit_web_view_get_type">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <signal name="resource_request_starting" handler="on_resource_request_starting"/>
+                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -387,12 +387,12 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebkitWebView" id="rules">
+              <object class="WebKitWebView" id="rules" type-func="webkit_web_view_get_type">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <signal name="resource_request_starting" handler="on_resource_request_starting"/>
+                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -420,12 +420,12 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebkitWebView" id="scenes">
+              <object class="WebKitWebView" id="scenes" type-func="webkit_web_view_get_type">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <signal name="resource_request_starting" handler="on_resource_request_starting"/>
+                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -453,12 +453,12 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebkitWebView" id="world">
+              <object class="WebKitWebView" id="world" type-func="webkit_web_view_get_type">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <signal name="resource_request_starting" handler="on_resource_request_starting"/>
+                <signal name="navigation_requested" handler="on_navigation_requested"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -572,14 +572,14 @@
         <property name="can_focus">True</property>
         <property name="hscrollbar_policy">automatic</property>
         <child>
-          <object class="WebkitWebView" id="documentation">
+          <object class="WebKitWebView" id="documentation" type-func="webkit_web_view_get_type">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="settings">websettings</property>
             <signal name="window_object_cleared" handler="on_documentation_window_object_cleared"/>
+            <signal name="resource_request_starting" handler="on_resource_request_starting"/>
             <signal name="navigation_requested" handler="on_navigation_requested"/>
             <signal name="navigation_requested" handler="after_documentation_navigation_requested" after="yes"/>
-            <signal name="resource_request_starting" handler="on_resource_request_starting"/>
             <child>
               <placeholder/>
             </child>

@@ -191,7 +191,7 @@ AC_CONFIG_FILES([
 Makefile
 gnome-inform7.spec
 src/Makefile
-src/aboutwindow.builder.xml
+src/aboutwindow.ui
 src/inform6/Makefile
 src/inweb/Makefile
 src/inweb/Materials/inweb-configuration.txt

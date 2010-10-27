@@ -22,16 +22,19 @@ gnome_inform7_SOURCES = \
 	html.c html.h \
 	lang.c lang.h \
 	newdialog.c newdialog.h \
+	node.c node.h \
 	notepad.c \
 	panel.c panel.h panel-private.h \
 	placeholder-entry.c placeholder-entry.h \
 	prefs.c prefs.h \
 	searchwindow.c searchwindow.h \
+	skein.c skein.h \
+	skein-view.c skein-view.h \
 	source-view.c source-view.h \
 	spawn.c spawn.h \
 	story.c story.h story-private.h \
 	story-source.c story-errors.c story-index.c story-settings.c \
-	story-compile.c story-game.c \
+	story-compile.c story-game.c story-skein.c \
 	welcomedialog.c welcomedialog.h \
 	main.c
 gnome_inform7_CPPFLAGS = \
@@ -43,7 +46,7 @@ gnome_inform7_LDADD = @INFORM7_LIBS@ $(INTLLIBS) osxcart/libosxcart.a
 gnome_inform7_LDFLAGS = \
 	-Wl,--export-dynamic
 
-noinst_PROGRAMS = skeintest
-skeintest_SOURCES = skeintest.c skein.c skein.h node.c node.h skein-view.c skein-view.h
-skeintest_CFLAGS = @INFORM7_CFLAGS@ $(AM_CFLAGS)
-skeintest_LDADD = @INFORM7_LIBS@
+#noinst_PROGRAMS = skeintest
+#skeintest_SOURCES = skeintest.c skein.c skein.h node.c node.h skein-view.c skein-view.h
+#skeintest_CFLAGS = @INFORM7_CFLAGS@ $(AM_CFLAGS)
+#skeintest_LDADD = @INFORM7_LIBS@
