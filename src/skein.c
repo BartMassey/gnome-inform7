@@ -752,6 +752,17 @@ i7_skein_add_new_parent(I7Skein *self, I7Node *node)
     return newnode;
 }
 
+/* Doesn't actually free the node itself, but removes it from the canvas so that
+ it gets freed. Has reversed arguments and returns FALSE for use in tree 
+ traversals. */
+static gboolean
+remove_node_from_canvas(GNode *gnode, I7Skein *self)
+{
+	goo_canvas_item_model_remove_child(GOO_CANVAS_ITEM_MODEL(self), goo_canvas_item_model_find_child(GOO_CANVAS_ITEM_MODEL(self), I7_NODE(gnode->data)->tree_item));
+    goo_canvas_item_model_remove_child(GOO_CANVAS_ITEM_MODEL(self), goo_canvas_item_model_find_child(GOO_CANVAS_ITEM_MODEL(self), GOO_CANVAS_ITEM_MODEL(gnode->data)));
+	return FALSE;
+}
+
 gboolean
 i7_skein_remove_all(I7Skein *self, I7Node *node)
 {
@@ -760,11 +771,11 @@ i7_skein_remove_all(I7Skein *self, I7Node *node)
     if(G_NODE_IS_ROOT(node->gnode))
 		return FALSE;
 	
-	/* FIXME something's wrong here */
     gboolean in_current = i7_skein_is_node_in_current_thread(self, node);
-	goo_canvas_item_model_remove_child(GOO_CANVAS_ITEM_MODEL(self), goo_canvas_item_model_find_child(GOO_CANVAS_ITEM_MODEL(self), node->tree_item));
-    goo_canvas_item_model_remove_child(GOO_CANVAS_ITEM_MODEL(self), goo_canvas_item_model_find_child(GOO_CANVAS_ITEM_MODEL(self), GOO_CANVAS_ITEM_MODEL(node)));
-    
+
+	g_node_unlink(node->gnode);
+	g_node_traverse(node->gnode, G_POST_ORDER, G_TRAVERSE_ALL, -1, (GNodeTraverseFunc)remove_node_from_canvas, self);
+	
     if(in_current) {
         priv->current = priv->root;
         priv->played = priv->root;
@@ -794,9 +805,8 @@ i7_skein_remove_single(I7Skein *self, I7Node *node)
 		}
 	}
 	g_node_unlink(node->gnode);
-	goo_canvas_item_model_remove_child(GOO_CANVAS_ITEM_MODEL(self), goo_canvas_item_model_find_child(GOO_CANVAS_ITEM_MODEL(self), node->tree_item));
-    goo_canvas_item_model_remove_child(GOO_CANVAS_ITEM_MODEL(self), goo_canvas_item_model_find_child(GOO_CANVAS_ITEM_MODEL(self), GOO_CANVAS_ITEM_MODEL(node)));
-	
+	remove_node_from_canvas(node->gnode, self);
+	                        
     if(in_current) {
         priv->current = priv->root;
         priv->played = priv->root;
