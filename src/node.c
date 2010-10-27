@@ -622,17 +622,22 @@ i7_node_layout(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canvas, gdoub
 	    "horizontal-spacing", &hspacing,
 	    "vertical-spacing", &vspacing,
 	    NULL);
-	
-	/* Find the total width of all descendant nodes */
-    gdouble total = i7_node_get_tree_width(self, skein, canvas);
-    /* Lay out each child node */
-	GNode *child; 
-    gdouble child_x = 0.0;
-    for(child = self->gnode->children; child; child = child->next) {
-        gdouble treewidth = i7_node_get_tree_width(child->data, skein, canvas);
-        i7_node_layout(child->data, skein, canvas, x - total * 0.5 + child_x + treewidth * 0.5);
-        child_x += treewidth + hspacing;
-    }
+    
+	if(g_node_n_children(self->gnode) == 1)
+		i7_node_layout(self->gnode->children->data, skein, canvas, x);
+	else {
+		/* Find the total width of all descendant nodes */
+    	gdouble total = i7_node_get_tree_width(self, skein, canvas);
+		/* Lay out each child node */
+		GNode *child; 
+		gdouble child_x = 0.0;
+
+		for(child = self->gnode->children; child; child = child->next) {
+		    gdouble treewidth = i7_node_get_tree_width(child->data, skein, canvas);
+		    i7_node_layout(child->data, skein, canvas, x - total * 0.5 + child_x + treewidth * 0.5);
+		    child_x += treewidth + hspacing;
+		}
+	}
 
 	/* Move the node's group to its proper place */
 	gdouble y = (gdouble)(g_node_depth(self->gnode) - 1.0) * vspacing;
