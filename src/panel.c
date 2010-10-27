@@ -35,6 +35,7 @@
 #include "file.h"
 #include "history.h"
 #include "html.h"
+#include "skein-view.h"
 
 /* Forward declarations */
 gboolean on_documentation_scrollbar_policy_changed(WebKitWebFrame *frame);
@@ -276,8 +277,14 @@ i7_panel_init(I7Panel *self)
 	self->sourceview = I7_SOURCE_VIEW(i7_source_view_new());
 	gtk_widget_show(GTK_WIDGET(self->sourceview));
 	GtkWidget *sourcelabel = GTK_WIDGET(load_object(builder, "source_pane_label"));
-	gtk_notebook_insert_page(GTK_NOTEBOOK(self->notebook), GTK_WIDGET(self->sourceview), sourcelabel, 0);
+	gtk_notebook_insert_page(GTK_NOTEBOOK(self->notebook), GTK_WIDGET(self->sourceview), sourcelabel, I7_PANE_SOURCE);
 	g_signal_connect_after(self->sourceview->notebook, "switch-page", G_CALLBACK(after_source_notebook_switch_page), self);
+
+	/* Add the I7SkeinView widget */
+	GtkWidget *skeinview = i7_skein_view_new();
+	gtk_widget_show(skeinview);
+	GtkWidget *skein_scrolledwindow = GTK_WIDGET(load_object(builder, "skein_scrolledwindow"));
+	gtk_container_add(GTK_CONTAINER(skein_scrolledwindow), skeinview);
 
 	/* Save public pointers to specific widgets */
 	self->z5 = GTK_WIDGET(load_object(builder, "z5"));
@@ -293,6 +300,7 @@ i7_panel_init(I7Panel *self)
 	self->tabs[I7_PANE_SOURCE] = self->sourceview->notebook;
 	self->tabs[I7_PANE_ERRORS] = GTK_WIDGET(load_object(builder, "errors_notebook"));
 	self->tabs[I7_PANE_INDEX] = GTK_WIDGET(load_object(builder, "index_notebook"));
+	self->tabs[I7_PANE_SKEIN] = skeinview;
 	self->tabs[I7_PANE_DOCUMENTATION] = GTK_WIDGET(load_object(builder, "documentation"));
 	self->tabs[I7_PANE_SETTINGS] = GTK_WIDGET(load_object(builder, "settings"));
 	self->source_tabs[I7_SOURCE_VIEW_TAB_CONTENTS] = self->sourceview->headings;

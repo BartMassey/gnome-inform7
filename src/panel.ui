@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
-  <requires lib="webkit" version="1.0"/>
-  <requires lib="gtksourceview" version="2.0"/>
+  <!-- interface-requires webkit 1.0 -->
+  <!-- interface-requires gtksourceview 2.0 -->
   <!-- interface-naming-policy project-wide -->
   <object class="GtkActionGroup" id="panel_actions"/>
   <object class="GtkActionGroup" id="skein_actions">
@@ -82,7 +82,7 @@
     <property name="is_important">True</property>
     <signal name="activate" handler="action_contents"/>
   </object>
-  <object class="WebKitWebSettings" id="websettings" type-func="webkit_web_settings_get_type">
+  <object class="WebkitWebSettings" id="websettings">
     <property name="default_encoding">utf8</property>
     <property name="enable_plugins">False</property>
     <property name="resizable_text_areas">False</property>
@@ -170,7 +170,7 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebKitWebView" id="problems" type-func="webkit_web_view_get_type">
+              <object class="WebkitWebView" id="problems">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
@@ -259,7 +259,7 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebKitWebView" id="actions" type-func="webkit_web_view_get_type">
+              <object class="WebkitWebView" id="actions">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
@@ -288,7 +288,7 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebKitWebView" id="contents" type-func="webkit_web_view_get_type">
+              <object class="WebkitWebView" id="contents">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
@@ -321,7 +321,7 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebKitWebView" id="kinds" type-func="webkit_web_view_get_type">
+              <object class="WebkitWebView" id="kinds">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
@@ -354,7 +354,7 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebKitWebView" id="phrasebook" type-func="webkit_web_view_get_type">
+              <object class="WebkitWebView" id="phrasebook">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
@@ -387,7 +387,7 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebKitWebView" id="rules" type-func="webkit_web_view_get_type">
+              <object class="WebkitWebView" id="rules">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
@@ -420,7 +420,7 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebKitWebView" id="scenes" type-func="webkit_web_view_get_type">
+              <object class="WebkitWebView" id="scenes">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
@@ -453,7 +453,7 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="WebKitWebView" id="world" type-func="webkit_web_view_get_type">
+              <object class="WebkitWebView" id="world">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
@@ -497,9 +497,14 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLabel" id="skein_placeholder">
+      <object class="GtkScrolledWindow" id="skein_scrolledwindow">
         <property name="visible">True</property>
-        <property name="label" translatable="yes">Skein</property>
+        <property name="can_focus">True</property>
+        <property name="hscrollbar_policy">automatic</property>
+        <property name="vscrollbar_policy">automatic</property>
+        <child>
+          <placeholder/>
+        </child>
       </object>
       <packing>
         <property name="position">3</property>
@@ -572,7 +577,7 @@
         <property name="can_focus">True</property>
         <property name="hscrollbar_policy">automatic</property>
         <child>
-          <object class="WebKitWebView" id="documentation" type-func="webkit_web_view_get_type">
+          <object class="WebkitWebView" id="documentation">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="settings">websettings</property>

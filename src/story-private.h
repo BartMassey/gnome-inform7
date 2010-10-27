@@ -28,6 +28,7 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 #include "story.h"
+#include "skein.h"
 #include "osxcart/plist.h"
 
 typedef struct {
@@ -50,6 +51,7 @@ typedef struct {
 	gchar *copyblorbto;
 	gchar *compiler_output;
 	/* Skein / running */
+	I7Skein *skein;
 	gboolean test_me;
 } I7StoryPrivate;
 

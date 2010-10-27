@@ -36,6 +36,8 @@
 #include "panel.h"
 #include "placeholder-entry.h"
 #include "searchwindow.h"
+#include "skein.h"
+#include "skein-view.h"
 #include "source-view.h"
 
 enum {
@@ -698,6 +700,7 @@ i7_story_init(I7Story *self)
 	priv->copyblorbto = NULL;
 	priv->compiler_output = NULL;
 	priv->test_me = FALSE;
+	priv->skein = i7_skein_new();
 
 	/* Set up the Notes window */
 	gtk_text_view_set_buffer(GTK_TEXT_VIEW(self->notes_view), priv->notes);
@@ -750,6 +753,7 @@ i7_story_init(I7Story *self)
 		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_PROGRESS]), priv->progress);
 		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_DEBUGGING]), priv->debug_log);
 		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_INFORM6]), GTK_TEXT_BUFFER(priv->i6_source));
+		i7_skein_view_set_skein(I7_SKEIN_VIEW(panel->tabs[I7_PANE_SKEIN]), priv->skein);
 
 		/* Set the Errors/Progress to a monospace font */
 		gtk_widget_modify_font(GTK_WIDGET(panel->errors_tabs[I7_ERRORS_TAB_PROGRESS]), font);
@@ -989,7 +993,10 @@ i7_story_open(I7Story *story, const gchar *directory)
 	g_free(text);
 	
 	/* Read the skein */
-	/*skein_load(priv->skein, directory);*/
+	filename = g_build_filename(directory, "Skein.skein", NULL);
+	if(!i7_skein_load(priv->skein, filename, &err))
+		error_dialog(GTK_WINDOW(story), err,
+		    _("This project's Skein was not found, or it was unreadable."));
 
 	/* Read the notes */
 	filename = g_build_filename(directory, "notes.rtf", NULL);
