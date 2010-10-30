@@ -677,6 +677,8 @@ i7_story_init(I7Story *self)
 	LOAD_WIDGET(skein_spacing_horizontal);
 	LOAD_WIDGET(skein_spacing_vertical);
 	LOAD_WIDGET(skein_spacing_use_defaults);
+	LOAD_WIDGET(skein_trim_dialog);
+	LOAD_WIDGET(skein_trim_slider);
 	
 	/* Set up the signals to do the menu hints in the statusbar */
 	i7_document_attach_menu_hints(I7_DOCUMENT(self), GTK_MENU_BAR(menu));

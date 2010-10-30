@@ -45,6 +45,7 @@
     <property name="tooltip">Trim unused nodes from the skein</property>
     <property name="stock_id">gtk-cut</property>
     <property name="is_important">True</property>
+    <signal name="activate" handler="action_trim"/>
   </object>
   <object class="GtkAction" id="play_all_blessed">
     <property name="label">Play _All</property>

@@ -47,6 +47,8 @@ gboolean i7_node_get_played(I7Node *self);
 void i7_node_set_played(I7Node *self, gboolean played);
 gboolean i7_node_get_blessed(I7Node *self);
 void i7_node_bless(I7Node *self);
+gint i7_node_get_score(I7Node *self);
+void i7_node_set_score(I7Node *self, gint score);
 
 /* Tree functions */
 gboolean i7_node_in_thread(I7Node *self, I7Node *endnode);

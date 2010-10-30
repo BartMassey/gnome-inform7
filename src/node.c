@@ -521,6 +521,19 @@ i7_node_bless(I7Node *self)
     i7_node_set_expected_text(self, priv->transcript_text);
 }
 
+gint i7_node_get_score(I7Node *self)
+{
+	I7_NODE_USE_PRIVATE;
+	return priv->score;
+}
+
+void i7_node_set_score(I7Node *self, gint score)
+{
+	I7_NODE_USE_PRIVATE;
+	priv->score = score;
+	g_object_notify(G_OBJECT(self), "score");
+}
+
 gdouble
 i7_node_get_tree_width(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canvas)
 {

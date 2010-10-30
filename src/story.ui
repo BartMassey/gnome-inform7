@@ -488,7 +488,7 @@ This operation cannot be undone.</property>
           </packing>
         </child>
         <child>
-          <object class="GtkHScale" id="trim_scale">
+          <object class="GtkHScale" id="skein_trim_slider">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="adjustment">trim_adj</property>
@@ -543,14 +543,15 @@ This operation cannot be undone.</property>
       </object>
     </child>
     <action-widgets>
-      <action-widget response="0">button5</action-widget>
-      <action-widget response="0">button4</action-widget>
+      <action-widget response="-6">button5</action-widget>
+      <action-widget response="-5">button4</action-widget>
     </action-widgets>
   </object>
   <object class="GtkAdjustment" id="trim_adj">
+    <property name="value">10</property>
     <property name="lower">1</property>
-    <property name="upper">100</property>
+    <property name="upper">30</property>
     <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
+    <property name="page_increment">5</property>
   </object>
 </interface>

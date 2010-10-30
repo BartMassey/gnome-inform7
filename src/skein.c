@@ -848,32 +848,68 @@ i7_skein_unlock(I7Skein *self, I7Node *node)
 }
 
 static void
-i7_skein_trim_recurse(I7Skein *self, I7Node *node, int min_score)
+i7_skein_trim_recurse(I7Skein *self, I7Node *node, gint min_score)
 {
 	I7_SKEIN_USE_PRIVATE;
 	
     int i = 0;
     while(i < g_node_n_children(node->gnode)) {
         I7Node *child = g_node_nth_child(node->gnode, i)->data;
-        if(i7_node_get_locked(child)) {
-            i7_skein_trim_recurse(self, child, -1);
+        if(i7_node_get_locked(child) || i7_node_get_score(child) > min_score) {
+            i7_skein_trim_recurse(self, child, min_score);
             i++;
         } else {
 			if(i7_skein_is_node_in_current_thread(self, child)) {
                 priv->current = priv->root;
                 priv->played = priv->root;
             }
-            
+			
             if(i7_skein_remove_all(self, child) == FALSE)
                 i++;
         }
     }
 }
 
+static gint
+int_compare_reversed(gconstpointer a, gconstpointer b)
+{
+	return GPOINTER_TO_INT(a) < GPOINTER_TO_INT(b);
+}
+
+static gboolean
+look_for_scores(GNode *gnode, GList **listptr)
+{
+	gint score = i7_node_get_score(I7_NODE(gnode->data));
+
+	if(g_list_index(*listptr, GINT_TO_POINTER(score)) == -1)
+		*listptr = g_list_insert_sorted(*listptr, GINT_TO_POINTER(score), int_compare_reversed);
+
+	return FALSE; /* don't stop the traversal */
+}
+
+/*static void
+print_score(gpointer item, gpointer data)
+{
+	g_print("%d ", GPOINTER_TO_INT(item));
+}*/
+
 void
-i7_skein_trim(I7Skein *self, I7Node *node, int min_score)
+i7_skein_trim(I7Skein *self, I7Node *node, gint max_temps)
 {
 	I7_SKEIN_USE_PRIVATE;
+
+	GList *scores_in_use = NULL;
+	g_node_traverse(priv->root->gnode, G_PRE_ORDER, G_TRAVERSE_ALL, -1, (GNodeTraverseFunc)look_for_scores, &scores_in_use);
+
+	/*g_print("Scores in use: ");
+	g_list_foreach(scores_in_use, print_score, NULL);
+	g_print("\n");*/
+	
+	/* Keep only the highest @max_temps scores (and those that are locked, of course) */
+	gint min_score = GPOINTER_TO_INT(g_list_nth_data(scores_in_use, max_temps));
+	/*g_print("Min score: %d\n", min_score);*/
+	g_list_free(scores_in_use);
+	
 	i7_skein_trim_recurse(self, node, min_score);
     g_signal_emit_by_name(self, "needs-layout");
     priv->modified = TRUE;

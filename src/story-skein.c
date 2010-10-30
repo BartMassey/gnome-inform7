@@ -215,20 +215,6 @@ on_skein_spacing_horizontal_value_changed(GtkRange *range)
 	config_file_set_int(PREFS_HORIZONTAL_SPACING, (gint)gtk_range_get_value(range));
 }
 
-#if 0
-void
-on_skein_trim_ok_clicked(GtkButton *button, Story *thestory)
-{
-    int pruning = 31 - (int)gtk_range_get_value
-		(GTK_RANGE(lookup_widget(thestory->window, "skein_trim_scale")));
-	if(pruning < 1)
-		pruning = 1;
-	skein_trim(thestory->theskein, skein_get_root_node(thestory->theskein),
-			   -1, TRUE);
-    gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-}
-#endif
-
 I7Skein *
 i7_story_get_skein(I7Story *story)
 {

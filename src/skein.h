@@ -98,7 +98,7 @@ gboolean i7_skein_remove_all(I7Skein *self, I7Node *node);
 gboolean i7_skein_remove_single(I7Skein *self, I7Node *node);
 void i7_skein_lock(I7Skein *self, I7Node *node);
 void i7_skein_unlock(I7Skein *self, I7Node *node);
-void i7_skein_trim(I7Skein *self, I7Node *node, int minScore);
+void i7_skein_trim(I7Skein *self, I7Node *node, gint max_temps);
 GSList *i7_skein_get_labels(I7Skein *self);
 gboolean i7_skein_has_labels(I7Skein *self);
 void i7_skein_bless(I7Skein *self, I7Node *node, gboolean all);

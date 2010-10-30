@@ -66,6 +66,9 @@ typedef struct {
 	GtkWidget *skein_spacing_horizontal;
 	GtkWidget *skein_spacing_vertical;
 	GtkWidget *skein_spacing_use_defaults;
+	/* "Skein trim" dialog widgets */
+	GtkWidget *skein_trim_dialog;
+	GtkWidget *skein_trim_slider;
 } I7Story;
 
 typedef void (*CompileActionFunc)(I7Story *, gpointer);

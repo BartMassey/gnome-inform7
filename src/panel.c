@@ -224,6 +224,25 @@ action_layout(GtkAction *action, I7Panel *panel)
 }
 
 void
+action_trim(GtkAction *action, I7Panel *panel)
+{
+	I7Story *story = I7_STORY(gtk_widget_get_toplevel(GTK_WIDGET(panel)));
+	I7Skein *skein = i7_story_get_skein(story);
+
+	gtk_widget_show(story->skein_trim_dialog);
+	gtk_window_present(GTK_WINDOW(story->skein_trim_dialog));
+	gint response = gtk_dialog_run(GTK_DIALOG(story->skein_trim_dialog));
+	gtk_widget_hide(story->skein_trim_dialog);
+
+	if(response == GTK_RESPONSE_OK) {
+		int pruning = 31 - (int)gtk_range_get_value(GTK_RANGE(story->skein_trim_slider));
+		if(pruning < 1)
+			pruning = 1;
+		i7_skein_trim(skein, i7_skein_get_root_node(skein), pruning);
+	}
+}
+
+void
 action_contents(GtkAction *action, I7Panel *panel)
 {
 	gchar *docs = i7_app_get_datafile_path_va(i7_app_get(), "Documentation", "index.html", NULL);
