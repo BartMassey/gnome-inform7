@@ -27,6 +27,7 @@
 #include "app.h"
 #include "document.h"
 #include "panel.h"
+#include "skein.h"
 
 #define I7_TYPE_STORY             	(i7_story_get_type())
 #define I7_STORY(obj)             	(G_TYPE_CHECK_INSTANCE_CAST((obj), I7_TYPE_STORY, I7Story))
@@ -59,6 +60,12 @@ typedef struct {
 	GtkWidget *notes_window;
 	GtkWidget *notes_view;
 	I7Panel *panel[I7_STORY_NUM_PANELS];
+
+	/* "Skein spacing options" dialog widgets */
+	GtkWidget *skein_spacing_dialog;
+	GtkWidget *skein_spacing_horizontal;
+	GtkWidget *skein_spacing_vertical;
+	GtkWidget *skein_spacing_use_defaults;
 } I7Story;
 
 typedef void (*CompileActionFunc)(I7Story *, gpointer);
@@ -122,5 +129,8 @@ void i7_story_run_compiler_output(I7Story *story);
 void i7_story_run_compiler_output_and_replay(I7Story *story);
 void i7_story_run_compiler_output_and_entire_skein(I7Story *story);
 void i7_story_stop_running_game(I7Story *story);
+
+/* Skein pane, story-skein.c */
+I7Skein *i7_story_get_skein(I7Story *story);
 
 #endif /* _STORY_H_ */

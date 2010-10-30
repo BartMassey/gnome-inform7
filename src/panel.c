@@ -200,6 +200,30 @@ action_forward(GtkAction *forward, I7Panel *panel)
 }
 
 void
+action_layout(GtkAction *action, I7Panel *panel)
+{
+	I7Story *story = I7_STORY(gtk_widget_get_toplevel(GTK_WIDGET(panel)));
+
+	/* Save old values in case the user decides to cancel */
+	g_object_set_data(G_OBJECT(story->skein_spacing_dialog), "old-horizontal-spacing", GINT_TO_POINTER(config_file_get_int(PREFS_HORIZONTAL_SPACING)));
+	g_object_set_data(G_OBJECT(story->skein_spacing_dialog), "old-vertical-spacing", GINT_TO_POINTER(config_file_get_int(PREFS_VERTICAL_SPACING)));
+
+	gtk_widget_show(story->skein_spacing_dialog);
+	gtk_window_present(GTK_WINDOW(story->skein_spacing_dialog));
+
+	gint response = 1; /* 1 = "Use defaults" */
+	while(response == 1)
+		response = gtk_dialog_run(GTK_DIALOG(story->skein_spacing_dialog));
+		/* If "Use defaults" clicked, then restart the dialog */
+	gtk_widget_hide(story->skein_spacing_dialog);
+	
+	if(response != GTK_RESPONSE_OK) {
+		config_file_set_int(PREFS_HORIZONTAL_SPACING, GPOINTER_TO_INT(g_object_get_data(G_OBJECT(story->skein_spacing_dialog), "old-horizontal-spacing")));
+		config_file_set_int(PREFS_VERTICAL_SPACING, GPOINTER_TO_INT(g_object_get_data(G_OBJECT(story->skein_spacing_dialog), "old-vertical-spacing")));
+	}
+}
+
+void
 action_contents(GtkAction *action, I7Panel *panel)
 {
 	gchar *docs = i7_app_get_datafile_path_va(i7_app_get(), "Documentation", "index.html", NULL);

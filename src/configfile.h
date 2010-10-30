@@ -111,6 +111,7 @@ void config_file_set_bool(const gchar *key, const gboolean value);
 gboolean config_file_get_bool(const gchar *key);
 void config_file_set_enum(const gchar *key, const gint value, GConfEnumStringPair lookup_table[]);
 gint config_file_get_enum(const gchar *key, GConfEnumStringPair lookup_table[]);
+void config_file_set_to_default(const gchar *key);
 void init_config_file(GtkBuilder *builder);
 void trigger_config_file(void);
 

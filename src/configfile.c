@@ -110,6 +110,14 @@ config_file_get_enum(const gchar *key, GConfEnumStringPair lookup_table[])
     return retval;
 }
 
+void
+config_file_set_to_default(const gchar *key)
+{
+	GConfClient *client = gconf_client_get_default();
+	gconf_client_set(client, key, gconf_client_get_default_from_schema(client, key, NULL), NULL);
+	g_object_unref(client);
+}
+
 /* returns -1 if unset or invalid */
 static int
 get_enum_from_entry(GConfEntry *entry, GConfEnumStringPair lookup_table[])
@@ -123,6 +131,8 @@ get_enum_from_entry(GConfEntry *entry, GConfEnumStringPair lookup_table[])
 	return enumvalue;
 }
 
+/* Does the same thing as config_file_set_to_default() only with an already-
+gotten client and entry */
 static void
 set_key_to_default(GConfClient *client, GConfEntry *entry)
 {
@@ -283,22 +293,30 @@ on_config_elastic_tabs_padding_changed(GConfClient *client, guint id, GConfEntry
 	i7_app_foreach_document(i7_app_get(), i7_document_refresh_elastic_tabs);
 }
 
-#if 0
-static gboolean
-update_skein_spacing(GtkWidget *window)
+static void
+update_skein_spacing(I7Document *document)
 {
-    Story *thestory = get_story(window);
-    skein_invalidate_layout(thestory->theskein);
-    skein_layout_and_redraw(thestory->theskein, thestory);
-    return FALSE; /* one-shot idle function */
+    if(!I7_IS_STORY(document))
+		return;
+
+	gdouble horizontal = (gdouble)config_file_get_int(PREFS_HORIZONTAL_SPACING);
+	gdouble vertical = (gdouble)config_file_get_int(PREFS_VERTICAL_SPACING);
+	
+    I7Story *story = I7_STORY(document);
+	g_object_set(i7_story_get_skein(story),
+	    "horizontal-spacing", horizontal,
+	    "vertical-spacing", vertical,
+	    NULL);
+	gtk_range_set_value(GTK_RANGE(story->skein_spacing_horizontal), horizontal);
+	gtk_range_set_value(GTK_RANGE(story->skein_spacing_vertical), vertical);
 }
 
 static void
-on_config_skein_spacing_changed(GConfClient *client, guint id, GConfEntry *entry, GtkWidget *window)
+on_config_skein_spacing_changed(GConfClient *client, guint id, GConfEntry *entry)
 {
-    for_each_story_window_idle((GSourceFunc)update_skein_spacing);
+	i7_app_foreach_document(i7_app_get(), update_skein_spacing);
 }
-#endif
+
 static void
 on_config_generic_bool_changed(GConfClient *client, guint id, GConfEntry *entry, GtkWidget *toggle)
 {
@@ -325,9 +343,9 @@ static struct KeyToMonitor keys_to_monitor[] = {
 	{ PREFS_CLEAN_INDEX_FILES, "clean_index_files", on_config_generic_bool_changed },
 	{ PREFS_DEBUG_LOG_VISIBLE, "show_debug_tabs", on_config_debug_log_visible_changed },
 	{ PREFS_USE_GIT, "glulx_combo", on_config_use_git_changed },
-	{ PREFS_ELASTIC_TABS_PADDING, NULL, on_config_elastic_tabs_padding_changed }/*,
+	{ PREFS_ELASTIC_TABS_PADDING, NULL, on_config_elastic_tabs_padding_changed },
 	{ PREFS_HORIZONTAL_SPACING, NULL, on_config_skein_spacing_changed },
-	{ PREFS_VERTICAL_SPACING, NULL, on_config_skein_spacing_changed }*/
+	{ PREFS_VERTICAL_SPACING, NULL, on_config_skein_spacing_changed }
 };
 
 /* Check if the config keys exist and if not, set them to defaults. */

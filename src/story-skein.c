@@ -14,8 +14,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "configfile.h"
+#include "node.h"
+#include "skein.h"
+#include "story.h"
+#include "story-private.h"
 
+void
+on_node_activate(I7Skein *skein, I7Node *node, I7Story *story)
+{
+}
 
+void
+on_node_popup(I7Skein *skein, I7Node *node, I7Story *story)
+{
+}
+
+void
+on_differs_badge_activate(I7Skein *skein, I7Node *node, I7Story *story)
+{
+}
 
 #if 0
 void
@@ -118,36 +136,6 @@ play_to_node(Skein *skein, GNode *newnode, Story *thestory)
 }
 
 void
-on_skein_layout_clicked(GtkToolButton *toolbutton, gpointer user_data)
-{
-	GtkWidget *dialog = create_skein_spacing_dialog();
-	Story *thestory = get_story(GTK_WIDGET(toolbutton));
-	thestory->old_horizontal_spacing = config_file_get_int("SkeinSettings", 
-														   "HorizontalSpacing");
-	thestory->old_vertical_spacing = config_file_get_int("SkeinSettings", 
-														 "VerticalSpacing");
-	GtkWidget *horiz = lookup_widget(dialog, "skein_horizontal_spacing");
-	GtkWidget *vert = lookup_widget(dialog, "skein_vertical_spacing");
-	gtk_range_set_value(GTK_RANGE(horiz), 
-						(gdouble)thestory->old_horizontal_spacing);
-	gtk_range_set_value(GTK_RANGE(vert), 
-						(gdouble)thestory->old_vertical_spacing);
-	g_signal_connect(lookup_widget(dialog, "skein_spacing_use_defaults"),
-					 "clicked",
-					 G_CALLBACK(on_skein_spacing_use_defaults_clicked),
-					 thestory);
-	g_signal_connect(lookup_widget(dialog, "skein_spacing_cancel"), "clicked",
-					 G_CALLBACK(on_skein_spacing_cancel_clicked), thestory);
-	g_signal_connect(horiz, "value-changed", 
-					 G_CALLBACK(on_skein_horizontal_spacing_value_changed),
-					 thestory);
-	g_signal_connect(vert, "value-changed", 
-					 G_CALLBACK(on_skein_vertical_spacing_value_changed),
-					 thestory);
-	gtk_dialog_run(GTK_DIALOG(dialog));
-}
-
-void
 on_skein_trim_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
 	GtkWidget *dialog = create_skein_trim_dialog();
@@ -206,45 +194,28 @@ on_skein_labels_show_menu(GtkMenuToolButton *menutoolbutton, gpointer user_data)
 	/* Set the menu as the drop-down menu of the button */
     gtk_menu_tool_button_set_menu(menutoolbutton, menu);
 }
+#endif
 
 void
-on_skein_spacing_use_defaults_clicked(GtkButton *button, Story *thestory)
+on_skein_spacing_use_defaults_clicked(GtkButton *button, I7Story *story)
 {
-	gtk_range_set_value(GTK_RANGE(lookup_widget(GTK_WIDGET(button), 
-												"skein_horizontal_spacing")), 
-						40.0);
-	gtk_range_set_value(GTK_RANGE(lookup_widget(GTK_WIDGET(button), 
-												"skein_vertical_spacing")), 
-						75.0);
-	/* Config file settings now triggered by "value-changed" signal */
-	skein_layout_and_redraw(thestory->theskein, thestory);
+	config_file_set_to_default(PREFS_HORIZONTAL_SPACING);
+	config_file_set_to_default(PREFS_VERTICAL_SPACING);
 }
 
 void
-on_skein_spacing_cancel_clicked(GtkButton *button, Story *thestory)
+on_skein_spacing_vertical_value_changed(GtkRange *range)
 {
-	/* Close the dialog */
-	config_file_set_int("SkeinSettings", "HorizontalSpacing", 
-						thestory->old_horizontal_spacing);
-    config_file_set_int("SkeinSettings", "VerticalSpacing", 
-						thestory->old_vertical_spacing);
-    gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+	config_file_set_int(PREFS_VERTICAL_SPACING, (gint)gtk_range_get_value(range));
 }
 
 void
-on_skein_vertical_spacing_value_changed(GtkRange *range, Story *thestory)
+on_skein_spacing_horizontal_value_changed(GtkRange *range)
 {
-	config_file_set_int("SkeinSettings", "VerticalSpacing", 
-						(gint)gtk_range_get_value(range));
+	config_file_set_int(PREFS_HORIZONTAL_SPACING, (gint)gtk_range_get_value(range));
 }
 
-void
-on_skein_horizontal_spacing_value_changed(GtkRange *range, Story *thestory)
-{
-	config_file_set_int("SkeinSettings", "HorizontalSpacing", 
-						(gint)gtk_range_get_value(range));
-}
-
+#if 0
 void
 on_skein_trim_ok_clicked(GtkButton *button, Story *thestory)
 {
@@ -257,3 +228,10 @@ on_skein_trim_ok_clicked(GtkButton *button, Story *thestory)
     gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
 }
 #endif
+
+I7Skein *
+i7_story_get_skein(I7Story *story)
+{
+	I7_STORY_USE_PRIVATE(story, priv);
+	return priv->skein;
+}

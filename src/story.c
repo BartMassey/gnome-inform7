@@ -33,6 +33,7 @@
 #include "error.h"
 #include "file.h"
 #include "lang.h"
+#include "node.h"
 #include "panel.h"
 #include "placeholder-entry.h"
 #include "searchwindow.h"
@@ -51,6 +52,11 @@ enum {
 G_DEFINE_TYPE(I7Story, i7_story, I7_TYPE_DOCUMENT);
 
 /* SIGNAL HANDLERS */
+
+/* Defined in story-skein.c */
+void on_node_activate(I7Skein *skein, I7Node *node, I7Story *story);
+void on_node_popup(I7Skein *skein, I7Node *node, I7Story *story);
+void on_differs_badge_activate(I7Skein *skein, I7Node *node, I7Story *story);
 
 static void
 on_heading_depth_value_changed(GtkRange *range, I7Story *story)
@@ -667,6 +673,10 @@ i7_story_init(I7Story *self)
 	LOAD_WIDGET(facing_pages);
 	LOAD_WIDGET(notes_window);
 	LOAD_WIDGET(notes_view);
+	LOAD_WIDGET(skein_spacing_dialog);
+	LOAD_WIDGET(skein_spacing_horizontal);
+	LOAD_WIDGET(skein_spacing_vertical);
+	LOAD_WIDGET(skein_spacing_use_defaults);
 	
 	/* Set up the signals to do the menu hints in the statusbar */
 	i7_document_attach_menu_hints(I7_DOCUMENT(self), GTK_MENU_BAR(menu));
@@ -700,8 +710,19 @@ i7_story_init(I7Story *self)
 	priv->copyblorbto = NULL;
 	priv->compiler_output = NULL;
 	priv->test_me = FALSE;
-	priv->skein = i7_skein_new();
 
+	/* Set up the Skein */
+	priv->skein = i7_skein_new();
+	g_object_set(priv->skein, 
+		"vertical-spacing", 75.0, 
+		"unlocked-color", "#6865FF",
+		NULL);
+	g_signal_connect(priv->skein, "node-activate", G_CALLBACK(on_node_activate), self);
+	g_signal_connect(priv->skein, "node-menu-popup", G_CALLBACK(on_node_popup), self);
+	g_signal_connect(priv->skein, "differs-badge-activate", G_CALLBACK(on_differs_badge_activate), self);
+	gtk_range_set_value(GTK_RANGE(self->skein_spacing_horizontal), (gdouble)config_file_get_int(PREFS_HORIZONTAL_SPACING));
+	gtk_range_set_value(GTK_RANGE(self->skein_spacing_vertical), (gdouble)config_file_get_int(PREFS_VERTICAL_SPACING));
+	
 	/* Set up the Notes window */
 	gtk_text_view_set_buffer(GTK_TEXT_VIEW(self->notes_view), priv->notes);
 	gtk_window_set_keep_above(GTK_WINDOW(self->notes_window), TRUE);

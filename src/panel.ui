@@ -38,6 +38,7 @@
     <property name="tooltip">Edit the spacing for items in the skein</property>
     <property name="stock_id">gtk-preferences</property>
     <property name="is_important">True</property>
+    <signal name="activate" handler="action_layout"/>
   </object>
   <object class="GtkAction" id="trim">
     <property name="label">_Trim</property>
