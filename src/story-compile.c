@@ -31,7 +31,11 @@
 #ifdef E2FS_UUID
 #  include <uuid/uuid.h> /* Use e2fsprogs uuid */
 #else
-#  include <ossp/uuid.h> /* Otherwise, it is OSSP uuid */
+#  ifdef HAVE_OSSP_UUID_H
+#    include <ossp/uuid.h> /* Otherwise, it is OSSP uuid */
+#  else
+#    include <uuid.h> /* May be in uuid.h */
+#  endif
 #endif
 
 #include "story.h"

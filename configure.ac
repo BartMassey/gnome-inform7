@@ -158,6 +158,8 @@ PKG_CHECK_EXISTS([uuid],
 		[AC_MSG_ERROR([Either OSSP UUID or e2fsprogs UUID required.])]
 	)]
 )
+# Also, check which header is used
+AC_CHECK_HEADERS([uuid.h ossp/uuid.h uuid/uuid.h])
 
 PKG_CHECK_MODULES([INFORM7], [
 	gdk-2.0 >= 2.2
