@@ -14,7 +14,7 @@ AC_CONFIG_SRCDIR(src/main.c)
 AM_INIT_AUTOMAKE([1.10 -Wall])
 # Configure with --enable-silent-rules to cut down on clutter
 # Requires automake 1.11, but should just be ignored on 1.10
-AM_SILENT_RULES
+AM_SILENT_RULES([yes])
 
 ### CHECK FOR PROPER NI EXECUTABLE #############################################
 
