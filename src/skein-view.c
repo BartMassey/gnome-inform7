@@ -207,3 +207,36 @@ i7_skein_view_edit_label(I7SkeinView *self, I7Node *node)
 	g_object_set_data(G_OBJECT(edit_popup), "node", node);
 	g_object_set_data(G_OBJECT(edit_popup), "callback", i7_node_set_label);
 }
+
+void
+i7_skein_view_show_node(I7SkeinView *self, I7Node *node, I7SkeinShowNodeReason why)
+{
+    switch(why) {
+        case I7_REASON_COMMAND:
+        case I7_REASON_USER_ACTION:
+		{
+			I7Skein *skein = i7_skein_view_get_skein(self);
+			gdouble vspacing, x, y, width, height;
+			
+            /* Work out the position of the node */
+			g_object_get(skein, "vertical-spacing", &vspacing, NULL);
+            x = i7_node_get_x(node);
+            y = (gdouble)(g_node_depth(node->gnode) - 1) * vspacing;
+
+			/* Work out the size of the viewport */
+			GtkWidget *scrolled_window = gtk_widget_get_parent(GTK_WIDGET(self));
+			g_assert(GTK_IS_SCROLLED_WINDOW(scrolled_window));
+			GtkAdjustment *adj = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(scrolled_window));
+			width = gtk_adjustment_get_page_size(adj);
+			adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scrolled_window));
+			height = gtk_adjustment_get_page_size(adj);
+
+			goo_canvas_scroll_to(GOO_CANVAS(self), x - width * 0.5, y - height * 0.5);
+		}
+            break;
+        case I7_REASON_TRANSCRIPT:
+            break;
+        default:
+            g_assert_not_reached();
+    }
+}

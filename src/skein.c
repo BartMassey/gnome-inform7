@@ -646,7 +646,7 @@ i7_skein_new_command(I7Skein *self, const gchar *command)
     	/* TODO: change node colors */
 		;
     }
-    g_signal_emit_by_name(self, "show-node", GOT_COMMAND, node);
+    g_signal_emit_by_name(self, "show-node", I7_REASON_COMMAND, node);
     priv->modified = TRUE;
 }
 
@@ -667,7 +667,7 @@ i7_skein_next_command(I7Skein *self, gchar **line)
 	gchar *temp = i7_node_get_command(next);
     *line = g_strcompress(temp);
 	g_free(temp);
-    g_signal_emit_by_name(self, "show-node", GOT_COMMAND, next);
+    g_signal_emit_by_name(self, "show-node", I7_REASON_COMMAND, next);
     return TRUE;
 }
 
@@ -688,7 +688,7 @@ i7_skein_get_commands(I7Skein *self)
 		gchar *skein_command = i7_node_get_command(next);
         commands = g_slist_prepend(commands, g_strcompress(skein_command));
 		g_free(skein_command);
-        g_signal_emit_by_name(self, "show-node", GOT_COMMAND, next);
+        g_signal_emit_by_name(self, "show-node", I7_REASON_COMMAND, next);
     }
     commands = g_slist_reverse(commands);
     return commands;
@@ -703,7 +703,7 @@ i7_skein_update_after_playing(I7Skein *self, const gchar *transcript)
     i7_node_set_played(priv->played, TRUE);
     if(strlen(transcript)) {
         i7_node_set_transcript_text(priv->played, transcript);
-        g_signal_emit_by_name(self, "show-node", GOT_TRANSCRIPT, priv->played);
+        g_signal_emit_by_name(self, "show-node", I7_REASON_TRANSCRIPT, priv->played);
     }
 }
 

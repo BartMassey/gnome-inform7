@@ -725,8 +725,8 @@ i7_story_init(I7Story *self)
 	g_signal_connect(priv->skein, "differs-badge-activate", G_CALLBACK(on_differs_badge_activate), self);
 	/* Connect to labels-changed twice, in order to update the pulldown menus
 	 on either side */
-	g_signal_connect(priv->skein, "labels-changed", G_CALLBACK(on_labels_changed), self->panel[LEFT]->labels);
-	g_signal_connect(priv->skein, "labels-changed", G_CALLBACK(on_labels_changed), self->panel[RIGHT]->labels);
+	g_signal_connect(priv->skein, "labels-changed", G_CALLBACK(on_labels_changed), self->panel[LEFT]);
+	g_signal_connect(priv->skein, "labels-changed", G_CALLBACK(on_labels_changed), self->panel[RIGHT]);
 	gtk_range_set_value(GTK_RANGE(self->skein_spacing_horizontal), (gdouble)config_file_get_int(PREFS_HORIZONTAL_SPACING));
 	gtk_range_set_value(GTK_RANGE(self->skein_spacing_vertical), (gdouble)config_file_get_int(PREFS_VERTICAL_SPACING));
 	

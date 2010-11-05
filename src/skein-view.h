@@ -52,6 +52,7 @@ void i7_skein_view_set_skein(I7SkeinView *self, I7Skein *skein);
 I7Skein *i7_skein_view_get_skein(I7SkeinView *self);
 void i7_skein_view_edit_node(I7SkeinView *self, I7Node *node);
 void i7_skein_view_edit_label(I7SkeinView *self, I7Node *node);
+void i7_skein_view_show_node(I7SkeinView *self, I7Node *node, I7SkeinShowNodeReason why);
 
 G_END_DECLS
 

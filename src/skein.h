@@ -25,17 +25,6 @@
 #include <cairo.h>
 #include "node.h"
 
-typedef struct {
-	gchar *label;
-	I7Node *node;
-} I7SkeinNodeLabel;
-
-enum {
-    GOT_COMMAND,
-    GOT_TRANSCRIPT,
-    GOT_USER_ACTION
-};
-
 G_BEGIN_DECLS
 
 #define I7_TYPE_SKEIN             (i7_skein_get_type ())
@@ -44,6 +33,17 @@ G_BEGIN_DECLS
 #define I7_IS_SKEIN(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), I7_TYPE_SKEIN))
 #define I7_IS_SKEIN_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), I7_TYPE_SKEIN))
 #define I7_SKEIN_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), I7_TYPE_SKEIN, I7SkeinClass))
+
+typedef enum {
+    I7_REASON_COMMAND,
+    I7_REASON_TRANSCRIPT,
+    I7_REASON_USER_ACTION
+} I7SkeinShowNodeReason;
+
+typedef struct {
+	gchar *label;
+	I7Node *node;
+} I7SkeinNodeLabel;
 
 typedef struct _I7SkeinClass I7SkeinClass;
 typedef struct _I7Skein I7Skein;

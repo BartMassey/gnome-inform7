@@ -73,6 +73,7 @@ typedef struct {
 	GtkWidget *notebook;
 	I7SourceView *sourceview;
 	GtkToolItem *labels;
+	GtkWidget *labels_menu;
 	GtkWidget *z5;
 	GtkWidget *z8;
 	GtkWidget *z6;

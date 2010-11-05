@@ -17,6 +17,7 @@
 #include "configfile.h"
 #include "node.h"
 #include "skein.h"
+#include "skein-view.h"
 #include "story.h"
 #include "story-private.h"
 
@@ -35,100 +36,50 @@ on_differs_badge_activate(I7Skein *skein, I7Node *node, I7Story *story)
 {
 }
 
+typedef struct {
+	I7SkeinView *skein_view;
+	I7Node *node;
+} I7LabelsMenuCallbackData;
+
 static void
-create_labels_menu(I7SkeinNodeLabel *nodelabel, GtkWidget *menu)
+jump_to_node(GtkMenuItem *menuitem, I7LabelsMenuCallbackData *data)
+{
+	i7_skein_view_show_node(data->skein_view, data->node, I7_REASON_USER_ACTION);
+}
+
+static void
+create_labels_menu(I7SkeinNodeLabel *nodelabel, I7Panel *panel)
 {
 	GtkWidget *item = gtk_menu_item_new_with_label(nodelabel->label);
 	gtk_widget_show(item);
-	//g_signal_connect(item, "activate", G_CALLBACK(jump_to_node), nodelabel->node);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+	/* Create a one-off callback data structure */
+	I7LabelsMenuCallbackData *data = g_new0(I7LabelsMenuCallbackData, 1);
+	data->skein_view = I7_SKEIN_VIEW(panel->tabs[I7_PANE_SKEIN]);
+	data->node = nodelabel->node;
+	
+	g_signal_connect_data(item, "activate", G_CALLBACK(jump_to_node), data, (GClosureNotify)g_free, 0);
+	gtk_menu_shell_append(GTK_MENU_SHELL(panel->labels_menu), item);
 }
 
 void
-on_labels_changed(I7Skein *skein, GtkMenuToolButton *button)
+on_labels_changed(I7Skein *skein, I7Panel *panel)
 {
 	GSList *labels = i7_skein_get_labels(skein);
 
 	/* Create a new menu */
-	GtkWidget *menu = gtk_menu_new();
-	gtk_widget_show(menu);
-	g_slist_foreach(labels, (GFunc)create_labels_menu, menu);
+	if(panel->labels_menu)
+		gtk_widget_destroy(panel->labels_menu);
+	panel->labels_menu = gtk_menu_new();
+	gtk_widget_show(panel->labels_menu);
+	g_slist_foreach(labels, (GFunc)create_labels_menu, panel);
 	i7_skein_free_node_label_list(labels);
 	
 	/* Set the menu as the drop-down menu of the button */
-    gtk_menu_tool_button_set_menu(button, menu);
+    gtk_menu_tool_button_set_menu(GTK_MENU_TOOL_BUTTON(panel->labels), panel->labels_menu);
 }
 
 #if 0
-void
-skein_layout_and_redraw(Skein *skein, Story *thestory)
-{
-    double horizontal_spacing = (double)config_file_get_int("SkeinSettings", 
-                                                           "HorizontalSpacing");
-	skein_layout(skein, horizontal_spacing);
-    skein_schedule_redraw(skein, thestory);
-	
-	/* Make the labels button sensitive or insensitive, since this function is
-	called on every "node-text-changed" signal */
-	gboolean labels = skein_has_labels(skein);
-	gtk_widget_set_sensitive(lookup_widget(thestory->window, "skein_labels_l"),
-							 labels);
-	gtk_widget_set_sensitive(lookup_widget(thestory->window, "skein_labels_r"),
-							 labels);
-}
-
-void
-show_node(Skein *skein, guint why, GNode *node, Story *thestory)
-{
-    double horizontal_spacing = (double)config_file_get_int("SkeinSettings", 
-                                                           "HorizontalSpacing");
-    double vertical_spacing = (double)config_file_get_int("SkeinSettings",
-                                                          "VerticalSpacing");
-    /* Why, oh why, can't GnomeCanvas have a SANE scroll mechanism?
-    And a model-view-controller interface? */
-    double x, y, width, x1 = 0.0, y1 = 0.0, x2 = 0.0, y2 = 0.0;
-    double scroll_x, scroll_y;
-    int foo;
-    extern GtkWidget *inspector_window;
-    gchar *skein_widgets[3] = {
-        "skein_l", "skein_r", "skein_inspector_canvas"
-    };
-    gchar *scroll_widgets[3] = {
-        "skein_l_scroll", "skein_r_scroll", "skein_inspector_scroll"
-    };
-    
-    switch(why) {
-        case GOT_LINE:
-        case GOT_USER_ACTION:
-            /* Work out the position of the node */
-            x = node_get_x(node);
-            y = (double)(g_node_depth(node) - 1) * vertical_spacing;
-            width = node_get_line_text_width(node) * 0.5;
-            for(foo = 0; foo < 3; foo++) {
-                GnomeCanvas *canvas = GNOME_CANVAS(lookup_widget(
-                    foo == 2? inspector_window : thestory->window,
-                    skein_widgets[foo]));
-                GtkScrolledWindow *scroll = GTK_SCROLLED_WINDOW(lookup_widget(
-                    foo == 2? inspector_window : thestory->window,
-                    scroll_widgets[foo]));
-                gnome_canvas_get_scroll_region(canvas, &x1, &y1, &x2, &y2);
-                GtkAdjustment *h = gtk_scrolled_window_get_hadjustment(scroll);
-                GtkAdjustment *v = gtk_scrolled_window_get_vadjustment(scroll);
-                scroll_x = ((x-x1) / (x2-x1)) * (h->upper-h->lower) + h->lower;
-                scroll_y = ((y-y1) / (y2-y1)) * (v->upper-v->lower) + v->lower;
-                gtk_adjustment_clamp_page(h, scroll_x-width-horizontal_spacing,
-                                          scroll_x+width+horizontal_spacing);
-                gtk_adjustment_clamp_page(v, scroll_y - 1.5*vertical_spacing,
-                                          scroll_y + 1.5*vertical_spacing);
-            }
-            break;
-        case GOT_TRANSCRIPT:
-            break;
-        default:
-            g_assert_not_reached();
-    }
-}
-
 void
 play_to_node(Skein *skein, GNode *newnode, Story *thestory)
 {
@@ -158,14 +109,6 @@ play_to_node(Skein *skein, GNode *newnode, Story *thestory)
         gtk_terp_set_interactive(terp, TRUE);
     }
 }
-
-static void
-jump_to_node(GtkMenuItem *menuitem, GNode *node)
-{
-	Story *thestory = get_story(GTK_WIDGET(menuitem));
-	show_node(thestory->theskein, GOT_USER_ACTION, node, thestory);
-}
-
 #endif
 
 void
