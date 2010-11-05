@@ -404,6 +404,7 @@ i7_node_set_command(I7Node *self, const gchar *command)
 	g_object_notify(G_OBJECT(self), "command");
 }
 
+/* Free after use */
 gchar *
 i7_node_get_label(I7Node *self)
 {

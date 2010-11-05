@@ -50,6 +50,7 @@ enum
 	DIFFERS_BADGE_ACTIVATE,
 	NODE_MENU_POPUP,
 	TRANSCRIPT_THREAD_CHANGED,
+	LABELS_CHANGED,
 	SHOW_NODE,
 	LAST_SIGNAL
 };
@@ -82,6 +83,7 @@ on_node_label_notify(I7Node *node, GParamSpec *pspec, I7Skein *self)
 {
 	if(i7_node_has_label(node))
 		i7_skein_lock(self, i7_skein_get_thread_bottom(self, node));
+	g_signal_emit_by_name(self, "labels-changed");
 	on_node_text_notify(node, pspec, self);
 }
 
@@ -230,6 +232,11 @@ i7_skein_class_init(I7SkeinClass *klass)
 	i7_skein_signals[TRANSCRIPT_THREAD_CHANGED] = g_signal_new("transcript-thread-changed",
 	    G_OBJECT_CLASS_TYPE(klass), 0,
 	    G_STRUCT_OFFSET(I7SkeinClass, transcript_thread_changed), NULL, NULL,
+	    g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+	/* labels-changed - for controlling the 'labels' dropdown menu */
+	i7_skein_signals[LABELS_CHANGED] = g_signal_new("labels-changed",
+	    G_OBJECT_CLASS_TYPE(klass), 0,
+	    G_STRUCT_OFFSET(I7SkeinClass, labels_changed), NULL, NULL,
 	    g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 	/* show-node - skein requests its view to display a certain node */
 	i7_skein_signals[SHOW_NODE] = g_signal_new("show-node",
@@ -458,6 +465,7 @@ i7_skein_load(I7Skein *self, const gchar *filename, GError **error)
 	} while(gnode);
 	
     g_signal_emit_by_name(self, "needs-layout");
+	g_signal_emit_by_name(self, "labels-changed");
     priv->modified = FALSE;
     
     g_free(root_id);
@@ -920,7 +928,7 @@ get_labels(GNode *gnode, GSList **labels)
 {
 	I7Node *node = gnode->data;
 	if(i7_node_has_label(node)) {
-		NodeLabel *nodelabel = g_slice_new0(NodeLabel);
+		I7SkeinNodeLabel *nodelabel = g_slice_new0(I7SkeinNodeLabel);
 		nodelabel->label = i7_node_get_label(node);
 		nodelabel->node = node;
 		*labels = g_slist_prepend(*labels, nodelabel);
@@ -928,6 +936,8 @@ get_labels(GNode *gnode, GSList **labels)
 	g_node_children_foreach(gnode, G_TRAVERSE_ALL, (GNodeForeachFunc)get_labels, labels);
 }
 
+/* Free the list after use with the convenience function 
+ i7_skein_free_node_label_list() */
 GSList *
 i7_skein_get_labels(I7Skein *self)
 {
@@ -936,6 +946,20 @@ i7_skein_get_labels(I7Skein *self)
 	get_labels(priv->root->gnode, &labels);
 	labels = g_slist_sort_with_data(labels, (GCompareDataFunc)strcmp, NULL);
 	return labels;
+}
+
+static void
+free_node_label(I7SkeinNodeLabel *label)
+{
+	g_free(label->label);
+	g_slice_free(I7SkeinNodeLabel, label);
+}
+
+void
+i7_skein_free_node_label_list(GSList *labels)
+{
+	g_slist_foreach(labels, (GFunc)free_node_label, NULL);
+	g_slist_free(labels);
 }
 
 static gboolean

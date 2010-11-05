@@ -57,6 +57,7 @@ G_DEFINE_TYPE(I7Story, i7_story, I7_TYPE_DOCUMENT);
 void on_node_activate(I7Skein *skein, I7Node *node, I7Story *story);
 void on_node_popup(I7Skein *skein, I7Node *node, I7Story *story);
 void on_differs_badge_activate(I7Skein *skein, I7Node *node, I7Story *story);
+void on_labels_changed(I7Skein *skein, I7Story *story);
 
 static void
 on_heading_depth_value_changed(GtkRange *range, I7Story *story)
@@ -722,6 +723,10 @@ i7_story_init(I7Story *self)
 	g_signal_connect(priv->skein, "node-activate", G_CALLBACK(on_node_activate), self);
 	g_signal_connect(priv->skein, "node-menu-popup", G_CALLBACK(on_node_popup), self);
 	g_signal_connect(priv->skein, "differs-badge-activate", G_CALLBACK(on_differs_badge_activate), self);
+	/* Connect to labels-changed twice, in order to update the pulldown menus
+	 on either side */
+	g_signal_connect(priv->skein, "labels-changed", G_CALLBACK(on_labels_changed), self->panel[LEFT]->labels);
+	g_signal_connect(priv->skein, "labels-changed", G_CALLBACK(on_labels_changed), self->panel[RIGHT]->labels);
 	gtk_range_set_value(GTK_RANGE(self->skein_spacing_horizontal), (gdouble)config_file_get_int(PREFS_HORIZONTAL_SPACING));
 	gtk_range_set_value(GTK_RANGE(self->skein_spacing_vertical), (gdouble)config_file_get_int(PREFS_VERTICAL_SPACING));
 	

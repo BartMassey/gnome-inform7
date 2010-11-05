@@ -32,6 +32,7 @@
     <property name="label">_Labels</property>
     <property name="tooltip">Jump to a labeled node in the Skein</property>
     <property name="stock_id">gtk-jump-to</property>
+    <signal name="activate" handler="action_labels"/>
   </object>
   <object class="GtkAction" id="layout">
     <property name="label">La_yout</property>
@@ -52,6 +53,7 @@
     <property name="tooltip">Play through all the blessed nodes in the entire skein</property>
     <property name="stock_id">gtk-media-play</property>
     <property name="is_important">True</property>
+    <signal name="activate" handler="action_play_all_blessed"/>
   </object>
   <object class="GtkAction" id="next_difference_skein">
     <property name="label">Next in _Skein</property>
@@ -845,5 +847,4 @@
     <property name="label" translatable="yes">Source</property>
     <property name="angle">270</property>
   </object>
-  <object class="GtkAction" id="labels_menu"/>
 </interface>

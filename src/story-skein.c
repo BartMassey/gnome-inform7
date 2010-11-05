@@ -35,6 +35,30 @@ on_differs_badge_activate(I7Skein *skein, I7Node *node, I7Story *story)
 {
 }
 
+static void
+create_labels_menu(I7SkeinNodeLabel *nodelabel, GtkWidget *menu)
+{
+	GtkWidget *item = gtk_menu_item_new_with_label(nodelabel->label);
+	gtk_widget_show(item);
+	//g_signal_connect(item, "activate", G_CALLBACK(jump_to_node), nodelabel->node);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+}
+
+void
+on_labels_changed(I7Skein *skein, GtkMenuToolButton *button)
+{
+	GSList *labels = i7_skein_get_labels(skein);
+
+	/* Create a new menu */
+	GtkWidget *menu = gtk_menu_new();
+	gtk_widget_show(menu);
+	g_slist_foreach(labels, (GFunc)create_labels_menu, menu);
+	i7_skein_free_node_label_list(labels);
+	
+	/* Set the menu as the drop-down menu of the button */
+    gtk_menu_tool_button_set_menu(button, menu);
+}
+
 #if 0
 void
 skein_layout_and_redraw(Skein *skein, Story *thestory)
@@ -135,32 +159,6 @@ play_to_node(Skein *skein, GNode *newnode, Story *thestory)
     }
 }
 
-void
-on_skein_trim_clicked(GtkToolButton *toolbutton, gpointer user_data)
-{
-	GtkWidget *dialog = create_skein_trim_dialog();
-	Story *thestory = get_story(GTK_WIDGET(toolbutton));
-	g_signal_connect(lookup_widget(dialog, "skein_trim_ok"), "clicked",
-					 G_CALLBACK(on_skein_trim_ok_clicked), thestory);
-	gtk_dialog_run(GTK_DIALOG(dialog));
-}
-
-void
-on_skein_play_all_clicked(GtkToolButton *toolbutton, gpointer user_data)
-{
-	
-}
-
-static void
-free_node_labels(GSList *item, gpointer data)
-{
-	NodeLabel *nodelabel = (NodeLabel *)item->data;
-	if(nodelabel) {
-		if(nodelabel->label) g_free(nodelabel->label);
-		g_free(nodelabel);
-	}
-}
-
 static void
 jump_to_node(GtkMenuItem *menuitem, GNode *node)
 {
@@ -168,32 +166,6 @@ jump_to_node(GtkMenuItem *menuitem, GNode *node)
 	show_node(thestory->theskein, GOT_USER_ACTION, node, thestory);
 }
 
-void
-on_skein_labels_show_menu(GtkMenuToolButton *menutoolbutton, gpointer user_data)
-{
-	Story *thestory = get_story(GTK_WIDGET(menutoolbutton));
-	
-	/* Destroy the previous menu */
-    gtk_menu_tool_button_set_menu(menutoolbutton, NULL);
-	/* Create a new menu */
-	GtkWidget *menu = gtk_menu_new();
-	gtk_widget_show(menu);
-	GSList *labels = skein_get_labels(thestory->theskein);
-	for( ; labels != NULL; labels = g_slist_next(labels)) {
-		NodeLabel *nodelabel = (NodeLabel *)labels->data;
-		GtkWidget *item = gtk_menu_item_new_with_label
-			(g_strdup(nodelabel->label));
-		gtk_widget_show(item);
-		g_signal_connect(item, "activate", G_CALLBACK(jump_to_node), 
-						 nodelabel->node);
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	}
-	g_slist_foreach(labels, (GFunc)free_node_labels, NULL);
-	g_slist_free(labels);
-	
-	/* Set the menu as the drop-down menu of the button */
-    gtk_menu_tool_button_set_menu(menutoolbutton, menu);
-}
 #endif
 
 void

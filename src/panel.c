@@ -200,6 +200,12 @@ action_forward(GtkAction *forward, I7Panel *panel)
 }
 
 void
+action_labels(GtkAction *action, I7Panel *panel)
+{
+
+}
+
+void
 action_layout(GtkAction *action, I7Panel *panel)
 {
 	I7Story *story = I7_STORY(gtk_widget_get_toplevel(GTK_WIDGET(panel)));
@@ -240,6 +246,11 @@ action_trim(GtkAction *action, I7Panel *panel)
 			pruning = 1;
 		i7_skein_trim(skein, i7_skein_get_root_node(skein), pruning);
 	}
+}
+
+void
+action_play_all(GtkAction *action, I7Panel *panel)
+{
 }
 
 void
@@ -306,10 +317,10 @@ i7_panel_init(I7Panel *self)
 	gtk_toolbar_set_style(GTK_TOOLBAR(self->toolbar), GTK_TOOLBAR_BOTH_HORIZ);
 	
 	/* Add the Labels menu; apparently GtkUIManager can't build menu tool items */
-	GtkToolItem *labels = gtk_menu_tool_button_new(NULL, NULL);
-	gtk_toolbar_insert(GTK_TOOLBAR(self->toolbar), labels, 3);
+	self->labels = gtk_menu_tool_button_new(NULL, NULL);
+	gtk_toolbar_insert(GTK_TOOLBAR(self->toolbar), self->labels, 3);
 	GtkAction *labels_action = gtk_action_group_get_action(priv->skein_action_group, "labels");
-	gtk_action_connect_proxy(labels_action, GTK_WIDGET(labels));
+	gtk_action_connect_proxy(labels_action, GTK_WIDGET(self->labels));
 
 	/* Reparent the widgets into our new VBox */
 	self->notebook = GTK_WIDGET(load_object(builder, "panel"));

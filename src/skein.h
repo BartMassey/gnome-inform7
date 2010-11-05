@@ -28,7 +28,7 @@
 typedef struct {
 	gchar *label;
 	I7Node *node;
-} NodeLabel;
+} I7SkeinNodeLabel;
 
 enum {
     GOT_COMMAND,
@@ -58,6 +58,7 @@ struct _I7SkeinClass
 	void(* differs_badge_activate) (I7Skein *self, I7Node *node);
 	void(* node_menu_popup) (I7Skein *self, I7Node *node);
 	void(* transcript_thread_changed) (I7Skein *self);
+	void(* labels_changed) (I7Skein *self);
 	void(* show_node) (I7Skein *self, guint why, I7Node *node);
 };
 
@@ -77,6 +78,7 @@ typedef enum _I7SkeinError {
 GQuark i7_skein_error_quark(void);
 GType i7_skein_get_type(void) G_GNUC_CONST;
 I7Skein *i7_skein_new(void);
+void i7_skein_free_node_label_list(GSList *labels);
 
 I7Node *i7_skein_get_root_node(I7Skein *self);
 I7Node *i7_skein_get_current_node(I7Skein *self);
