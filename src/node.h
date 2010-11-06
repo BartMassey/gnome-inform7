@@ -63,6 +63,7 @@ gdouble i7_node_get_x(I7Node *self);
 gdouble i7_node_get_tree_width(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canvas);
 void i7_node_layout(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canvas, gdouble x);
 void i7_node_calculate_size(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canvas);
+void i7_node_invalidate_size(I7Node *self);
 gboolean i7_node_get_command_coordinates(I7Node *self, gint *x, gint *y, GooCanvas *canvas);
 gboolean i7_node_get_label_coordinates(I7Node *self, gint *x, gint *y, GooCanvas *canvas);
 

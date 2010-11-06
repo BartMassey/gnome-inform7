@@ -433,8 +433,12 @@ i7_story_update_fonts(I7Document *document)
 	if(!I7_IS_STORY(document))
 		return;
 	I7Story *story = I7_STORY(document);
+	I7_STORY_USE_PRIVATE(story, priv);
 	i7_panel_update_fonts(story->panel[LEFT]);
 	i7_panel_update_fonts(story->panel[RIGHT]);
+	PangoFontDescription *font = get_font_description();
+	i7_skein_set_font(priv->skein, font);
+	pango_font_description_free(font);
 	update_font(story->notes_view);
 }
 
@@ -445,8 +449,12 @@ i7_story_update_font_sizes(I7Document *document)
 	if(!I7_IS_STORY(document))
 		return;
 	I7Story *story = I7_STORY(document);
+	I7_STORY_USE_PRIVATE(story, priv);
 	i7_panel_update_font_sizes(story->panel[LEFT]);
 	i7_panel_update_font_sizes(story->panel[RIGHT]);
+	PangoFontDescription *font = get_font_description();
+	i7_skein_set_font(priv->skein, font);
+	pango_font_description_free(font);
 }
 
 static void

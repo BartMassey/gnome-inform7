@@ -763,6 +763,16 @@ i7_node_calculate_size(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canva
 		g_signal_emit_by_name(skein, "needs-layout");
 }
 
+void 
+i7_node_invalidate_size(I7Node *self)
+{
+	I7_NODE_USE_PRIVATE;
+	priv->command_width = -1.0;
+	priv->command_height = -1.0;
+	priv->label_width = -1.0;
+	priv->label_height = -1.0;
+}
+
 static gboolean
 i7_goo_canvas_item_get_onscreen_coordinates(GooCanvasItem *item, GooCanvas *canvas, gint *x, gint *y)
 {

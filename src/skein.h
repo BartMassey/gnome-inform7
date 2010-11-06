@@ -107,6 +107,7 @@ gboolean i7_skein_can_bless(I7Skein *self, I7Node *node, gboolean all);
 I7Node *i7_skein_get_thread_top(I7Skein *self, I7Node *node);
 I7Node *i7_skein_get_thread_bottom(I7Skein *self, I7Node *node);
 gboolean i7_skein_get_modified(I7Skein *self);
+void i7_skein_set_font(I7Skein *self, PangoFontDescription *font);
 
 /* DEBUG */
 void i7_skein_dump(I7Skein *self);

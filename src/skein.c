@@ -1039,6 +1039,22 @@ i7_skein_get_modified(I7Skein *self)
     return priv->modified;
 }
 
+static gboolean
+invalidate(GNode *gnode)
+{
+	i7_node_invalidate_size(I7_NODE(gnode->data));
+	return FALSE;
+}
+
+void 
+i7_skein_set_font(I7Skein *self, PangoFontDescription *font)
+{
+	I7_SKEIN_USE_PRIVATE;
+	g_object_set(self, "font-desc", font, NULL);
+	g_node_traverse(priv->root->gnode, G_PRE_ORDER, G_TRAVERSE_ALL, -1, (GNodeTraverseFunc)invalidate, NULL);
+	g_signal_emit_by_name(self, "needs-layout");
+}
+
 /* DEBUG */
 static void
 i7_skein_node_dump(I7Node *node)
