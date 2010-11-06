@@ -54,10 +54,11 @@ G_DEFINE_TYPE(I7Story, i7_story, I7_TYPE_DOCUMENT);
 /* SIGNAL HANDLERS */
 
 /* Defined in story-skein.c */
-void on_node_activate(I7Skein *skein, I7Node *node, I7Story *story);
-void on_node_popup(I7Skein *skein, I7Node *node, I7Story *story);
-void on_differs_badge_activate(I7Skein *skein, I7Node *node, I7Story *story);
-void on_labels_changed(I7Skein *skein, I7Story *story);
+void on_node_activate(I7Skein *, I7Node *, I7Story *);
+void on_node_popup(I7SkeinView *, I7Node *);
+void on_differs_badge_activate(I7Skein *, I7Node *, I7Story *);
+void on_labels_changed(I7Skein *, I7Panel *);
+void on_show_node(I7Skein *, I7SkeinShowNodeReason, I7Node *, I7Panel *);
 
 static void
 on_heading_depth_value_changed(GtkRange *range, I7Story *story)
@@ -721,12 +722,7 @@ i7_story_init(I7Story *self)
 		"unlocked-color", "#6865FF",
 		NULL);
 	g_signal_connect(priv->skein, "node-activate", G_CALLBACK(on_node_activate), self);
-	g_signal_connect(priv->skein, "node-menu-popup", G_CALLBACK(on_node_popup), self);
 	g_signal_connect(priv->skein, "differs-badge-activate", G_CALLBACK(on_differs_badge_activate), self);
-	/* Connect to labels-changed twice, in order to update the pulldown menus
-	 on either side */
-	g_signal_connect(priv->skein, "labels-changed", G_CALLBACK(on_labels_changed), self->panel[LEFT]);
-	g_signal_connect(priv->skein, "labels-changed", G_CALLBACK(on_labels_changed), self->panel[RIGHT]);
 	gtk_range_set_value(GTK_RANGE(self->skein_spacing_horizontal), (gdouble)config_file_get_int(PREFS_HORIZONTAL_SPACING));
 	gtk_range_set_value(GTK_RANGE(self->skein_spacing_vertical), (gdouble)config_file_get_int(PREFS_VERTICAL_SPACING));
 	
@@ -774,6 +770,9 @@ i7_story_init(I7Story *self)
 		g_signal_connect(panel, "paste-code", G_CALLBACK(on_panel_paste_code), self);
 		g_signal_connect(panel, "jump-to-line", G_CALLBACK(on_panel_jump_to_line), self);
 		g_signal_connect(panel, "display-docpage", G_CALLBACK(on_panel_display_docpage), self);
+		g_signal_connect(priv->skein, "labels-changed", G_CALLBACK(on_labels_changed), panel);
+		g_signal_connect(priv->skein, "show-node", G_CALLBACK(on_show_node), panel);
+		g_signal_connect(panel->tabs[I7_PANE_SKEIN], "node-menu-popup", G_CALLBACK(on_node_popup), NULL);
 
 		/* Connect various models to various views */
 		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->source_tabs[I7_SOURCE_VIEW_TAB_SOURCE]), GTK_TEXT_BUFFER(buffer));

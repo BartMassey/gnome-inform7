@@ -39,6 +39,8 @@ typedef struct _I7SkeinView I7SkeinView;
 struct _I7SkeinViewClass
 {
 	GooCanvasClass parent_class;
+	/* Signals */
+	void(* node_menu_popup) (I7SkeinView *self, I7Node *node);
 };
 
 struct _I7SkeinView

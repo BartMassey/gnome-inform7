@@ -32,6 +32,14 @@ typedef struct _I7SkeinViewPrivate
 #define I7_SKEIN_VIEW_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), I7_TYPE_SKEIN_VIEW, I7SkeinViewPrivate))
 #define I7_SKEIN_VIEW_USE_PRIVATE(o,n) I7SkeinViewPrivate *n = I7_SKEIN_VIEW_PRIVATE(o)
 
+enum 
+{
+	NODE_MENU_POPUP,
+	LAST_SIGNAL
+};
+
+static guint i7_skein_view_signals[LAST_SIGNAL] = { 0 };
+
 G_DEFINE_TYPE(I7SkeinView, i7_skein_view, GOO_TYPE_CANVAS);
 
 static void
@@ -75,6 +83,12 @@ i7_skein_view_class_init(I7SkeinViewClass *klass)
 {
 	GObjectClass* object_class = G_OBJECT_CLASS(klass);
 	object_class->finalize = i7_skein_view_finalize;
+
+	/* node-popup-menu - user right-clicked on a node */
+	i7_skein_view_signals[NODE_MENU_POPUP] = g_signal_new("node-menu-popup",
+		G_OBJECT_CLASS_TYPE(klass), 0,
+		G_STRUCT_OFFSET(I7SkeinViewClass, node_menu_popup), NULL, NULL,
+		g_cclosure_marshal_VOID__OBJECT, G_TYPE_NONE, 1, I7_TYPE_NODE);
 
 	/* Add private data */
 	g_type_class_add_private(klass, sizeof(I7SkeinViewPrivate));

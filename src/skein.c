@@ -48,7 +48,6 @@ enum
 	NEEDS_LAYOUT,
 	NODE_ACTIVATE,
 	DIFFERS_BADGE_ACTIVATE,
-	NODE_MENU_POPUP,
 	TRANSCRIPT_THREAD_CHANGED,
 	LABELS_CHANGED,
 	SHOW_NODE,
@@ -223,11 +222,6 @@ i7_skein_class_init(I7SkeinClass *klass)
 	    G_OBJECT_CLASS_TYPE(klass), 0,
 	    G_STRUCT_OFFSET(I7SkeinClass, differs_badge_activate), NULL, NULL,
 	    g_cclosure_marshal_VOID__OBJECT, G_TYPE_NONE, 1, I7_TYPE_NODE);
-	/* node-popup-menu - user right-clicked on a node */
-	i7_skein_signals[NODE_MENU_POPUP] = g_signal_new("node-menu-popup",
-		G_OBJECT_CLASS_TYPE(klass), 0,
-		G_STRUCT_OFFSET(I7SkeinClass, node_menu_popup), NULL, NULL,
-		g_cclosure_marshal_VOID__OBJECT, G_TYPE_NONE, 1, I7_TYPE_NODE);
 	/* transcript-thread-changed */
 	i7_skein_signals[TRANSCRIPT_THREAD_CHANGED] = g_signal_new("transcript-thread-changed",
 	    G_OBJECT_CLASS_TYPE(klass), 0,

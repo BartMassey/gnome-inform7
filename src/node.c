@@ -107,7 +107,8 @@ on_node_button_press(GooCanvasItem *item, GooCanvasItem *target_item, GdkEventBu
 		g_signal_emit_by_name(skein, "node-activate", self);
 		return TRUE;
 	} else if(event->type == GDK_BUTTON_PRESS && event->button == 3) {
-		g_signal_emit_by_name(skein, "node-menu-popup", self);
+		GooCanvas *view = goo_canvas_item_get_canvas(target_item);
+		g_signal_emit_by_name(view, "node-menu-popup", self);
 		return TRUE;
 	}
 	return FALSE;

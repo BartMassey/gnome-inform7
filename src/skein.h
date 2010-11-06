@@ -56,7 +56,6 @@ struct _I7SkeinClass
 	void(* needs_layout) (I7Skein *self);
 	void(* node_activate) (I7Skein *self, I7Node *node);
 	void(* differs_badge_activate) (I7Skein *self, I7Node *node);
-	void(* node_menu_popup) (I7Skein *self, I7Node *node);
 	void(* transcript_thread_changed) (I7Skein *self);
 	void(* labels_changed) (I7Skein *self);
 	void(* show_node) (I7Skein *self, guint why, I7Node *node);
