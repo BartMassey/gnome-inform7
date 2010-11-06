@@ -54,9 +54,6 @@ typedef enum {
 gboolean update_style(GtkSourceBuffer *buffer);
 gboolean update_font(GtkWidget *widget);
 gboolean update_tabs(GtkSourceView *view);
-gchar *get_font_family(void);
-gint get_font_size(PangoFontDescription *font);
-PangoFontDescription *get_font_description(void);
 void select_style_scheme(GtkTreeView *view, const gchar *id);
 
 #endif /* _PREFS_H_ */

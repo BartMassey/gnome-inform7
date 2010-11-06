@@ -529,63 +529,6 @@ update_tabs(GtkSourceView *view)
 	return FALSE; /* one-shot idle function */
 }
 
-/* Return a string of font families for the font setting. String must be freed*/
-gchar *
-get_font_family(void)
-{
-    gchar *customfont;
-    switch(config_file_get_enum(PREFS_FONT_SET, font_set_lookup_table)) {
-        case FONT_MONOSPACE:
-            return config_file_get_string(DESKTOP_PREFS_MONOSPACE_FONT);
-        case FONT_CUSTOM:
-            customfont = config_file_get_string(PREFS_CUSTOM_FONT);
-            if(customfont)
-                return customfont;
-            /* else fall through */
-        default:
-            ;
-    }
-    return config_file_get_string(DESKTOP_PREFS_STANDARD_FONT);
-}
-
-/* Return the font size in Pango units for the font size setting */
-gint
-get_font_size(PangoFontDescription *font)
-{
-	double size = pango_font_description_get_size(font);
-	if(pango_font_description_get_size_is_absolute(font))
-		size *= 96.0 / 72.0; /* a guess; not likely to be absolute anyway */
-	if(size == 0.0)
-		size = DEFAULT_SIZE_STANDARD * PANGO_SCALE;
-	
-    switch(config_file_get_enum(PREFS_FONT_SIZE, font_size_lookup_table)) {
-        case FONT_SIZE_MEDIUM:
-            size *= RELATIVE_SIZE_MEDIUM;
-			break;
-        case FONT_SIZE_LARGE:
-            size *= RELATIVE_SIZE_LARGE;
-			break;
-        case FONT_SIZE_HUGE:
-            size *= RELATIVE_SIZE_HUGE;
-			break;
-        default:
-            size *= RELATIVE_SIZE_STANDARD;
-    }
-    return size;
-}
-
-/* Get the current font as a PangoFontDescription.
-Must be freed with pango_font_description_free. */
-PangoFontDescription *
-get_font_description(void)
-{
-    gchar *fontfamily = get_font_family();
-    PangoFontDescription *font = pango_font_description_from_string(fontfamily);
-    g_free(fontfamily);
-    pango_font_description_set_size(font, get_font_size(font));
-    return font;
-}
-
 void
 select_style_scheme(GtkTreeView *view, const gchar *id)
 {

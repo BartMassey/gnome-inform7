@@ -114,5 +114,8 @@ gint config_file_get_enum(const gchar *key, GConfEnumStringPair lookup_table[]);
 void config_file_set_to_default(const gchar *key);
 void init_config_file(GtkBuilder *builder);
 void trigger_config_file(void);
+gchar *get_font_family(void);
+gint get_font_size(PangoFontDescription *font);
+PangoFontDescription *get_font_description(void);
 
 #endif
