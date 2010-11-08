@@ -288,16 +288,12 @@ on_labels_changed(I7Skein *skein, I7Panel *panel)
 {
 	GSList *labels = i7_skein_get_labels(skein);
 
+	/* Empty the menu */
+	gtk_container_foreach(GTK_CONTAINER(panel->labels_menu), (GtkCallback)gtk_widget_destroy, NULL);
+	
 	/* Create a new menu */
-	if(panel->labels_menu)
-		gtk_widget_destroy(panel->labels_menu);
-	panel->labels_menu = gtk_menu_new();
-	gtk_widget_show(panel->labels_menu);
 	g_slist_foreach(labels, (GFunc)create_labels_menu, panel);
 	i7_skein_free_node_label_list(labels);
-	
-	/* Set the menu as the drop-down menu of the button */
-    gtk_menu_tool_button_set_menu(GTK_MENU_TOOL_BUTTON(panel->labels), panel->labels_menu);
 }
 
 void

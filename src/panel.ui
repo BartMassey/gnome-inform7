@@ -1,9 +1,15 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
   <!-- interface-requires webkit 1.0 -->
   <!-- interface-requires gtksourceview 2.0 -->
   <!-- interface-naming-policy project-wide -->
+  <object class="GtkAction" id="labels">
+    <property name="label">_Labels</property>
+    <property name="tooltip">Jump to a labeled node in the Skein</property>
+    <property name="stock_id">gtk-jump-to</property>
+    <property name="is_important">True</property>
+  </object>
   <object class="GtkActionGroup" id="panel_actions"/>
   <object class="GtkActionGroup" id="skein_actions">
     <property name="visible">False</property>
@@ -19,41 +25,35 @@
     <property name="tooltip">Go back</property>
     <property name="stock_id">gtk-go-back</property>
     <property name="sensitive">False</property>
-    <signal name="activate" handler="action_back"/>
+    <signal name="activate" handler="action_back" swapped="no"/>
   </object>
   <object class="GtkAction" id="forward">
     <property name="label">_Forward</property>
     <property name="tooltip">Go forward</property>
     <property name="stock_id">gtk-go-forward</property>
     <property name="sensitive">False</property>
-    <signal name="activate" handler="action_forward"/>
-  </object>
-  <object class="GtkAction" id="labels">
-    <property name="label">_Labels</property>
-    <property name="tooltip">Jump to a labeled node in the Skein</property>
-    <property name="stock_id">gtk-jump-to</property>
-    <signal name="activate" handler="action_labels"/>
+    <signal name="activate" handler="action_forward" swapped="no"/>
   </object>
   <object class="GtkAction" id="layout">
     <property name="label">La_yout</property>
     <property name="tooltip">Edit the spacing for items in the skein</property>
     <property name="stock_id">gtk-preferences</property>
     <property name="is_important">True</property>
-    <signal name="activate" handler="action_layout"/>
+    <signal name="activate" handler="action_layout" swapped="no"/>
   </object>
   <object class="GtkAction" id="trim">
     <property name="label">_Trim</property>
     <property name="tooltip">Trim unused nodes from the skein</property>
     <property name="stock_id">gtk-cut</property>
     <property name="is_important">True</property>
-    <signal name="activate" handler="action_trim"/>
+    <signal name="activate" handler="action_trim" swapped="no"/>
   </object>
   <object class="GtkAction" id="play_all_blessed">
     <property name="label">Play _All</property>
     <property name="tooltip">Play through all the blessed nodes in the entire skein</property>
     <property name="stock_id">gtk-media-play</property>
     <property name="is_important">True</property>
-    <signal name="activate" handler="action_play_all_blessed"/>
+    <signal name="activate" handler="action_play_all_blessed" swapped="no"/>
   </object>
   <object class="GtkAction" id="next_difference_skein">
     <property name="label">Next in _Skein</property>
@@ -84,7 +84,7 @@
     <property name="tooltip">Display the Inform 7 documentation</property>
     <property name="stock_id">gtk-index</property>
     <property name="is_important">True</property>
-    <signal name="activate" handler="action_contents"/>
+    <signal name="activate" handler="action_contents" swapped="no"/>
   </object>
   <object class="WebkitWebSettings" id="websettings">
     <property name="default_encoding">utf8</property>
@@ -98,8 +98,8 @@
     <property name="can_focus">True</property>
     <property name="tab_pos">right</property>
     <property name="scrollable">True</property>
-    <signal name="switch_page" handler="after_notebook_switch_page" after="yes"/>
-    <signal name="switch_page" handler="on_notebook_switch_page"/>
+    <signal name="switch-page" handler="after_notebook_switch_page" after="yes" swapped="no"/>
+    <signal name="switch-page" handler="on_notebook_switch_page" swapped="no"/>
     <child>
       <placeholder/>
     </child>
@@ -112,7 +112,7 @@
         <property name="can_focus">True</property>
         <property name="border_width">6</property>
         <property name="scrollable">True</property>
-        <signal name="switch_page" handler="after_errors_notebook_switch_page" after="yes"/>
+        <signal name="switch-page" handler="after_errors_notebook_switch_page" after="yes" swapped="no"/>
         <child>
           <object class="GtkScrolledWindow" id="progress_scrolledwindow">
             <property name="visible">True</property>
@@ -178,9 +178,9 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="window_object_cleared" handler="on_documentation_window_object_cleared"/>
-                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="window-object-cleared" handler="on_documentation_window_object_cleared" swapped="no"/>
+                <signal name="resource-request-starting" handler="on_resource_request_starting" swapped="no"/>
+                <signal name="navigation-requested" handler="on_navigation_requested" swapped="no"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -255,7 +255,7 @@
         <property name="can_focus">True</property>
         <property name="border_width">6</property>
         <property name="scrollable">True</property>
-        <signal name="switch_page" handler="after_index_notebook_switch_page" after="yes"/>
+        <signal name="switch-page" handler="after_index_notebook_switch_page" after="yes" swapped="no"/>
         <child>
           <object class="GtkScrolledWindow" id="actions_scrolledwindow">
             <property name="visible">True</property>
@@ -267,8 +267,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource-request-starting" handler="on_resource_request_starting" swapped="no"/>
+                <signal name="navigation-requested" handler="on_navigation_requested" swapped="no"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -296,8 +296,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource-request-starting" handler="on_resource_request_starting" swapped="no"/>
+                <signal name="navigation-requested" handler="on_navigation_requested" swapped="no"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -329,8 +329,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource-request-starting" handler="on_resource_request_starting" swapped="no"/>
+                <signal name="navigation-requested" handler="on_navigation_requested" swapped="no"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -362,8 +362,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource-request-starting" handler="on_resource_request_starting" swapped="no"/>
+                <signal name="navigation-requested" handler="on_navigation_requested" swapped="no"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -395,8 +395,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource-request-starting" handler="on_resource_request_starting" swapped="no"/>
+                <signal name="navigation-requested" handler="on_navigation_requested" swapped="no"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -428,8 +428,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource-request-starting" handler="on_resource_request_starting" swapped="no"/>
+                <signal name="navigation-requested" handler="on_navigation_requested" swapped="no"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -461,8 +461,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="settings">websettings</property>
-                <signal name="resource_request_starting" handler="on_resource_request_starting"/>
-                <signal name="navigation_requested" handler="on_navigation_requested"/>
+                <signal name="resource-request-starting" handler="on_resource_request_starting" swapped="no"/>
+                <signal name="navigation-requested" handler="on_navigation_requested" swapped="no"/>
                 <child>
                   <placeholder/>
                 </child>
@@ -585,10 +585,10 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="settings">websettings</property>
-            <signal name="window_object_cleared" handler="on_documentation_window_object_cleared"/>
-            <signal name="resource_request_starting" handler="on_resource_request_starting"/>
-            <signal name="navigation_requested" handler="on_navigation_requested"/>
-            <signal name="navigation_requested" handler="after_documentation_navigation_requested" after="yes"/>
+            <signal name="window-object-cleared" handler="on_documentation_window_object_cleared" swapped="no"/>
+            <signal name="resource-request-starting" handler="on_resource_request_starting" swapped="no"/>
+            <signal name="navigation-requested" handler="on_navigation_requested" swapped="no"/>
+            <signal name="navigation-requested" handler="after_documentation_navigation_requested" after="yes" swapped="no"/>
             <child>
               <placeholder/>
             </child>
@@ -615,7 +615,6 @@
       <object class="GtkVBox" id="settings">
         <property name="width_request">100</property>
         <property name="visible">True</property>
-        <property name="orientation">vertical</property>
         <child>
           <object class="GtkFrame" id="settings_format_frame">
             <property name="visible">True</property>
@@ -630,7 +629,6 @@
                 <child>
                   <object class="GtkVBox" id="settings_format_vbox">
                     <property name="visible">True</property>
-                    <property name="orientation">vertical</property>
                     <child>
                       <object class="GtkLabel" id="settings_zcode_format_label">
                         <property name="visible">True</property>
@@ -774,7 +772,6 @@
                 <child>
                   <object class="GtkVBox" id="settings_randomness_vbox">
                     <property name="visible">True</property>
-                    <property name="orientation">vertical</property>
                     <child>
                       <object class="GtkLabel" id="nobble_rng_label">
                         <property name="visible">True</property>

@@ -202,7 +202,7 @@ action_forward(GtkAction *forward, I7Panel *panel)
 void
 action_labels(GtkAction *action, I7Panel *panel)
 {
-
+	gtk_widget_show_all(panel->labels_menu);
 }
 
 void
@@ -319,6 +319,8 @@ i7_panel_init(I7Panel *self)
 	/* Add the Labels menu; apparently GtkUIManager can't build menu tool items */
 	self->labels = gtk_menu_tool_button_new(NULL, NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(self->toolbar), self->labels, 3);
+	self->labels_menu = gtk_menu_new();
+	gtk_menu_tool_button_set_menu(GTK_MENU_TOOL_BUTTON(self->labels), self->labels_menu);
 	GtkAction *labels_action = gtk_action_group_get_action(priv->skein_action_group, "labels");
 	gtk_action_connect_proxy(labels_action, GTK_WIDGET(self->labels));
 
