@@ -59,6 +59,7 @@ struct _I7SkeinClass
 	void(* transcript_thread_changed) (I7Skein *self);
 	void(* labels_changed) (I7Skein *self);
 	void(* show_node) (I7Skein *self, guint why, I7Node *node);
+	void(* modified) (I7Skein *self);
 };
 
 struct _I7Skein

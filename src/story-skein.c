@@ -58,6 +58,12 @@ play_to_node(Skein *skein, GNode *newnode, Story *thestory)
 #endif
 
 void
+on_skein_modified(I7Skein *skein, I7Story *story)
+{
+	i7_document_set_modified(I7_DOCUMENT(story), TRUE);
+}
+
+void
 on_node_activate(I7Skein *skein, I7Node *node, I7Story *story)
 {
 }

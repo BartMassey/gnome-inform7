@@ -51,6 +51,7 @@ enum
 	TRANSCRIPT_THREAD_CHANGED,
 	LABELS_CHANGED,
 	SHOW_NODE,
+	MODIFIED,
 	LAST_SIGNAL
 };
 
@@ -70,11 +71,16 @@ G_DEFINE_TYPE(I7Skein, i7_skein, GOO_TYPE_CANVAS_GROUP_MODEL);
 /* SIGNAL HANDLERS */
 
 static void
-on_node_text_notify(I7Node *node, GParamSpec *pspec, I7Skein *self)
+on_node_other_notify(I7Node *node, GParamSpec *pspec, I7Skein *self)
 {
-	I7_SKEIN_USE_PRIVATE;
+	g_signal_emit_by_name(self, "modified");
+}
+
+static void
+on_node_layout_notify(I7Node *node, GParamSpec *pspec, I7Skein *self)
+{
 	g_signal_emit_by_name(self, "needs-layout");
-	priv->modified = TRUE;
+	on_node_other_notify(node, pspec, self);
 }
 
 static void
@@ -83,31 +89,17 @@ on_node_label_notify(I7Node *node, GParamSpec *pspec, I7Skein *self)
 	if(i7_node_has_label(node))
 		i7_skein_lock(self, i7_skein_get_thread_bottom(self, node));
 	g_signal_emit_by_name(self, "labels-changed");
-	on_node_text_notify(node, pspec, self);
-}
-
-static void
-on_node_color_notify(I7Node *node, GParamSpec *pspec, I7Skein *self)
-{
-	I7_SKEIN_USE_PRIVATE;
-	priv->modified = TRUE;
-}
-
-static void
-on_node_lock_notify(I7Node *node, GParamSpec *pspec, I7Skein *self)
-{
-	I7_SKEIN_USE_PRIVATE;
-	g_signal_emit_by_name(self, "needs-layout");
-	priv->modified = TRUE;
+	on_node_layout_notify(node, pspec, self);
 }
 
 static void
 node_listen(I7Skein *self, I7Node *node)
 {
-	g_signal_connect(node, "notify::command", G_CALLBACK(on_node_text_notify), self);
+	g_signal_connect(node, "notify::command", G_CALLBACK(on_node_layout_notify), self);
 	g_signal_connect(node, "notify::label", G_CALLBACK(on_node_label_notify), self);
-	g_signal_connect(node, "notify::text-expected", G_CALLBACK(on_node_color_notify), self);
-	g_signal_connect(node, "notify::locked", G_CALLBACK(on_node_lock_notify), self);
+	g_signal_connect(node, "notify::transcript-text", G_CALLBACK(on_node_other_notify), self);
+	g_signal_connect(node, "notify::expected-text", G_CALLBACK(on_node_other_notify), self);
+	g_signal_connect(node, "notify::locked", G_CALLBACK(on_node_layout_notify), self);
 }
 
 /* TYPE SYSTEM */
@@ -198,9 +190,18 @@ i7_skein_finalize(GObject *self)
 	G_OBJECT_CLASS(i7_skein_parent_class)->finalize(self);
 }
 
+/* Default signal handler */
+static void
+i7_skein_modified(I7Skein *self)
+{
+	I7_SKEIN_USE_PRIVATE;
+	priv->modified = TRUE;
+}
+
 static void
 i7_skein_class_init(I7SkeinClass *klass)
 {
+	klass->modified = i7_skein_modified;
 	GObjectClass* object_class = G_OBJECT_CLASS(klass);
 	object_class->set_property = i7_skein_set_property;
 	object_class->get_property = i7_skein_get_property;
@@ -238,6 +239,11 @@ i7_skein_class_init(I7SkeinClass *klass)
 	    G_STRUCT_OFFSET(I7SkeinClass, show_node), NULL, NULL,
 	    g_cclosure_marshal_VOID__UINT_POINTER, G_TYPE_NONE, 2, 
 	    G_TYPE_UINT, I7_TYPE_NODE);
+	/* modified - skein has been modified since last save */
+	i7_skein_signals[MODIFIED] = g_signal_new("modified",
+	    G_OBJECT_CLASS_TYPE(klass), 0,
+	    G_STRUCT_OFFSET(I7SkeinClass, modified), NULL, NULL,
+	    g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 	    
 	/* Install properties */
 	GParamFlags flags = G_PARAM_CONSTRUCT | G_PARAM_LAX_VALIDATION | G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB;
@@ -294,7 +300,6 @@ i7_skein_set_current_node(I7Skein *self, I7Node *node)
 {
 	I7_SKEIN_USE_PRIVATE;
     priv->current = node;
-    priv->modified = TRUE;
 }
 
 gboolean
@@ -473,9 +478,9 @@ fail:
 }
 
 gboolean
-node_write_xml(I7Node *node, FILE *fp)
+node_write_xml(GNode *gnode, FILE *fp)
 {
-	gchar *xml = i7_node_get_xml(node);
+	gchar *xml = i7_node_get_xml(I7_NODE(gnode->data));
 	fprintf(fp, xml);
 	g_free(xml);
     return FALSE; /* Do not stop the traversal */
@@ -484,7 +489,7 @@ node_write_xml(I7Node *node, FILE *fp)
 gboolean
 i7_skein_save(I7Skein *self, const gchar *filename, GError **error)
 {
-	g_return_val_if_fail(FALSE, error == NULL || *error == NULL);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 	
 	I7_SKEIN_USE_PRIVATE;
 	
@@ -520,7 +525,6 @@ i7_skein_reset(I7Skein *self, gboolean current)
         priv->current = priv->root;
     priv->played = priv->root;
     /* TODO modify the node colors */
-    priv->modified = TRUE;
 }
 
 static guint
@@ -641,7 +645,7 @@ i7_skein_new_command(I7Skein *self, const gchar *command)
 		;
     }
     g_signal_emit_by_name(self, "show-node", I7_REASON_COMMAND, node);
-    priv->modified = TRUE;
+	g_signal_emit_by_name(self, "modified");
 }
 
 /* Find the next node to use. Return TRUE if found, and if so, store a
@@ -725,14 +729,12 @@ i7_skein_get_command_from_history(I7Skein *self, gchar **command, int history)
 I7Node *
 i7_skein_add_new(I7Skein *self, I7Node *node)
 {
-	I7_SKEIN_USE_PRIVATE;
-	
     I7Node *newnode = i7_node_new("", "", "", "", FALSE, FALSE, 0, GOO_CANVAS_ITEM_MODEL(self));
 	node_listen(self, newnode);
     g_node_append(node->gnode, newnode->gnode);
     
     g_signal_emit_by_name(self, "needs-layout");
-    priv->modified = TRUE;
+	g_signal_emit_by_name(self, "modified");
     
     return newnode;
 }
@@ -740,8 +742,6 @@ i7_skein_add_new(I7Skein *self, I7Node *node)
 I7Node *
 i7_skein_add_new_parent(I7Skein *self, I7Node *node)
 {
-	I7_SKEIN_USE_PRIVATE;
-	
     I7Node *newnode = i7_node_new("", "", "", "", FALSE, FALSE, 0, GOO_CANVAS_ITEM_MODEL(self));
 	node_listen(self, newnode);
     g_node_insert(node->gnode->parent, g_node_child_position(node->gnode->parent, node->gnode), newnode->gnode);
@@ -749,7 +749,7 @@ i7_skein_add_new_parent(I7Skein *self, I7Node *node)
     g_node_append(newnode->gnode, node->gnode);
     
     g_signal_emit_by_name(self, "needs-layout");
-    priv->modified = TRUE;
+	g_signal_emit_by_name(self, "modified");
     
     return newnode;
 }
@@ -784,7 +784,7 @@ i7_skein_remove_all(I7Skein *self, I7Node *node)
     }
         
     g_signal_emit_by_name(self, "needs-layout");
-    priv->modified = TRUE;
+	g_signal_emit_by_name(self, "modified");
     return TRUE;
 }
 
@@ -815,7 +815,7 @@ i7_skein_remove_single(I7Skein *self, I7Node *node)
     }
     
     g_signal_emit_by_name(self, "needs-layout");
-    priv->modified = TRUE;
+	g_signal_emit_by_name(self, "modified");
     return TRUE;
 }
 
@@ -844,9 +844,8 @@ i7_skein_unlock_recurse(I7Skein *self, I7Node *node)
 void
 i7_skein_unlock(I7Skein *self, I7Node *node)
 {
-	I7_SKEIN_USE_PRIVATE;
 	i7_skein_unlock_recurse(self, node);
-    priv->modified = TRUE;
+	g_signal_emit_by_name(self, "modified");
 }
 
 static void
@@ -914,7 +913,7 @@ i7_skein_trim(I7Skein *self, I7Node *node, gint max_temps)
 	
 	i7_skein_trim_recurse(self, node, min_score);
     g_signal_emit_by_name(self, "needs-layout");
-    priv->modified = TRUE;
+	g_signal_emit_by_name(self, "modified");
 }
 
 static void
@@ -979,12 +978,11 @@ i7_skein_has_labels(I7Skein *self)
 void
 i7_skein_bless(I7Skein *self, I7Node *node, gboolean all)
 {
-	I7_SKEIN_USE_PRIVATE;
 	GNode *iter;
     for(iter = node->gnode; iter; iter = all? iter->parent : NULL)
         i7_node_bless(I7_NODE(iter->data));
 
-    priv->modified = TRUE;
+	g_signal_emit_by_name(self, "modified");
 }
 
 gboolean

@@ -54,6 +54,7 @@ G_DEFINE_TYPE(I7Story, i7_story, I7_TYPE_DOCUMENT);
 /* SIGNAL HANDLERS */
 
 /* Defined in story-skein.c */
+void on_skein_modified(I7Skein *, I7Story *);
 void on_node_activate(I7Skein *, I7Node *, I7Story *);
 void on_node_popup(I7SkeinView *, I7Node *);
 void on_differs_badge_activate(I7Skein *, I7Node *, I7Story *);
@@ -368,14 +369,19 @@ i7_story_save_as(I7Document *document, gchar *directory)
 	g_free(filename);
 	
 	/* Save the skein */
+	filename = g_build_filename(directory, "Skein.skein", NULL);
+	if(!i7_skein_save(priv->skein, filename, &err)) {
+		error_dialog(GTK_WINDOW(document), err, _("There was an error saving the Skein. Your story will still be saved. Problem: "));
+		err = NULL;
+	}
+	g_free(filename);
 	/* skein_save(thestory->theskein, directory);*/
 
 	/* Save the notes */
 	filename = g_build_filename(directory, "notes.rtf", NULL);
 	if(!rtf_text_buffer_export(priv->notes, filename, &err)) {
-		error_dialog(GTK_WINDOW(document), err, _("Error saving file '%s': "), filename);
-		g_free(filename);
-		return;
+		error_dialog(GTK_WINDOW(document), err, _("There was an error saving the Notepad. Your story will still be saved. Problem: "));
+		err = NULL;
 	}
 	gtk_text_buffer_set_modified(priv->notes, FALSE);
 	g_free(filename);
@@ -383,9 +389,8 @@ i7_story_save_as(I7Document *document, gchar *directory)
 	/* Save the project settings */
 	filename = g_build_filename(directory, "Settings.plist", NULL);
 	if(!plist_write(priv->settings, filename, &err)) {
-		error_dialog(GTK_WINDOW(document), err, _("Error saving file '%s': "), filename);
-		g_free(filename);
-		return;
+		error_dialog(GTK_WINDOW(document), err, _("There was an error saving the project settings. Your story will still be saved. Problem: "));
+		err = NULL;
 	}
 	g_free(filename);
 
@@ -731,6 +736,7 @@ i7_story_init(I7Story *self)
 		NULL);
 	g_signal_connect(priv->skein, "node-activate", G_CALLBACK(on_node_activate), self);
 	g_signal_connect(priv->skein, "differs-badge-activate", G_CALLBACK(on_differs_badge_activate), self);
+	g_signal_connect(priv->skein, "modified", G_CALLBACK(on_skein_modified), self);
 	gtk_range_set_value(GTK_RANGE(self->skein_spacing_horizontal), (gdouble)config_file_get_int(PREFS_HORIZONTAL_SPACING));
 	gtk_range_set_value(GTK_RANGE(self->skein_spacing_vertical), (gdouble)config_file_get_int(PREFS_VERTICAL_SPACING));
 	
@@ -1029,9 +1035,11 @@ i7_story_open(I7Story *story, const gchar *directory)
 	
 	/* Read the skein */
 	filename = g_build_filename(directory, "Skein.skein", NULL);
-	if(!i7_skein_load(priv->skein, filename, &err))
-		error_dialog(GTK_WINDOW(story), err,
-		    _("This project's Skein was not found, or it was unreadable."));
+	if(!i7_skein_load(priv->skein, filename, &err)) {
+		error_dialog(GTK_WINDOW(story), err, _("This project's Skein was not found, or it was unreadable."));
+		err = NULL;
+	}
+	g_free(filename);
 
 	/* Read the notes */
 	filename = g_build_filename(directory, "notes.rtf", NULL);
