@@ -202,7 +202,6 @@ action_forward(GtkAction *forward, I7Panel *panel)
 void
 action_labels(GtkAction *action, I7Panel *panel)
 {
-	g_printerr("action_labels\n");
 	gtk_menu_popup(GTK_MENU(panel->labels_menu), NULL, NULL, NULL, NULL, 1, gtk_get_current_event_time());
 }
 

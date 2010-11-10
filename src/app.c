@@ -290,7 +290,9 @@ i7_app_close_all_documents(I7App *app)
 		gtk_main_quit();
 }
 
-/* Carry out @func for each document window */
+/* Carry out @func for each document window. To do something to each story or
+ extension window only, call this function and check for I7_IS_STORY() in your
+ callback function. */
 void
 i7_app_foreach_document(I7App *app, void (*func)(I7Document *))
 {
