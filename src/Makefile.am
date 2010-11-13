@@ -1,4 +1,4 @@
-SUBDIRS = inweb cBlorb inform6 ni osxcart
+SUBDIRS = inweb cBlorb inform6 ni osxcart libchimara
 
 AM_CFLAGS = -Wall
 
@@ -42,7 +42,11 @@ gnome_inform7_CPPFLAGS = \
 	-DPACKAGE_LIBEXEC_DIR=\""$(pkglibexecdir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 gnome_inform7_CFLAGS = @INFORM7_CFLAGS@ $(AM_CFLAGS)
-gnome_inform7_LDADD = @INFORM7_LIBS@ $(INTLLIBS) osxcart/libosxcart.a
+gnome_inform7_LDADD = \
+	@INFORM7_LIBS@ \
+	$(INTLLIBS) \
+	osxcart/libosxcart.a \
+	libchimara/libchimara.a
 gnome_inform7_LDFLAGS = \
 	-Wl,--export-dynamic
 

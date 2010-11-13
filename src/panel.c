@@ -24,6 +24,7 @@
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
 #include <JavaScriptCore/JavaScript.h>
+#include <libchimara/chimara-if.h>
 
 #include "panel.h"
 #include "panel-private.h"
@@ -342,6 +343,16 @@ i7_panel_init(I7Panel *self)
 	GtkWidget *skein_scrolledwindow = GTK_WIDGET(load_object(builder, "skein_scrolledwindow"));
 	gtk_container_add(GTK_CONTAINER(skein_scrolledwindow), skeinview);
 
+	/* Add the Chimara widget */
+	GtkWidget *game = chimara_if_new();
+	gtk_widget_show(game);
+	GtkWidget *gamelabel = GTK_WIDGET(load_object(builder, "game_pane_label"));
+	gtk_notebook_insert_page(GTK_NOTEBOOK(self->notebook), game, gamelabel, I7_PANE_GAME);
+	chimara_if_set_preferred_interpreter(CHIMARA_IF(game), CHIMARA_IF_FORMAT_Z5, CHIMARA_IF_INTERPRETER_FROTZ);
+	chimara_if_set_preferred_interpreter(CHIMARA_IF(game), CHIMARA_IF_FORMAT_Z6, CHIMARA_IF_INTERPRETER_FROTZ);
+	chimara_if_set_preferred_interpreter(CHIMARA_IF(game), CHIMARA_IF_FORMAT_Z8, CHIMARA_IF_INTERPRETER_FROTZ);
+	chimara_if_set_preferred_interpreter(CHIMARA_IF(game), CHIMARA_IF_FORMAT_GLULX, CHIMARA_IF_INTERPRETER_GLULXE);
+
 	/* Save public pointers to specific widgets */
 	self->z5 = GTK_WIDGET(load_object(builder, "z5"));
 	self->z8 = GTK_WIDGET(load_object(builder, "z8"));
@@ -357,6 +368,7 @@ i7_panel_init(I7Panel *self)
 	self->tabs[I7_PANE_ERRORS] = GTK_WIDGET(load_object(builder, "errors_notebook"));
 	self->tabs[I7_PANE_INDEX] = GTK_WIDGET(load_object(builder, "index_notebook"));
 	self->tabs[I7_PANE_SKEIN] = skeinview;
+	self->tabs[I7_PANE_GAME] = game;
 	self->tabs[I7_PANE_DOCUMENTATION] = GTK_WIDGET(load_object(builder, "documentation"));
 	self->tabs[I7_PANE_SETTINGS] = GTK_WIDGET(load_object(builder, "settings"));
 	self->source_tabs[I7_SOURCE_VIEW_TAB_CONTENTS] = self->sourceview->headings;

@@ -4,6 +4,11 @@
   <!-- interface-requires webkit 1.0 -->
   <!-- interface-requires gtksourceview 2.0 -->
   <!-- interface-naming-policy project-wide -->
+  <object class="GtkLabel" id="game_pane_label">
+    <property name="visible">True</property>
+    <property name="label" translatable="yes">Game</property>
+    <property name="angle">270</property>
+  </object>
   <object class="GtkLabel" id="source_pane_label">
     <property name="visible">True</property>
     <property name="label" translatable="yes">Source</property>
@@ -472,24 +477,10 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLabel" id="game_placeholder">
-        <property name="visible">True</property>
-        <property name="label" translatable="yes">Game</property>
-      </object>
-      <packing>
-        <property name="position">5</property>
-      </packing>
+      <placeholder/>
     </child>
     <child type="tab">
-      <object class="GtkLabel" id="game_label">
-        <property name="visible">True</property>
-        <property name="label" translatable="yes">Game</property>
-        <property name="angle">270</property>
-      </object>
-      <packing>
-        <property name="position">5</property>
-        <property name="tab_fill">False</property>
-      </packing>
+      <placeholder/>
     </child>
     <child>
       <object class="GtkScrolledWindow" id="documentation_scrolledwindow">

@@ -180,6 +180,13 @@ PKG_CHECK_MODULES([OSXCART], [
 	gdk-pixbuf-2.0 >= 2.6
 	gtk+-2.0 >= 2.10
 ])
+PKG_CHECK_MODULES([CHIMARA], [
+	glib-2.0 >= 2.16
+	gtk+-2.0 >= 2.12
+	gthread-2.0
+	gmodule-2.0
+	pango
+])
 
 # Get current year for updating copyrights
 AC_SUBST(COPYRIGHT_YEAR, [`$DATE +%Y`])
@@ -200,6 +207,7 @@ src/inweb/Materials/inweb-configuration.txt
 src/cBlorb/Makefile
 src/ni/Makefile
 src/osxcart/Makefile
+src/libchimara/Makefile
 po/Makefile.in
 data/Makefile
 data/licenses/Makefile
