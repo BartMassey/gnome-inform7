@@ -68,7 +68,7 @@ static void start_cblorb_compiler(CompilerData *data);
 static void finish_cblorb_compiler(GPid pid, gint status, CompilerData *data);
 static void finish_compiling(gboolean success, CompilerData *data);
 
-/* Set the function that will be called when compiling has finished */
+/* Set the function that will be called when compiling has finished. */
 void 
 i7_story_set_compile_finished_action(I7Story *story, CompileActionFunc callback, gpointer data)
 {
@@ -77,7 +77,7 @@ i7_story_set_compile_finished_action(I7Story *story, CompileActionFunc callback,
 	priv->compile_finished_callback_data = data;
 }
 
-/* Start the compiling process */
+/* Start the compiling process. Called from the main thread. */
 void
 i7_story_compile(I7Story *story, gboolean release, gboolean refresh)
 {
@@ -115,7 +115,7 @@ i7_story_compile(I7Story *story, gboolean release, gboolean refresh)
 }
 
 
-/* Set everything up for using the NI compiler */
+/* Set everything up for using the NI compiler. Called from the main thread. */
 static void 
 prepare_ni_compiler(CompilerData *data) 
 {
@@ -167,7 +167,9 @@ prepare_ni_compiler(CompilerData *data)
 	i7_document_display_status_message(I7_DOCUMENT(data->story), _("Compiling Inform 7 to Inform 6"), COMPILE_OPERATIONS);
 }
 
-/* Display the NI compiler's status in the app status bar */
+/* Display the NI compiler's status in the app status bar. This function is
+ called from a child process watch, so the GDK lock is not held and must be
+ acquired for any GUI calls. */
 static void 
 display_ni_status(I7Document *document, gchar *text) 
 {
@@ -175,13 +177,15 @@ display_ni_status(I7Document *document, gchar *text)
     gchar *message;
     
     if(sscanf(text, " ++ %d%% (%a[^)]", &percent, &message) == 2) {
+		gdk_threads_enter();
 		i7_document_display_progress_percentage(document, percent / 100.0);
-        
+        gdk_threads_leave();
         free(message);
     }
 }
 
-/* Start the NI compiler and set up the callback for when it is finished */
+/* Start the NI compiler and set up the callback for when it is finished. Called
+ from the main thread.*/
 static void 
 start_ni_compiler(CompilerData *data) 
 {
@@ -223,15 +227,19 @@ start_ni_compiler(CompilerData *data)
     g_strfreev(commandline);
 }
 
-/* Display any errors from the NI compiler and continue on */
+/* Display any errors from the NI compiler and continue on. This function is
+ called from a child process watch, so the GDK lock is not held and must be
+ acquired for any GUI calls. */
 static void 
 finish_ni_compiler(GPid pid, gint status, CompilerData *data) 
 {
 	I7_STORY_USE_PRIVATE(data->story, priv);
 	
     /* Clear the progress indicator */
+	gdk_threads_enter();
 	i7_document_remove_status_message(I7_DOCUMENT(data->story), COMPILE_OPERATIONS);
     i7_document_clear_progress(I7_DOCUMENT(data->story));
+	gdk_threads_leave();
         
     /* Get the ni.exe exit code */
     int exit_code = WIFEXITED(status)? WEXITSTATUS(status) : -1;
@@ -258,22 +266,30 @@ finish_ni_compiler(GPid pid, gint status, CompilerData *data)
     
     if(config_file_get_bool(PREFS_DEBUG_LOG_VISIBLE)) {
         /* Update */
+		gdk_threads_enter();
         while(gtk_events_pending())
-            g_main_context_iteration(NULL, FALSE);
+            gtk_main_iteration();
+		gdk_threads_leave();
         
         /* Refresh the debug log */
         gchar *text;
         gchar *filename = g_build_filename(data->input_file, "Build", "Debug log.txt", NULL);
         /* Ignore errors, just don't show it if it's not there */
-        if(g_file_get_contents(filename, &text, NULL, NULL))
+        if(g_file_get_contents(filename, &text, NULL, NULL)) {
+			gdk_threads_enter();
             gtk_text_buffer_set_text(priv->debug_log, text, -1);
+			gdk_threads_leave();
+		}
         g_free(text);
         g_free(filename);
         
         /* Refresh the I6 code */
         filename = g_build_filename(data->input_file, "Build", "auto.inf", NULL);
-        if(g_file_get_contents(filename, &text, NULL, NULL))
+        if(g_file_get_contents(filename, &text, NULL, NULL)) {
+			gdk_threads_enter();
             gtk_text_buffer_set_text(GTK_TEXT_BUFFER(priv->i6_source), text, -1);
+			gdk_threads_leave();
+		}
         g_free(text);
         g_free(filename);
     }
@@ -288,7 +304,10 @@ finish_ni_compiler(GPid pid, gint status, CompilerData *data)
 	if(data->refresh_only) {
 		I7Story *story = data->story;
 		finish_compiling(TRUE, data);
+		/* Hold the GDK lock for the callback */
+		gdk_threads_enter();
 		(priv->compile_finished_callback)(story, priv->compile_finished_callback_data);
+		gdk_threads_leave();
 		return;
 	}
 
@@ -297,11 +316,15 @@ finish_ni_compiler(GPid pid, gint status, CompilerData *data)
 }
     
 
-/* Get ready to run the I6 compiler; right now this does almost nothing */
+/* Get ready to run the I6 compiler; right now this does almost nothing. This 
+ function is called from a child process watch, so the GDK lock is not held and 
+ must be acquired for any GUI calls. */
 static void 
 prepare_i6_compiler(CompilerData *data) 
 {
+	gdk_threads_enter();
     i7_document_display_status_message(I7_DOCUMENT(data->story), _("Running Inform 6..."), COMPILE_OPERATIONS);
+	gdk_threads_leave();
 }
 
 /* Determine i6 compiler switches, given the compiler action and the virtual
@@ -338,14 +361,22 @@ get_i6_compiler_switches(gboolean release, int format)
     return retval;
 }
 
+/* Pulse the progress bar every time the I6 compiler outputs a '#' (which
+ happens whenever it has processed 100 source lines.) This function is
+ called from a child process watch, so the GDK lock is not held and must be
+ acquired for any GUI calls. */
 static void 
 display_i6_status(I7Document *document, gchar *text) 
 {
-    if(strchr(text, '#'))
+    if(strchr(text, '#')) {
+		gdk_threads_enter();
         i7_document_display_progress_busy(document);
+		gdk_threads_leave();
+	}
 }
 
-/* Run the I6 compiler */
+/* Run the I6 compiler. This function is called from a child process watch, so 
+ the GDK lock is not held and must be acquired for any GUI calls. */
 static void 
 start_i6_compiler(CompilerData *data) 
 {   
@@ -370,15 +401,19 @@ start_i6_compiler(CompilerData *data)
     g_strfreev(commandline);
 }
 
-/* Display any errors from Inform 6 and decide what to do next */
+/* Display any errors from Inform 6 and decide what to do next. This function is
+ called from a child process watch, so the GDK lock is not held and must be
+ acquired for any GUI calls. */
 static void 
 finish_i6_compiler(GPid pid, gint status, CompilerData *data) 
 {
     I7_STORY_USE_PRIVATE(data->story, priv);
 	
     /* Clear the progress indicator */
+	gdk_threads_enter();
 	i7_document_remove_status_message(I7_DOCUMENT(data->story), COMPILE_OPERATIONS);
     i7_document_clear_progress(I7_DOCUMENT(data->story));
+	gdk_threads_leave();
     
     /* Get exit code from I6 process */
     int exit_code = WIFEXITED(status)? WEXITSTATUS(status) : -1;
@@ -387,8 +422,10 @@ finish_i6_compiler(GPid pid, gint status, CompilerData *data)
     gchar *statusmsg = g_strdup_printf(_("\nCompiler finished with code %d\n"),
       exit_code);
     GtkTextIter iter;
+	gdk_threads_enter();
     gtk_text_buffer_get_end_iter(priv->progress, &iter);
     gtk_text_buffer_insert(priv->progress, &iter, statusmsg, -1);
+	gdk_threads_leave();
     g_free(statusmsg);
     
     GtkTextIter start, end;
@@ -396,6 +433,7 @@ finish_i6_compiler(GPid pid, gint status, CompilerData *data)
     gchar *loadfile = NULL;
 
     /* Display the appropriate HTML error pages */
+	gdk_threads_enter();
     for(line = gtk_text_buffer_get_line_count(priv->progress); line >= 0; line--) {
         gchar *msg;
         gtk_text_buffer_get_iter_at_line(priv->progress, &start, line);
@@ -420,12 +458,15 @@ finish_i6_compiler(GPid pid, gint status, CompilerData *data)
         }
         g_free(msg);
     }
+	gdk_threads_leave();
     if(!loadfile && exit_code != 0)
         loadfile = i7_app_get_datafile_path_va(i7_app_get(), 
 		    "Documentation", "Sections", "ErrorI6.html", NULL);
     if(loadfile) {
+		gdk_threads_enter();
         html_load_file(WEBKIT_WEB_VIEW(data->story->panel[LEFT]->errors_tabs[I7_ERRORS_TAB_PROBLEMS]), loadfile);
         html_load_file(WEBKIT_WEB_VIEW(data->story->panel[RIGHT]->errors_tabs[I7_ERRORS_TAB_PROBLEMS]), loadfile);
+		gdk_threads_leave();
         g_free(loadfile);
     }
     
@@ -439,7 +480,10 @@ finish_i6_compiler(GPid pid, gint status, CompilerData *data)
 	if(!data->build_for_release) {
 		I7Story *story = data->story;
 		finish_compiling(TRUE, data);
+		/* Hold the GDK lock for the callback */
+		gdk_threads_enter();
 		(priv->compile_finished_callback)(story, priv->compile_finished_callback_data);
+		gdk_threads_leave();
 		return;
 	}
 
@@ -447,11 +491,15 @@ finish_i6_compiler(GPid pid, gint status, CompilerData *data)
 	start_cblorb_compiler(data);
 }
 
-/* Get ready to run the CBlorb compiler */
+/* Get ready to run the CBlorb compiler. This function is called from a child 
+ process watch, so the GDK lock is not held and must be acquired for any GUI 
+ calls. */
 static void 
 prepare_cblorb_compiler(CompilerData *data) 
 {
+	gdk_threads_enter();
 	i7_document_display_status_message(I7_DOCUMENT(data->story), _("Running cBlorb..."), COMPILE_OPERATIONS);
+	gdk_threads_leave();
 }
 
 static void
@@ -466,7 +514,8 @@ parse_cblorb_output(I7Story *story, gchar *text)
 	}
 }
 
-/* Run the CBlorb compiler */
+/* Run the CBlorb compiler. This function is called from a child process watch, 
+ so the GDK lock is not held and must be acquired for any GUI calls. */
 static void 
 start_cblorb_compiler(CompilerData *data) 
 {
@@ -488,22 +537,27 @@ start_cblorb_compiler(CompilerData *data)
     g_strfreev(commandline);
 }
     
-/* Display any errors from cBlorb */
+/* Display any errors from cBlorb. This function is called from a child process
+ watch, so the GDK lock is not held and must be acquired for any GUI calls. */
 static void 
 finish_cblorb_compiler(GPid pid, gint status, CompilerData *data) 
 {
 	I7_STORY_USE_PRIVATE(data->story, priv);
 	
     /* Clear the progress indicator */
+	gdk_threads_enter();
 	i7_document_remove_status_message(I7_DOCUMENT(data->story), COMPILE_OPERATIONS);
+	gdk_threads_leave();
 	
     /* Get exit code from CBlorb */
     int exit_code = WIFEXITED(status)? WEXITSTATUS(status) : -1;
     
     /* Display the appropriate HTML page */
     gchar *file = g_build_filename(data->input_file, "Build", "StatusCblorb.html", NULL);
+	gdk_threads_enter();
     html_load_file(WEBKIT_WEB_VIEW(data->story->panel[LEFT]->errors_tabs[I7_ERRORS_TAB_PROBLEMS]), file);
     html_load_file(WEBKIT_WEB_VIEW(data->story->panel[RIGHT]->errors_tabs[I7_ERRORS_TAB_PROBLEMS]), file);
+	gdk_threads_leave();
     g_free(file);
 
     /* Stop here and show the Errors/Problems tab if there was an error */
@@ -515,17 +569,24 @@ finish_cblorb_compiler(GPid pid, gint status, CompilerData *data)
     /* Decide what to do next */
 	I7Story *story = data->story;
 	finish_compiling(TRUE, data);
+
+	/* Hold the GDK lock for the callback */
+	gdk_threads_enter();
 	(priv->compile_finished_callback)(story, priv->compile_finished_callback_data);
+	gdk_threads_leave();
 }
 
 /* Clean up the compiling stuff and notify the user that compiling has finished.
- All compiler tool chains must call this function at the end!! */
+ All compiler tool chains must call this function at the end!! This function is
+ called from a child process watch, so the GDK lock is not held and must be
+ acquired for any GUI calls. */
 static void 
 finish_compiling(gboolean success, CompilerData *data) 
 {
 	I7_STORY_USE_PRIVATE(data->story, priv);
 	
     /* Display status message */
+	gdk_threads_enter();
 	i7_document_remove_status_message(I7_DOCUMENT(data->story), COMPILE_OPERATIONS);
     i7_document_flash_status_message(I7_DOCUMENT(data->story), 
 	    success? _("Compiling succeeded.") : _("Compiling failed."), 
@@ -533,6 +594,7 @@ finish_compiling(gboolean success, CompilerData *data)
                                  
     /* Switch the Errors tab to the Problems page */
     i7_story_show_tab(data->story, I7_PANE_ERRORS, I7_ERRORS_TAB_PROBLEMS);
+	gdk_threads_leave();
 
 	/* Store the compiler output filename */
 	priv->compiler_output = data->output_file;
@@ -543,11 +605,14 @@ finish_compiling(gboolean success, CompilerData *data)
 	g_slice_free(CompilerData, data);
 	
     /* Update */
+	gdk_threads_enter();
     while(gtk_events_pending())
-	  g_main_context_iteration(NULL, FALSE);
+		gtk_main_iteration();
+	gdk_threads_leave();
 }
 
-/* Finish up the user's Export iFiction Record command */
+/* Finish up the user's Export iFiction Record command. This is a callback and
+ the GDK lock is held when entering this function. */
 void
 i7_story_save_ifiction(I7Story *story)
 {
@@ -609,7 +674,8 @@ i7_story_save_ifiction(I7Story *story)
 }
 
 /* Finish up the user's Release command by choosing a location to store the
-project */
+project. This is a callback and the GDK lock is held when entering this 
+ function. */
 void 
 i7_story_save_compiler_output(I7Story *story, const gchar *dialog_title) 
 {

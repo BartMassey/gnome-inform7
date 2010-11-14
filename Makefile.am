@@ -1,5 +1,7 @@
 SUBDIRS = src po data pixmaps
 
+ACLOCAL_AMFLAGS = -I m4
+
 desktopdir = $(datadir)/applications
 dist_desktop_DATA = gnome-inform7.desktop
 

@@ -10,6 +10,8 @@ AC_INIT([Inform 7], [6F95], [http://inform7.com/mantis], [gnome-inform7])
 AC_PREREQ([2.60])
 # Sanity check to make sure we are running Autoconf from the right directory
 AC_CONFIG_SRCDIR(src/main.c)
+# Tell where to put the libtool macros
+AC_CONFIG_MACRO_DIR([m4])
 # Initialize automake; $(MKDIR_P) was introduced in 1.10
 AM_INIT_AUTOMAKE([1.10 -Wall])
 # Configure with --enable-silent-rules to cut down on clutter
@@ -119,9 +121,14 @@ AS_IF([$TEST "x$RPM_RELEASE" = x], [RPM_RELEASE=1])
 AC_PROG_CC                        # C compiler
 AM_PROG_CC_C_O                    # Automake requires this for per-target CFLAGS
 AC_PROG_INSTALL                   # Install
-AC_PROG_RANLIB                    # Ranlib
 AC_PROG_SED                       # Sed
 AC_PROG_MKDIR_P                   # mkdir -p
+m4_defun([_LT_AC_LANG_CXX_CONFIG], [:]) # Disable unnecessary Libtool checks
+m4_defun([_LT_AC_LANG_F77_CONFIG], [:]) # to save time (1.5 only)
+#LT_INIT                           # Libtool 2.2.6 and up
+LT_INIT([dlopen])                # Should call it this way, but
+#LT_PREREQ([2.2.6])               # ...goddamn Debian still has 1.5
+AC_PROG_LIBTOOL                   # Old way of declaring Libtool
 # Other tools used in this package's various make scripts
 AC_PATH_PROG([PERL], [perl])      # Perl
 AC_PATH_PROG([TAR], [tar gtar])   # tar
@@ -188,6 +195,12 @@ PKG_CHECK_MODULES([CHIMARA], [
 	pango
 ])
 
+# Plugin flags; include '-module' in each Makefile.am, because AC_SUBSTed
+# variables are black boxes to Automake, so it has to know about it being a
+# module in the makefile itself.
+PLUGIN_LIBTOOL_FLAGS='-avoid-version -shared -export-symbols-regex "^glk"'
+AC_SUBST(PLUGIN_LIBTOOL_FLAGS)
+
 # Get current year for updating copyrights
 AC_SUBST(COPYRIGHT_YEAR, [`$DATE +%Y`])
 
@@ -208,6 +221,10 @@ src/cBlorb/Makefile
 src/ni/Makefile
 src/osxcart/Makefile
 src/libchimara/Makefile
+src/interpreters/Makefile
+src/interpreters/frotz/Makefile
+src/interpreters/glulxe/Makefile
+src/interpreters/git/Makefile
 po/Makefile.in
 data/Makefile
 data/licenses/Makefile

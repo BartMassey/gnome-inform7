@@ -62,6 +62,10 @@ main(int argc, char *argv[])
 	g_option_context_free(context);
 	
 	setenv("GNOME_INFORM_PIXMAP_DIR", "/home/fliep/workspace/new-i7/pixmaps", 1);
+
+	if(!g_thread_supported())
+	    g_thread_init(NULL);
+	gdk_threads_init();
 	
 	gtk_init(&argc, &argv);
 	
@@ -86,7 +90,9 @@ main(int argc, char *argv[])
 		gtk_widget_show_all(welcomedialog);
 	}
 
+	gdk_threads_enter();
 	gtk_main();
+	gdk_threads_leave();
 
 	g_object_unref(theapp);
 	return 0;

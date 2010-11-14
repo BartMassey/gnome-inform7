@@ -44,7 +44,6 @@ libchimara_a_CPPFLAGS = \
 	-DPLUGINSOURCEDIR=\""$(abs_builddir)/../interpreters"\" \
 	-I..
 libchimara_a_CFLAGS = @CHIMARA_CFLAGS@ $(AM_CFLAGS)
-libchimara_a_LDFLAGS = @CHIMARA_LIBS@
 
 BUILT_SOURCES = chimara-marshallers.c chimara-marshallers.h
 chimara-marshallers.c: chimara-marshallers.txt

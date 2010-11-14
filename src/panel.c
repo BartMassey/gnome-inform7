@@ -352,6 +352,8 @@ i7_panel_init(I7Panel *self)
 	chimara_if_set_preferred_interpreter(CHIMARA_IF(game), CHIMARA_IF_FORMAT_Z6, CHIMARA_IF_INTERPRETER_FROTZ);
 	chimara_if_set_preferred_interpreter(CHIMARA_IF(game), CHIMARA_IF_FORMAT_Z8, CHIMARA_IF_INTERPRETER_FROTZ);
 	chimara_if_set_preferred_interpreter(CHIMARA_IF(game), CHIMARA_IF_FORMAT_GLULX, CHIMARA_IF_INTERPRETER_GLULXE);
+	chimara_glk_set_interactive(CHIMARA_GLK(game), TRUE);
+	chimara_glk_set_protect(CHIMARA_GLK(game), FALSE);
 
 	/* Save public pointers to specific widgets */
 	self->z5 = GTK_WIDGET(load_object(builder, "z5"));

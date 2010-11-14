@@ -1,4 +1,4 @@
-SUBDIRS = inweb cBlorb inform6 ni osxcart libchimara
+SUBDIRS = inweb cBlorb inform6 ni osxcart libchimara interpreters
 
 AM_CFLAGS = -Wall
 
@@ -41,14 +41,18 @@ gnome_inform7_CPPFLAGS = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_LIBEXEC_DIR=\""$(pkglibexecdir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
-gnome_inform7_CFLAGS = @INFORM7_CFLAGS@ $(AM_CFLAGS)
+gnome_inform7_CFLAGS = -g @INFORM7_CFLAGS@ $(AM_CFLAGS)
 gnome_inform7_LDADD = \
-	@INFORM7_LIBS@ \
+	@INFORM7_LIBS@ @OSXCART_LIBS@ @CHIMARA_LIBS@ \
 	$(INTLLIBS) \
-	osxcart/libosxcart.a \
-	libchimara/libchimara.a
-gnome_inform7_LDFLAGS = \
-	-Wl,--export-dynamic
+	osxcart/libosxcart.a 
+# The following mystical incantation is needed because the Glk programs, which
+# are dynamically loaded, reference symbols from the Glk API in libchimara.a
+# which are not referenced by the main program. The default behavior of ld is
+# not to include object files with no referenced symbols in the final binary
+# product. This tells ld to link in all object files in libchimara.a.
+gnome_inform7_LDFLAGS = -Wl,--export-dynamic \
+	-Wl,--whole-archive,libchimara/libchimara.a,--no-whole-archive
 
 #noinst_PROGRAMS = skeintest
 #skeintest_SOURCES = skeintest.c skein.c skein.h node.c node.h skein-view.c skein-view.h

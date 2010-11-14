@@ -15,13 +15,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <glib/gi18n.h>
 #include <gtk/gtk.h>
+#include <libchimara/chimara-if.h>
 #include "story.h"
 #include "story-private.h"
+#include "error.h"
 
 void
 i7_story_run_compiler_output(I7Story *story)
 {
+	I7_STORY_USE_PRIVATE(story, priv);
+	GError *err = NULL;
+
+    I7StoryPanel side = i7_story_choose_panel(story, I7_PANE_GAME);
+	ChimaraIF *glk = CHIMARA_IF(story->panel[side]->tabs[I7_PANE_GAME]);
+	    
+    /* Load and start the interpreter */
+	if(!chimara_if_run_game(glk, priv->compiler_output, &err)) {
+		error_dialog(GTK_WINDOW(story), err, _("Could not load interpreter: "));
+    }
 }
 
 void
@@ -37,28 +50,27 @@ i7_story_run_compiler_output_and_entire_skein(I7Story *story)
 void
 i7_story_stop_running_game(I7Story *story)
 {
+	ChimaraGlk *glk;
+
+	int side;
+	/* Execute for both panels */
+	for(side = LEFT; side < I7_STORY_NUM_PANELS; side++) {
+		glk = CHIMARA_GLK(story->panel[side]->tabs[I7_PANE_GAME]);
+		if(chimara_glk_get_running(glk)) {
+			chimara_glk_stop(glk);
+			/* chimara_glk_wait(glk); */ /* Not necessary? */
+		}
+	}
+}
+
+gboolean 
+i7_story_get_game_running(I7Story *story)
+{
+	return chimara_glk_get_running(CHIMARA_GLK(story->panel[LEFT]->tabs[I7_PANE_GAME]))
+		|| chimara_glk_get_running(CHIMARA_GLK(story->panel[RIGHT]->tabs[I7_PANE_GAME]));
 }
 
 #if 0
-#include <gnome.h>
-#include <ctype.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <string.h>
-
-#include "support.h"
-
-#include "appwindow.h"
-#include "configfile.h"
-#include "datafile.h"
-#include "error.h"
-#include "prefs.h"
-#include "skein.h"
-#include "story.h"
-#include "tabgame.h"
-
-#include "gtkterp/gtkterp.h"
-
 /* Callback for when the interpreter is finished */
 static void 
 on_interpreter_exit(GtkTerp *terp, gint exit_code, Story *thestory)
@@ -83,34 +95,6 @@ static void
 catch_input(GtkTerp *terp, const gchar *command, Story *thestory)
 {
     skein_new_line(thestory->theskein, command);
-}
-
-/* Create the GtkTerp widget and set some preferences */
-GtkWidget*
-game_create(gchar *widget_name, gchar *string1, gchar *string2, gint int1, 
-            gint int2)
-{
-    GtkTerp *terp = GTK_TERP(gtk_terp_new());
-    gtk_terp_set_interactive(terp, TRUE);
-    gtk_terp_set_protected(terp, FALSE);
-    return GTK_WIDGET(terp);
-}
-
-/* Resize the interpreter widget when its parent scroll window is allocated */
-void
-on_game_viewport_l_size_allocate(GtkWidget *widget, GtkAllocation *allocation,
-                                 gpointer data)
-{
-    resize_game_window(get_story(widget), LEFT, allocation->width,
-      allocation->height);
-}
-
-void
-on_game_viewport_r_size_allocate(GtkWidget *widget, GtkAllocation *allocation,
-                                 gpointer data)
-{
-    resize_game_window(get_story(widget), RIGHT, allocation->width,
-      allocation->height);
 }
 
 /* Run the story in the GtkTerp widget */
@@ -180,35 +164,5 @@ run_project(Story *thestory)
         commands = g_slist_delete_link(commands, commands);
     }
     gtk_terp_set_interactive(terp, TRUE);
-}
-
-/* Kill the interpreter if it is running */
-void
-stop_project(Story *thestory)
-{
-    GtkTerp *terp = GTK_TERP(lookup_widget(thestory->window, "game_l"));
-    if(gtk_terp_get_game_loaded(terp))
-        gtk_terp_stop_game(terp);
-    terp = GTK_TERP(lookup_widget(thestory->window, "game_r"));
-    if(gtk_terp_get_game_loaded(terp))
-        gtk_terp_stop_game(terp);
-}
-
-/* Resize the interpreter */
-void 
-resize_game_window(Story *thestory, int right, guint w, guint h)
-{
-    GtkTerp *terp = GTK_TERP(lookup_widget(thestory->window,
-                                           right? "game_r" : "game_l"));
-    if(gtk_terp_get_running(terp))
-        gtk_terp_set_minimum_size(terp, w, h);
-}
-/* Tell whether the interpreter is running on either side */
-gboolean
-game_is_running(Story *thestory)
-{
-    return
-      gtk_terp_get_running(GTK_TERP(lookup_widget(thestory->window,"game_r")))||
-      gtk_terp_get_running(GTK_TERP(lookup_widget(thestory->window,"game_l")));
 }
 #endif
