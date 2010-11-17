@@ -170,3 +170,23 @@ run_project(Story *thestory)
     gtk_terp_set_interactive(terp, TRUE);
 }
 #endif
+
+/* SIGNAL HANDLERS */
+
+/* Set the "stop" action to be sensitive when the game starts */
+void
+on_game_started(ChimaraGlk *game, I7Story *story)
+{
+	I7_STORY_USE_PRIVATE(story, priv);
+	GtkAction *stop = gtk_action_group_get_action(priv->story_action_group, "stop");
+	gtk_action_set_sensitive(stop, TRUE);
+}
+
+/* Set the "stop" action to be insensitive when the game finishes */
+void
+on_game_stopped(ChimaraGlk *game, I7Story *story)
+{
+	I7_STORY_USE_PRIVATE(story, priv);
+	GtkAction *stop = gtk_action_group_get_action(priv->story_action_group, "stop");
+	gtk_action_set_sensitive(stop, FALSE);
+}

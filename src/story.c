@@ -23,6 +23,7 @@
 #include <gtksourceview/gtksourceiter.h>
 #include "osxcart/plist.h"
 #include "osxcart/rtf.h"
+#include "libchimara/chimara-glk.h"
 #include "story.h"
 #include "story-private.h"
 #include "app.h"
@@ -60,6 +61,9 @@ void on_node_popup(I7SkeinView *, I7Node *);
 void on_differs_badge_activate(I7Skein *, I7Node *, I7Story *);
 void on_labels_changed(I7Skein *, I7Panel *);
 void on_show_node(I7Skein *, I7SkeinShowNodeReason, I7Node *, I7Panel *);
+/* Defined in story-game.c */
+void on_game_started(ChimaraGlk *, I7Story *);
+void on_game_stopped(ChimaraGlk *, I7Story *);
 
 static void
 on_heading_depth_value_changed(GtkRange *range, I7Story *story)
@@ -652,6 +656,10 @@ i7_story_init(I7Story *self)
 	add_actions(builder, &(priv->story_action_group), "story_actions", actions);
 	add_actions(builder, &(priv->unimplemented_action_group), "unimplemented_actions", unimplemented);
 
+	/* One exception: the "stop" action starts out insensitive */
+	GtkAction *stop = gtk_action_group_get_action(priv->story_action_group, "stop");
+	gtk_action_set_sensitive(stop, FALSE);
+
 	/* Build the menus and toolbars from the GtkUIManager file */
 	gtk_ui_manager_insert_action_group(I7_DOCUMENT(self)->ui_manager, priv->story_action_group, 0);
 	gtk_ui_manager_insert_action_group(I7_DOCUMENT(self)->ui_manager, priv->unimplemented_action_group, 0);
@@ -787,6 +795,8 @@ i7_story_init(I7Story *self)
 		g_signal_connect(priv->skein, "labels-changed", G_CALLBACK(on_labels_changed), panel);
 		g_signal_connect(priv->skein, "show-node", G_CALLBACK(on_show_node), panel);
 		g_signal_connect(panel->tabs[I7_PANE_SKEIN], "node-menu-popup", G_CALLBACK(on_node_popup), NULL);
+		g_signal_connect(panel->tabs[I7_PANE_GAME], "started", G_CALLBACK(on_game_started), self);
+		g_signal_connect(panel->tabs[I7_PANE_GAME], "stopped", G_CALLBACK(on_game_stopped), self);
 
 		/* Connect various models to various views */
 		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->source_tabs[I7_SOURCE_VIEW_TAB_SOURCE]), GTK_TEXT_BUFFER(buffer));
