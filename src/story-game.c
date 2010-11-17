@@ -35,6 +35,10 @@ i7_story_run_compiler_output(I7Story *story)
 	if(!chimara_if_run_game(glk, priv->compiler_output, &err)) {
 		error_dialog(GTK_WINDOW(story), err, _("Could not load interpreter: "));
     }
+	
+	/* Display and set the focus to the interpreter */
+	i7_story_show_pane(story, I7_PANE_GAME);
+    gtk_widget_grab_focus(GTK_WIDGET(glk));
 }
 
 void
