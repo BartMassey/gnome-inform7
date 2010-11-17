@@ -28,8 +28,8 @@
 typedef struct _I7SkeinPrivate
 {
 	I7Node *root;
-	I7Node *current;
-	I7Node *played;
+	I7Node *current; /* Node currently displayed in Transcript */
+	I7Node *played;  /* Node currently played (yellow) */
     gboolean modified;
     
     gdouble hspacing;
@@ -58,6 +58,8 @@ enum
 enum
 {
 	PROP_0,
+	PROP_CURRENT_NODE,
+	PROP_PLAYED_NODE,
 	PROP_HORIZONTAL_SPACING,
 	PROP_VERTICAL_SPACING,
 	PROP_LOCKED_COLOR,
@@ -136,6 +138,9 @@ i7_skein_set_property(GObject *self, guint prop_id, const GValue *value, GParamS
     I7_SKEIN_USE_PRIVATE;
     
     switch(prop_id) {
+		case PROP_CURRENT_NODE:
+			i7_skein_set_current_node(I7_SKEIN(self), I7_NODE(g_value_get_object(value)));
+			break;
 		case PROP_HORIZONTAL_SPACING:
 			priv->hspacing = g_value_get_double(value);
 			g_object_notify(self, "horizontal-spacing");
@@ -167,6 +172,12 @@ i7_skein_get_property(GObject *self, guint prop_id, GValue *value, GParamSpec *p
     I7_SKEIN_USE_PRIVATE;
     
     switch(prop_id) {
+		case PROP_CURRENT_NODE:
+			g_value_set_object(value, priv->current);
+			break;
+		case PROP_PLAYED_NODE:
+			g_value_set_object(value, priv->played);
+			break;
 		case PROP_HORIZONTAL_SPACING:
 			g_value_set_double(value, priv->hspacing);
 			break;
@@ -246,24 +257,32 @@ i7_skein_class_init(I7SkeinClass *klass)
 	    g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 	    
 	/* Install properties */
-	GParamFlags flags = G_PARAM_CONSTRUCT | G_PARAM_LAX_VALIDATION | G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB;
+	GParamFlags flags = G_PARAM_LAX_VALIDATION | G_PARAM_STATIC_NAME | G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB;
 	/* SUCKY DEBIAN replace with G_PARAM_STATIC_STRINGS */
+	g_object_class_install_property(object_class, PROP_CURRENT_NODE,
+	    g_param_spec_object("current-node", _("Current node"),
+		    _("The node currently displayed in the Transcript"),
+		    I7_TYPE_NODE, G_PARAM_READWRITE | flags));
+	g_object_class_install_property(object_class, PROP_PLAYED_NODE,
+	    g_param_spec_object("played-node", _("Played node"),
+		    _("The node last played in the Game view"),
+		    I7_TYPE_NODE, G_PARAM_READABLE | flags));
 	g_object_class_install_property(object_class, PROP_HORIZONTAL_SPACING,
 		g_param_spec_double("horizontal-spacing", _("Horizontal spacing"),
 		    _("Pixels of horizontal space between skein branches"),
-		    20.0, 100.0, 40.0, G_PARAM_READWRITE | flags));
+		    20.0, 100.0, 40.0, G_PARAM_READWRITE | G_PARAM_CONSTRUCT | flags));
 	g_object_class_install_property(object_class, PROP_VERTICAL_SPACING,
 		g_param_spec_double("vertical-spacing", _("Vertical spacing"),
 			_("Pixels of vertical space between skein items"),
-			20.0, 100.0, 40.0, G_PARAM_READWRITE | flags));
+			20.0, 100.0, 40.0, G_PARAM_READWRITE | G_PARAM_CONSTRUCT | flags));
 	g_object_class_install_property(object_class, PROP_LOCKED_COLOR,
 		g_param_spec_string("locked-color", _("Locked color"),
 			_("Color of locked threads"),
-			"black", G_PARAM_WRITABLE | flags));
+			"black", G_PARAM_WRITABLE | G_PARAM_CONSTRUCT | flags));
 	g_object_class_install_property(object_class, PROP_UNLOCKED_COLOR,
 		g_param_spec_string("unlocked-color", _("Unlocked color"),
 			_("Color of unlocked threads"),
-			"black", G_PARAM_WRITABLE | flags));
+			"black", G_PARAM_WRITABLE | G_PARAM_CONSTRUCT | flags));
 
 	/* Add private data */
 	g_type_class_add_private(klass, sizeof(I7SkeinPrivate));
@@ -300,6 +319,7 @@ i7_skein_set_current_node(I7Skein *self, I7Node *node)
 {
 	I7_SKEIN_USE_PRIVATE;
     priv->current = node;
+	g_object_notify(G_OBJECT(self), "current-node");
 }
 
 gboolean
@@ -314,6 +334,47 @@ i7_skein_get_played_node(I7Skein *self)
 {
 	I7_SKEIN_USE_PRIVATE;
     return priv->played;
+}
+
+static gboolean
+change_node_played(GNode *gnode, gpointer data)
+{
+	i7_node_set_played(I7_NODE(gnode->data), GPOINTER_TO_INT(data));
+	return FALSE; /* Don't stop the traversal */
+}
+
+/* Private */
+static void
+i7_skein_set_played_node(I7Skein *self, I7Node *node)
+{
+	I7_SKEIN_USE_PRIVATE;
+
+	/* Change the colors of the nodes */
+
+	GNode *gnode;
+	if(priv->played && i7_node_in_thread(priv->played, node)) {
+		/* If the new played node is a descendant of the old played node, then
+		 just change the colors in a line down to the new one */
+		gnode = priv->played->gnode;
+	}
+	else {
+		/* Otherwise, make every node unplayed first and start again at the
+		 root node */
+		g_node_traverse(priv->root->gnode, G_IN_ORDER, G_TRAVERSE_ALL, -1, (GNodeTraverseFunc)change_node_played, GINT_TO_POINTER(FALSE));
+		gnode = priv->root->gnode;
+	}
+
+	/* Calculate which nodes should be "played" */
+	do {
+		i7_node_set_played(I7_NODE(gnode->data), TRUE);
+		for(gnode = gnode->children; gnode; gnode = gnode->next) {
+			if(i7_node_in_thread(I7_NODE(gnode->data), node))
+			    break;
+		}
+	} while(gnode);
+	
+	priv->played = node;
+	g_object_notify(G_OBJECT(self), "played-node");
 }
 
 /* Search an xmlNode's properties for a certain one and return its content.
@@ -450,18 +511,9 @@ i7_skein_load(I7Skein *self, const gchar *filename, GError **error)
     /* Discard the current skein and replace with the new */
     g_object_unref(priv->root);
     priv->root = I7_NODE(g_hash_table_lookup(nodetable, root_id));
-    priv->played = I7_NODE(g_hash_table_lookup(nodetable, active_id));
-    priv->current = priv->root;
-
-	/* Calculate which nodes should be "played" */
-	GNode *gnode = priv->root->gnode;
-	do {
-		i7_node_set_played(I7_NODE(gnode->data), TRUE);
-		for(gnode = gnode->children; gnode; gnode = gnode->next) {
-			if(i7_node_in_thread(I7_NODE(gnode->data), priv->played))
-			    break;
-		}
-	} while(gnode);
+    priv->played = NULL;
+	i7_skein_set_played_node(self, I7_NODE(g_hash_table_lookup(nodetable, active_id)));
+    i7_skein_set_current_node(self, priv->root);
 	
     g_signal_emit_by_name(self, "needs-layout");
 	g_signal_emit_by_name(self, "labels-changed");
@@ -517,14 +569,15 @@ i7_skein_save(I7Skein *self, const gchar *filename, GError **error)
 	return TRUE;
 }
 
+/* Rewinds the skein to the beginning; if @current is TRUE, also resets the
+ view in the Transcript to the beginning */
 void
 i7_skein_reset(I7Skein *self, gboolean current)
 {
 	I7_SKEIN_USE_PRIVATE;
     if(current)
-        priv->current = priv->root;
-    priv->played = priv->root;
-    /* TODO modify the node colors */
+        i7_skein_set_current_node(self, priv->root);
+	i7_skein_set_played_node(self, priv->root);
 }
 
 static guint
@@ -603,7 +656,10 @@ i7_skein_draw(I7Skein *self, GooCanvas *canvas)
     	treewidth * 0.5 + priv->hspacing, g_node_max_height(priv->root->gnode) * priv->vspacing);
 }
 
-void
+/* Add a new node with the given command, under the played node. Unless there
+ is already a node with that command. In either case, return a pointer to that
+ node. */
+I7Node *
 i7_skein_new_command(I7Skein *self, const gchar *command)
 {
 	I7_SKEIN_USE_PRIVATE;
@@ -613,7 +669,7 @@ i7_skein_new_command(I7Skein *self, const gchar *command)
 
     /* Is there a child node with the same line? */
 	I7Node *node = NULL;
-    GNode *gnode = priv->current->gnode->children;
+    GNode *gnode = priv->played->gnode->children;
     while(gnode != NULL) {
 		gchar *cmp_command = i7_node_get_command(I7_NODE(gnode->data));
         /* Special case: NULL is treated as "" */
@@ -628,30 +684,28 @@ i7_skein_new_command(I7Skein *self, const gchar *command)
 		/* Wasn't found, create new node */
         node = i7_node_new(node_command, "", "", "", TRUE, FALSE, 0, GOO_CANVAS_ITEM_MODEL(self));
 		node_listen(self, node);
-        g_node_append(priv->current->gnode, node->gnode);
+        g_node_append(priv->played->gnode, node->gnode);
         node_added = TRUE;
     }
     g_free(node_command);
     
     /* Make this the new current node */
-    priv->current = node;
-    priv->played = node;
+    i7_skein_set_current_node(self, node);
+	i7_skein_set_played_node(self, node);
 
     /* Send signals */
-    if(node_added) {
+    if(node_added)
         g_signal_emit_by_name(self, "needs-layout");
-    } else {
-    	/* TODO: change node colors */
-		;
-    }
     g_signal_emit_by_name(self, "show-node", I7_REASON_COMMAND, node);
 	g_signal_emit_by_name(self, "modified");
+
+	return node;
 }
 
 /* Find the next node to use. Return TRUE if found, and if so, store a
-newly-allocated copy of its command text in line.*/
+newly-allocated copy of its command text in @command.*/
 gboolean
-i7_skein_next_command(I7Skein *self, gchar **line)
+i7_skein_next_command(I7Skein *self, gchar **command)
 {
 	I7_SKEIN_USE_PRIVATE;
 	
@@ -663,7 +717,7 @@ i7_skein_next_command(I7Skein *self, gchar **line)
         next = next->gnode->parent->data;
     priv->played = next;
 	gchar *temp = i7_node_get_command(next);
-    *line = g_strcompress(temp);
+    *command = g_strcompress(temp);
 	g_free(temp);
     g_signal_emit_by_name(self, "show-node", I7_REASON_COMMAND, next);
     return TRUE;
@@ -779,8 +833,8 @@ i7_skein_remove_all(I7Skein *self, I7Node *node)
 	g_node_traverse(node->gnode, G_POST_ORDER, G_TRAVERSE_ALL, -1, (GNodeTraverseFunc)remove_node_from_canvas, self);
 	
     if(in_current) {
-        priv->current = priv->root;
-        priv->played = priv->root;
+		i7_skein_set_current_node(self, priv->root);
+		i7_skein_set_played_node(self, priv->root);
     }
         
     g_signal_emit_by_name(self, "needs-layout");
@@ -810,8 +864,8 @@ i7_skein_remove_single(I7Skein *self, I7Node *node)
 	remove_node_from_canvas(node->gnode, self);
 	                        
     if(in_current) {
-        priv->current = priv->root;
-        priv->played = priv->root;
+        i7_skein_set_current_node(self, priv->root);
+		i7_skein_set_played_node(self, priv->root);
     }
     
     g_signal_emit_by_name(self, "needs-layout");
@@ -861,8 +915,8 @@ i7_skein_trim_recurse(I7Skein *self, I7Node *node, gint min_score)
             i++;
         } else {
 			if(i7_skein_is_node_in_current_thread(self, child)) {
-                priv->current = priv->root;
-                priv->played = priv->root;
+                i7_skein_set_current_node(self, priv->root);
+				i7_skein_set_played_node(self, priv->root);
             }
 			
             if(i7_skein_remove_all(self, child) == FALSE)
