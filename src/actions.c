@@ -948,7 +948,7 @@ action_test_me(GtkAction *action, I7Story *story)
 void
 action_stop(GtkAction *action, I7Story *story)
 {
-	
+	i7_story_stop_running_game(story);
 }
 
 /* Helper function to reload the index tabs and then display the index pane */
