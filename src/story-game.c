@@ -58,7 +58,7 @@ i7_story_stop_running_game(I7Story *story)
 		glk = CHIMARA_GLK(story->panel[side]->tabs[I7_PANE_GAME]);
 		if(chimara_glk_get_running(glk)) {
 			chimara_glk_stop(glk);
-			/* chimara_glk_wait(glk); */ /* Not necessary? */
+			chimara_glk_wait(glk); /* Seems to be necessary? */
 		}
 	}
 }

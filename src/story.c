@@ -97,7 +97,7 @@ on_storywindow_delete_event(GtkWidget *window, GdkEvent *event)
 	save_storywindow_size(I7_STORY(window));
 
 	gtk_widget_destroy(I7_STORY(window)->notes_window);
-	/*stop_project(self);*/
+	i7_story_stop_running_game(I7_STORY(window));
 	if(i7_document_get_path(I7_DOCUMENT(window)))
 	    delete_build_files(I7_STORY(window));
 
