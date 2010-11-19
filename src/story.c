@@ -24,6 +24,7 @@
 #include "osxcart/plist.h"
 #include "osxcart/rtf.h"
 #include "libchimara/chimara-glk.h"
+#include "libchimara/chimara-if.h"
 #include "story.h"
 #include "story-private.h"
 #include "app.h"
@@ -64,6 +65,7 @@ void on_show_node(I7Skein *, I7SkeinShowNodeReason, I7Node *, I7Panel *);
 /* Defined in story-game.c */
 void on_game_started(ChimaraGlk *, I7Story *);
 void on_game_stopped(ChimaraGlk *, I7Story *);
+void on_game_command(ChimaraIF *, gchar *, gchar *, I7Story *);
 
 static void
 on_heading_depth_value_changed(GtkRange *range, I7Story *story)
@@ -797,6 +799,7 @@ i7_story_init(I7Story *self)
 		g_signal_connect(panel->tabs[I7_PANE_SKEIN], "node-menu-popup", G_CALLBACK(on_node_popup), NULL);
 		g_signal_connect(panel->tabs[I7_PANE_GAME], "started", G_CALLBACK(on_game_started), self);
 		g_signal_connect(panel->tabs[I7_PANE_GAME], "stopped", G_CALLBACK(on_game_stopped), self);
+		g_signal_connect(panel->tabs[I7_PANE_GAME], "command", G_CALLBACK(on_game_command), self);
 
 		/* Connect various models to various views */
 		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->source_tabs[I7_SOURCE_VIEW_TAB_SOURCE]), GTK_TEXT_BUFFER(buffer));

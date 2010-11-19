@@ -104,7 +104,9 @@ chimara_if_waiting(ChimaraGlk *glk)
 	gchar *response = g_string_free(priv->response, FALSE);
 	priv->response = g_string_new("");
 
+	gdk_threads_enter();
 	g_signal_emit_by_name(glk, "command", priv->input, response);
+	gdk_threads_leave();
 
 	g_free(priv->input);
 	g_free(response);
@@ -281,12 +283,16 @@ chimara_if_class_init(ChimaraIFClass *klass)
 	/**
 	 * ChimaraIF::command:
 	 * @self: The widget that received the signal
-	 * @input: The command typed into the game
+	 * @input: The command typed into the game, or %NULL
 	 * @response: The game's response to the command
 	 *
 	 * Emitted once for each input-response cycle of an interactive fiction
 	 * game. Note that games with nontraditional input systems (i.e. not all
 	 * taking place in the same text buffer window) may confuse this signal.
+	 *
+	 * It may happen that @input is %NULL, in which case @response is not due to
+	 * a user command, but contains the text printed at the beginning of the
+	 * game, up until the first prompt.
 	 */
 	chimara_if_signals[COMMAND] = g_signal_new("command",
 		G_OBJECT_CLASS_TYPE(klass), 0,

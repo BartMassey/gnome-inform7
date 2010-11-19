@@ -21,12 +21,17 @@
 #include "story.h"
 #include "story-private.h"
 #include "error.h"
+#include "node.h"
+#include "skein.h"
 
 void
 i7_story_run_compiler_output(I7Story *story)
 {
 	I7_STORY_USE_PRIVATE(story, priv);
 	GError *err = NULL;
+
+	/* Rewind the Skein to the beginning */
+	i7_skein_reset(priv->skein, TRUE);
 
     I7StoryPanel side = i7_story_choose_panel(story, I7_PANE_GAME);
 	ChimaraIF *glk = CHIMARA_IF(story->panel[side]->tabs[I7_PANE_GAME]);
@@ -75,32 +80,6 @@ i7_story_get_game_running(I7Story *story)
 }
 
 #if 0
-/* Callback for when the interpreter is finished */
-static void 
-on_interpreter_exit(GtkTerp *terp, gint exit_code, Story *thestory)
-{
-    gtk_terp_unload_game(terp);
-    
-    if(thestory->handler_finished)
-        g_signal_handler_disconnect((gpointer)terp, thestory->handler_finished);
-    if(thestory->handler_input)
-        g_signal_handler_disconnect((gpointer)terp, thestory->handler_input);
-    
-    thestory->handler_finished = 0;
-    thestory->handler_input = 0;
-    
-    gtk_widget_set_sensitive(lookup_widget(thestory->window, "stop"), FALSE);
-    gtk_widget_set_sensitive(lookup_widget(thestory->window, "stop_toolbutton"),
-      FALSE);
-}
-
-/* Grab commands entered by the user and store them in the skein */
-static void 
-catch_input(GtkTerp *terp, const gchar *command, Story *thestory)
-{
-    skein_new_line(thestory->theskein, command);
-}
-
 /* Run the story in the GtkTerp widget */
 void 
 run_project(Story *thestory) 
@@ -189,4 +168,21 @@ on_game_stopped(ChimaraGlk *game, I7Story *story)
 	I7_STORY_USE_PRIVATE(story, priv);
 	GtkAction *stop = gtk_action_group_get_action(priv->story_action_group, "stop");
 	gtk_action_set_sensitive(stop, FALSE);
+}
+
+/* Grab commands entered by the user and store them in the skein */
+void
+on_game_command(ChimaraIF *game, gchar *input, gchar *response, I7Story *story)
+{
+	I7_STORY_USE_PRIVATE(story, priv);
+	if(!input) {
+		/* If no input, then this was the text printed before the first prompt.
+		 It should become the transcript text of the root node. */
+		I7Node *root = i7_skein_get_root_node(priv->skein);
+		g_assert(i7_skein_get_current_node(priv->skein) == root);
+		i7_node_set_transcript_text(root, response);
+	} else {
+		I7Node *node = i7_skein_new_command(priv->skein, input);
+		i7_node_set_transcript_text(node, response);
+	}
 }
