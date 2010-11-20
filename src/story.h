@@ -133,6 +133,7 @@ void i7_story_run_compiler_output_and_replay(I7Story *story);
 void i7_story_run_compiler_output_and_entire_skein(I7Story *story);
 void i7_story_stop_running_game(I7Story *story);
 gboolean i7_story_get_game_running(I7Story *story);
+void i7_story_set_use_git(I7Story *story, gboolean use_git);
 
 /* Skein pane, story-skein.c */
 I7Skein *i7_story_get_skein(I7Story *story);

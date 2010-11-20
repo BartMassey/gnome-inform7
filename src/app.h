@@ -50,6 +50,8 @@ enum _I7AppExtensionsColumns {
 	I7_APP_NUM_EXTENSION_COLUMNS
 };
 
+typedef void (*I7DocumentForeachFunc)(I7Document *, gpointer);
+
 typedef struct {
 	GObjectClass parent_class;
 } I7AppClass;
@@ -73,7 +75,7 @@ void i7_app_remove_document(I7App *app, I7Document *document);
 I7Document *i7_app_get_already_open(I7App *app, const gchar *filename);
 gint i7_app_get_num_open_documents(I7App *app);
 void i7_app_close_all_documents(I7App *app);
-void i7_app_foreach_document(I7App *app, void (*func)(I7Document *), gpointer data);
+void i7_app_foreach_document(I7App *app, I7DocumentForeachFunc func, gpointer data);
 
 void i7_app_monitor_extensions_directory(I7App *app);
 void i7_app_stop_monitoring_extensions_directory(I7App *app);

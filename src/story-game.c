@@ -79,6 +79,18 @@ i7_story_get_game_running(I7Story *story)
 		|| chimara_glk_get_running(CHIMARA_GLK(story->panel[RIGHT]->tabs[I7_PANE_GAME]));
 }
 
+void 
+i7_story_set_use_git(I7Story *story, gboolean use_git)
+{
+	ChimaraIF *glk;
+	int side;
+	/* Execute for both panels */
+	for(side = LEFT; side < I7_STORY_NUM_PANELS; side++) {
+		glk = CHIMARA_IF(story->panel[side]->tabs[I7_PANE_GAME]);
+		chimara_if_set_preferred_interpreter(glk, CHIMARA_IF_FORMAT_GLULX, use_git? CHIMARA_IF_INTERPRETER_GIT : CHIMARA_IF_INTERPRETER_GLULXE);
+	}
+}
+
 #if 0
 /* Run the story in the GtkTerp widget */
 void 
