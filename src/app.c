@@ -294,10 +294,10 @@ i7_app_close_all_documents(I7App *app)
  extension window only, call this function and check for I7_IS_STORY() in your
  callback function. */
 void
-i7_app_foreach_document(I7App *app, void (*func)(I7Document *))
+i7_app_foreach_document(I7App *app, void (*func)(I7Document *), gpointer data)
 {
 	I7_APP_USE_PRIVATE(app, priv);
-	g_slist_foreach(priv->document_list, (GFunc)func, NULL);
+	g_slist_foreach(priv->document_list, (GFunc)func, data);
 }
 
 /* Callback for file monitor on extensions directory; run the census if a file

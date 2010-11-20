@@ -153,7 +153,7 @@ on_config_font_set_changed(GConfClient *client, guint id, GConfEntry *entry, Gtk
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combobox), newvalue);
 	update_font(GTK_WIDGET(theapp->prefs->source_example));
 	update_font(GTK_WIDGET(theapp->prefs->tab_example));
-	i7_app_foreach_document(theapp, i7_document_update_fonts);
+	i7_app_foreach_document(theapp, i7_document_update_fonts, NULL);
 }
 
 static void
@@ -168,7 +168,7 @@ on_config_custom_font_changed(GConfClient *client, guint id, GConfEntry *entry, 
 	if(config_file_get_enum(PREFS_FONT_SET, font_set_lookup_table) == FONT_CUSTOM) {
 		update_font(GTK_WIDGET(theapp->prefs->source_example));
 		update_font(GTK_WIDGET(theapp->prefs->tab_example));
-		i7_app_foreach_document(theapp, i7_document_update_fonts);
+		i7_app_foreach_document(theapp, i7_document_update_fonts, NULL);
 	}
 }
 
@@ -186,8 +186,8 @@ on_config_font_size_changed(GConfClient *client, guint id, GConfEntry *entry, Gt
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combobox), newvalue);
 	update_font(GTK_WIDGET(theapp->prefs->source_example));
 	update_font(GTK_WIDGET(theapp->prefs->tab_example));
-	i7_app_foreach_document(theapp, i7_document_update_fonts);
-	i7_app_foreach_document(theapp, i7_document_update_font_sizes);
+	i7_app_foreach_document(theapp, i7_document_update_fonts, NULL);
+	i7_app_foreach_document(theapp, i7_document_update_font_sizes, NULL);
 }
 
 static void
@@ -201,8 +201,8 @@ on_config_style_scheme_changed(GConfClient *client, guint id, GConfEntry *entry,
 	/* update application to reflect new value */
 	select_style_scheme(GTK_TREE_VIEW(list), newvalue);
 	update_style(GTK_SOURCE_BUFFER(gtk_text_view_get_buffer(GTK_TEXT_VIEW(theapp->prefs->source_example))));
-	i7_app_foreach_document(theapp, i7_document_update_fonts);
-	i7_app_foreach_document(theapp, i7_document_update_font_styles);
+	i7_app_foreach_document(theapp, i7_document_update_fonts, NULL);
+	i7_app_foreach_document(theapp, i7_document_update_font_styles, NULL);
 }
 
 static void
@@ -219,7 +219,7 @@ on_config_tab_width_changed(GConfClient *client, guint id, GConfEntry *entry, Gt
 	gtk_range_set_value(GTK_RANGE(range), (gdouble)newvalue);
 	update_tabs(theapp->prefs->tab_example);
 	update_tabs(theapp->prefs->source_example);
-	i7_app_foreach_document(theapp, i7_document_update_tabs);
+	i7_app_foreach_document(theapp, i7_document_update_tabs, NULL);
 }
 
 static void
@@ -229,8 +229,8 @@ on_config_syntax_highlighting_changed(GConfClient *client, guint id, GConfEntry 
 	/* update application to reflect new value */
 	I7App *theapp = i7_app_get();
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle), newvalue);
-	i7_app_foreach_document(theapp, i7_document_update_source_highlight);
-	i7_app_foreach_document(theapp, i7_document_update_fonts);
+	i7_app_foreach_document(theapp, i7_document_update_source_highlight, NULL);
+	i7_app_foreach_document(theapp, i7_document_update_fonts, NULL);
 }
 
 static void
@@ -269,7 +269,7 @@ on_config_debug_log_visible_changed(GConfClient *client, guint id, GConfEntry *e
 	gboolean newvalue = gconf_value_get_bool(gconf_entry_get_value(entry));
 	/* update application to reflect new value */
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle), newvalue);
-	i7_app_foreach_document(i7_app_get(), newvalue? i7_story_add_debug_tabs : i7_story_remove_debug_tabs);
+	i7_app_foreach_document(i7_app_get(), newvalue? i7_story_add_debug_tabs : i7_story_remove_debug_tabs, NULL);
 }
 
 static void
@@ -290,7 +290,7 @@ on_config_elastic_tabs_padding_changed(GConfClient *client, guint id, GConfEntry
 		return;
 	}
 	/* update application to reflect new value */
-	i7_app_foreach_document(i7_app_get(), i7_document_refresh_elastic_tabs);
+	i7_app_foreach_document(i7_app_get(), i7_document_refresh_elastic_tabs, NULL);
 }
 
 static void
@@ -314,7 +314,7 @@ update_skein_spacing(I7Document *document)
 static void
 on_config_skein_spacing_changed(GConfClient *client, guint id, GConfEntry *entry)
 {
-	i7_app_foreach_document(i7_app_get(), update_skein_spacing);
+	i7_app_foreach_document(i7_app_get(), update_skein_spacing, NULL);
 }
 
 static void
