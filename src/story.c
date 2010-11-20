@@ -594,6 +594,50 @@ i7_story_check_spelling(I7Document *document)
 /* TYPE SYSTEM */
 
 static void
+story_init_panel(I7Story *self, I7Panel *panel, PangoFontDescription *font)
+{
+	I7_STORY_USE_PRIVATE(self, priv);
+	
+	gtk_widget_show(GTK_WIDGET(panel));
+	
+	/* Connect other signals */
+	g_signal_connect(panel->sourceview->heading_depth, "value-changed", G_CALLBACK(on_heading_depth_value_changed), self);
+	g_signal_connect(panel->z5, "toggled", G_CALLBACK(on_z5_button_toggled), self);
+	g_signal_connect(panel->z8, "toggled", G_CALLBACK(on_z8_button_toggled), self);
+	g_signal_connect(panel->z6, "toggled", G_CALLBACK(on_z6_button_toggled), self);
+	g_signal_connect(panel->glulx, "toggled", G_CALLBACK(on_glulx_button_toggled), self);
+	g_signal_connect(panel->blorb, "toggled", G_CALLBACK(on_blorb_button_toggled), self);
+	g_signal_connect(panel->nobble_rng, "toggled", G_CALLBACK(on_nobble_rng_button_toggled), self);
+	g_signal_connect(panel->tabs[I7_PANE_SOURCE], "switch-page", G_CALLBACK(on_source_notebook_switch_page), self);
+	g_signal_connect(panel->source_tabs[I7_SOURCE_VIEW_TAB_CONTENTS], "row-activated", G_CALLBACK(on_headings_row_activated), self);
+	g_signal_connect(panel, "select-view", G_CALLBACK(on_panel_select_view), self);
+	g_signal_connect(panel, "paste-code", G_CALLBACK(on_panel_paste_code), self);
+	g_signal_connect(panel, "jump-to-line", G_CALLBACK(on_panel_jump_to_line), self);
+	g_signal_connect(panel, "display-docpage", G_CALLBACK(on_panel_display_docpage), self);
+	g_signal_connect(priv->skein, "labels-changed", G_CALLBACK(on_labels_changed), panel);
+	g_signal_connect(priv->skein, "show-node", G_CALLBACK(on_show_node), panel);
+	g_signal_connect(panel->tabs[I7_PANE_SKEIN], "node-menu-popup", G_CALLBACK(on_node_popup), NULL);
+	g_signal_connect(panel->tabs[I7_PANE_GAME], "started", G_CALLBACK(on_game_started), self);
+	g_signal_connect(panel->tabs[I7_PANE_GAME], "stopped", G_CALLBACK(on_game_stopped), self);
+	g_signal_connect(panel->tabs[I7_PANE_GAME], "command", G_CALLBACK(on_game_command), self);
+
+	/* Connect various models to various views */
+	gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->source_tabs[I7_SOURCE_VIEW_TAB_SOURCE]), GTK_TEXT_BUFFER(i7_document_get_buffer(I7_DOCUMENT(self))));
+	gtk_tree_view_set_model(GTK_TREE_VIEW(panel->source_tabs[I7_SOURCE_VIEW_TAB_CONTENTS]), i7_document_get_headings(I7_DOCUMENT(self)));
+	gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_PROGRESS]), priv->progress);
+	gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_DEBUGGING]), priv->debug_log);
+	gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_INFORM6]), GTK_TEXT_BUFFER(priv->i6_source));
+	i7_skein_view_set_skein(I7_SKEIN_VIEW(panel->tabs[I7_PANE_SKEIN]), priv->skein);
+
+	/* Set the Errors/Progress to a monospace font */
+	gtk_widget_modify_font(GTK_WIDGET(panel->errors_tabs[I7_ERRORS_TAB_PROGRESS]), font);
+	
+	/* Connect the Previous Section and Next Section actions to the up and down buttons */
+	gtk_action_connect_proxy(I7_DOCUMENT(self)->previous_section, panel->sourceview->previous);
+	gtk_action_connect_proxy(I7_DOCUMENT(self)->next_section, panel->sourceview->next);
+}
+
+static void
 i7_story_init(I7Story *self)
 {
 	I7_STORY_USE_PRIVATE(self, priv);
@@ -774,48 +818,8 @@ i7_story_init(I7Story *self)
 	g_free(family);
 	pango_font_description_set_size(font, get_font_size(font));
 
-	/* Do stuff to the left and then the right pane */
-	int side;
-	for(side = LEFT; side < I7_STORY_NUM_PANELS; side++) {
-		I7Panel *panel = self->panel[side];
-		gtk_widget_show(GTK_WIDGET(panel));
-		
-		/* Connect other signals */
-		g_signal_connect(panel->sourceview->heading_depth, "value-changed", G_CALLBACK(on_heading_depth_value_changed), self);
-		g_signal_connect(panel->z5, "toggled", G_CALLBACK(on_z5_button_toggled), self);
-		g_signal_connect(panel->z8, "toggled", G_CALLBACK(on_z8_button_toggled), self);
-		g_signal_connect(panel->z6, "toggled", G_CALLBACK(on_z6_button_toggled), self);
-		g_signal_connect(panel->glulx, "toggled", G_CALLBACK(on_glulx_button_toggled), self);
-		g_signal_connect(panel->blorb, "toggled", G_CALLBACK(on_blorb_button_toggled), self);
-		g_signal_connect(panel->nobble_rng, "toggled", G_CALLBACK(on_nobble_rng_button_toggled), self);
-		g_signal_connect(panel->tabs[I7_PANE_SOURCE], "switch-page", G_CALLBACK(on_source_notebook_switch_page), self);
-		g_signal_connect(panel->source_tabs[I7_SOURCE_VIEW_TAB_CONTENTS], "row-activated", G_CALLBACK(on_headings_row_activated), self);
-		g_signal_connect(panel, "select-view", G_CALLBACK(on_panel_select_view), self);
-		g_signal_connect(panel, "paste-code", G_CALLBACK(on_panel_paste_code), self);
-		g_signal_connect(panel, "jump-to-line", G_CALLBACK(on_panel_jump_to_line), self);
-		g_signal_connect(panel, "display-docpage", G_CALLBACK(on_panel_display_docpage), self);
-		g_signal_connect(priv->skein, "labels-changed", G_CALLBACK(on_labels_changed), panel);
-		g_signal_connect(priv->skein, "show-node", G_CALLBACK(on_show_node), panel);
-		g_signal_connect(panel->tabs[I7_PANE_SKEIN], "node-menu-popup", G_CALLBACK(on_node_popup), NULL);
-		g_signal_connect(panel->tabs[I7_PANE_GAME], "started", G_CALLBACK(on_game_started), self);
-		g_signal_connect(panel->tabs[I7_PANE_GAME], "stopped", G_CALLBACK(on_game_stopped), self);
-		g_signal_connect(panel->tabs[I7_PANE_GAME], "command", G_CALLBACK(on_game_command), self);
-
-		/* Connect various models to various views */
-		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->source_tabs[I7_SOURCE_VIEW_TAB_SOURCE]), GTK_TEXT_BUFFER(buffer));
-		gtk_tree_view_set_model(GTK_TREE_VIEW(panel->source_tabs[I7_SOURCE_VIEW_TAB_CONTENTS]), i7_document_get_headings(I7_DOCUMENT(self)));
-		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_PROGRESS]), priv->progress);
-		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_DEBUGGING]), priv->debug_log);
-		gtk_text_view_set_buffer(GTK_TEXT_VIEW(panel->errors_tabs[I7_ERRORS_TAB_INFORM6]), GTK_TEXT_BUFFER(priv->i6_source));
-		i7_skein_view_set_skein(I7_SKEIN_VIEW(panel->tabs[I7_PANE_SKEIN]), priv->skein);
-
-		/* Set the Errors/Progress to a monospace font */
-		gtk_widget_modify_font(GTK_WIDGET(panel->errors_tabs[I7_ERRORS_TAB_PROGRESS]), font);
-		
-		/* Connect the Previous Section and Next Section actions to the up and down buttons */
-		gtk_action_connect_proxy(I7_DOCUMENT(self)->previous_section, panel->sourceview->previous);
-		gtk_action_connect_proxy(I7_DOCUMENT(self)->next_section, panel->sourceview->next);
-	}
+	/* Do panel-specific stuff to the left and then the right panel */
+	i7_story_foreach_panel(self, (I7PanelForeachFunc)story_init_panel, font);
 	pango_font_description_free(font);
 	
 	/* Now the buffers and models are owned by the views, so dereference them */
@@ -1188,4 +1192,14 @@ i7_story_get_extension(I7Story *story)
     }
 	g_assert_not_reached();
     return "error";
+}
+
+/* Execute @func for both panels */
+void 
+i7_story_foreach_panel(I7Story *story, I7PanelForeachFunc func, gpointer data)
+{
+	int side;
+	/* Execute for both panels */
+	for(side = LEFT; side < I7_STORY_NUM_PANELS; side++)
+		func(story, story->panel[side], data);
 }

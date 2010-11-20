@@ -56,20 +56,20 @@ i7_story_run_compiler_output_and_entire_skein(I7Story *story)
 {
 }
 
+static void
+panel_stop_running_game(I7Story *story, I7Panel *panel)
+{
+	ChimaraGlk *glk = CHIMARA_GLK(panel->tabs[I7_PANE_GAME]);
+	if(chimara_glk_get_running(glk)) {
+		chimara_glk_stop(glk);
+		chimara_glk_wait(glk); /* Seems to be necessary? */
+	}
+}
+
 void
 i7_story_stop_running_game(I7Story *story)
 {
-	ChimaraGlk *glk;
-
-	int side;
-	/* Execute for both panels */
-	for(side = LEFT; side < I7_STORY_NUM_PANELS; side++) {
-		glk = CHIMARA_GLK(story->panel[side]->tabs[I7_PANE_GAME]);
-		if(chimara_glk_get_running(glk)) {
-			chimara_glk_stop(glk);
-			chimara_glk_wait(glk); /* Seems to be necessary? */
-		}
-	}
+	i7_story_foreach_panel(story, (I7PanelForeachFunc)panel_stop_running_game, NULL);
 }
 
 gboolean 
@@ -79,16 +79,18 @@ i7_story_get_game_running(I7Story *story)
 		|| chimara_glk_get_running(CHIMARA_GLK(story->panel[RIGHT]->tabs[I7_PANE_GAME]));
 }
 
+static void
+panel_set_use_git(I7Story *story, I7Panel *panel, gpointer data)
+{
+	ChimaraIFFormat interpreter = GPOINTER_TO_INT(data)? CHIMARA_IF_INTERPRETER_GIT : CHIMARA_IF_INTERPRETER_GLULXE;
+	ChimaraIF *glk = CHIMARA_IF(panel->tabs[I7_PANE_GAME]);
+	chimara_if_set_preferred_interpreter(glk, CHIMARA_IF_FORMAT_GLULX, interpreter);
+}
+
 void 
 i7_story_set_use_git(I7Story *story, gboolean use_git)
 {
-	ChimaraIF *glk;
-	int side;
-	/* Execute for both panels */
-	for(side = LEFT; side < I7_STORY_NUM_PANELS; side++) {
-		glk = CHIMARA_IF(story->panel[side]->tabs[I7_PANE_GAME]);
-		chimara_if_set_preferred_interpreter(glk, CHIMARA_IF_FORMAT_GLULX, use_git? CHIMARA_IF_INTERPRETER_GIT : CHIMARA_IF_INTERPRETER_GLULXE);
-	}
+	i7_story_foreach_panel(story, (I7PanelForeachFunc)panel_set_use_git, GINT_TO_POINTER(use_git));
 }
 
 #if 0

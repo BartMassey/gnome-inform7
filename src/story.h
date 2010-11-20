@@ -72,6 +72,7 @@ typedef struct {
 } I7Story;
 
 typedef void (*CompileActionFunc)(I7Story *, gpointer);
+typedef void (*I7PanelForeachFunc)(I7Story *, I7Panel *, gpointer);
 
 GType i7_story_get_type(void) G_GNUC_CONST;
 I7Story *i7_story_new(I7App *app, const gchar *filename, const gchar *title, const gchar *author);
@@ -86,6 +87,7 @@ void i7_story_show_docpage(I7Story *story, const gchar *file);
 void i7_story_show_docpage_at_anchor(I7Story *story, const gchar *file, const gchar *anchor);
 gchar *i7_story_get_materials_path(I7Story *story);
 const gchar *i7_story_get_extension(I7Story *story);
+void i7_story_foreach_panel(I7Story *story, I7PanelForeachFunc func, gpointer data);
 
 /* Source pane, story-source.c */
 void on_panel_paste_code(I7Panel *panel, gchar *code, I7Story *story);
