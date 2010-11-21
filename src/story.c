@@ -658,6 +658,7 @@ i7_story_init(I7Story *self)
 		"refresh_index", "<ctrl>I",
 		"go", "<ctrl>R",
 		"replay", "",
+		"show_last_command_skein", "<shift><ctrl>L",
 		"stop", "<shift><ctrl>Q",
 		"release", "<shift><ctrl>R",
 		"save_debug_build", "",
@@ -690,7 +691,6 @@ i7_story_init(I7Story *self)
 	const gchar *unimplemented[] = {
 		"import_into_skein", "",
 		"show_last_command", "<alt><ctrl>L",
-		"show_last_command_skein", "<shift><ctrl>L",
 		"previous_changed_command", "",
 		"next_changed_command", "",
 		"previous_difference", "",
