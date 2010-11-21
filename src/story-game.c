@@ -47,8 +47,31 @@ i7_story_run_compiler_output(I7Story *story)
     gtk_widget_grab_focus(GTK_WIDGET(glk));
 }
 
-/* Finish setting up the interpreter when the input from the Skein is done
- processing */
+/* Compile finished action: run the output and feed it the command "test me" */
+void
+i7_story_test_compiler_output(I7Story *story)
+{
+	I7_STORY_USE_PRIVATE(story, priv);
+	GError *err = NULL;
+
+	I7StoryPanel side = i7_story_choose_panel(story, I7_PANE_GAME);
+	ChimaraIF *glk = CHIMARA_IF(story->panel[side]->tabs[I7_PANE_GAME]);
+
+	/* Load and start the interpreter */
+	if(!chimara_if_run_game(glk, priv->compiler_output, &err)) {
+		error_dialog(GTK_WINDOW(story), err, _("Could not load interpreter: "));
+    }
+
+	/* Tell the interpreter to "test me" */
+    i7_skein_reset(priv->skein, TRUE);
+    chimara_glk_feed_line_input(CHIMARA_GLK(glk), "test me");
+
+	/* Display and set the focus to the interpreter */
+	i7_story_show_pane(story, I7_PANE_GAME);
+    gtk_widget_grab_focus(GTK_WIDGET(glk));
+}
+
+/* Finish setting up the interpreter when forced input is done processing */
 static void
 on_waiting(ChimaraGlk *glk)
 {
@@ -78,9 +101,8 @@ i7_story_run_compiler_output_and_replay(I7Story *story)
     I7StoryPanel side = i7_story_choose_panel(story, I7_PANE_GAME);
 	ChimaraIF *glk = CHIMARA_IF(story->panel[side]->tabs[I7_PANE_GAME]);
 
-    /* Set non-interactive if there are commands, because if we don't, the first
-    screen might freeze on a "-- more --" prompt and ignore the first automatic
-    input */
+    /* Set non-interactive if there are commands, because we don't want to
+	 scroll through screens full of -- more -- prompts */
     if(commands)
 		chimara_glk_set_interactive(CHIMARA_GLK(glk), FALSE);
 
@@ -146,77 +168,6 @@ i7_story_set_use_git(I7Story *story, gboolean use_git)
 {
 	i7_story_foreach_panel(story, (I7PanelForeachFunc)panel_set_use_git, GINT_TO_POINTER(use_git));
 }
-
-#if 0
-/* Run the story in the GtkTerp widget */
-void 
-run_project(Story *thestory) 
-{
-    int right = choose_notebook(thestory->window, TAB_GAME);
-    GtkTerp *terp = GTK_TERP(lookup_widget(thestory->window, right?
-      "game_r" : "game_l"));
-    
-    /* Load and start the interpreter */
-    gchar *file = g_strconcat("output.", get_story_extension(thestory), NULL);
-    gchar *path = g_build_filename(thestory->filename, "Build", file, NULL);
-    g_free(file);
-    GError *err = NULL;
-    if(!gtk_terp_load_game(terp, path, &err)) {
-        error_dialog(GTK_WINDOW(thestory->window), err,
-          _("Could not load interpreter: "));
-        g_free(path);
-        return;
-    }
-    g_free(path);
-    
-    /* Get a list of the commands that need to be fed in */
-    GSList *commands = skein_get_commands(thestory->theskein);
-    
-    /* Set non-interactive if there are commands, because if we don't, the first
-    screen might freeze on a "-- more --" prompt and ignore the first automatic
-    input */
-    if(commands)
-        gtk_terp_set_interactive(terp, FALSE);
-    
-    if(!gtk_terp_start_game(terp, (thestory->story_format == FORMAT_GLULX)?
-       (config_file_get_bool("IDESettings", "UseGit")? 
-	   GTK_TERP_GIT : GTK_TERP_GLULXE) : GTK_TERP_FROTZ, &err)) {
-        error_dialog(GTK_WINDOW(thestory->window), err,
-          _("Could not start interpreter: "));
-        gtk_terp_unload_game(terp);
-        return;
-    }
-
-    /* Connect signals and save the signal handlers to disconnect later */
-    thestory->handler_finished = g_signal_connect((gpointer)terp,
-      "stopped", G_CALLBACK(on_interpreter_exit), (gpointer)thestory);
-    thestory->handler_input = g_signal_connect((gpointer)terp,
-      "command-received", G_CALLBACK(catch_input), (gpointer)thestory);
-    
-    /* Now the "Stop" option works */
-    gtk_widget_set_sensitive(lookup_widget(thestory->window, "stop"), TRUE);
-    gtk_widget_set_sensitive(lookup_widget(thestory->window, "stop_toolbutton"),
-      TRUE);
-    /* Display and set the focus to the terminal widget */
-    gtk_notebook_set_current_page(get_notebook(thestory->window, right),
-      TAB_GAME);
-    gtk_widget_grab_focus(GTK_WIDGET(terp));
-    
-    /* Wait for the interpreter to get ready */
-    while(!gtk_terp_get_running(terp))
-        gtk_main_iteration();
-    
-    /* Feed the commands up to the current pointer in the skein into the
-    terminal */
-    skein_reset(thestory->theskein, TRUE);      
-    while(commands != NULL) {
-        gtk_terp_feed_command(terp, (gchar *)(commands->data));
-        g_free(commands->data);
-        commands = g_slist_delete_link(commands, commands);
-    }
-    gtk_terp_set_interactive(terp, TRUE);
-}
-#endif
 
 /* SIGNAL HANDLERS */
 

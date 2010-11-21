@@ -928,8 +928,6 @@ action_enable_elastic_tabs_toggled(GtkToggleAction *action, I7Document *document
 void
 action_go(GtkAction *action, I7Story *story)
 {
-	/* TODO: i7_story_reset_skein(story); */
-	/* TODO: i7_story_set_test_me(story, FALSE); */
 	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_run_compiler_output, NULL);
 	i7_story_compile(story, FALSE, FALSE);
 }
@@ -938,9 +936,7 @@ action_go(GtkAction *action, I7Story *story)
 void
 action_test_me(GtkAction *action, I7Story *story)
 {
-	/* TODO: i7_story_reset_skein(story); */
-	/* TODO: i7_story_set_test_me(story, TRUE); */
-	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_run_compiler_output, NULL);
+	i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_test_compiler_output, NULL);
 	i7_story_compile(story, FALSE, FALSE);
 }
 

@@ -131,6 +131,7 @@ void i7_story_save_ifiction(I7Story *story);
 
 /* Game pane, story-game.c */
 void i7_story_run_compiler_output(I7Story *story);
+void i7_story_test_compiler_output(I7Story *story);
 void i7_story_run_compiler_output_and_replay(I7Story *story);
 void i7_story_run_compiler_output_and_entire_skein(I7Story *story);
 void i7_story_stop_running_game(I7Story *story);
