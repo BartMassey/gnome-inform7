@@ -17,6 +17,7 @@
 
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
+#include <libchimara/chimara-glk.h>
 #include <libchimara/chimara-if.h>
 #include "story.h"
 #include "story-private.h"
@@ -46,9 +47,62 @@ i7_story_run_compiler_output(I7Story *story)
     gtk_widget_grab_focus(GTK_WIDGET(glk));
 }
 
+/* Finish setting up the interpreter when the input from the Skein is done
+ processing */
+static void
+on_waiting(ChimaraGlk *glk)
+{
+	if(!chimara_glk_is_line_input_pending(glk)) {
+		chimara_glk_set_interactive(glk, TRUE);
+	
+		/* Set focus to the interpreter */
+		gtk_widget_grab_focus(GTK_WIDGET(glk));
+
+		/* Disconnect this signal handler - have to do it this way, because
+		 a gulong can't be packed into a pointer */
+		gulong handler = g_signal_handler_find(glk, G_SIGNAL_MATCH_FUNC | G_SIGNAL_MATCH_DATA, 
+		    0, 0, NULL, on_waiting, NULL);
+		g_signal_handler_disconnect(glk, handler);
+	}
+}
+
 void
 i7_story_run_compiler_output_and_replay(I7Story *story)
 {
+	I7_STORY_USE_PRIVATE(story, priv);
+	GError *err = NULL;
+
+	/* Get a list of the commands that need to be fed in */
+    GSList *commands = i7_skein_get_commands(priv->skein);
+
+    I7StoryPanel side = i7_story_choose_panel(story, I7_PANE_GAME);
+	ChimaraIF *glk = CHIMARA_IF(story->panel[side]->tabs[I7_PANE_GAME]);
+
+    /* Set non-interactive if there are commands, because if we don't, the first
+    screen might freeze on a "-- more --" prompt and ignore the first automatic
+    input */
+    if(commands)
+		chimara_glk_set_interactive(CHIMARA_GLK(glk), FALSE);
+
+	/* Load and start the interpreter */
+	if(!chimara_if_run_game(glk, priv->compiler_output, &err)) {
+		error_dialog(GTK_WINDOW(story), err, _("Could not load interpreter: "));
+    }
+
+	/* Display the interpreter */
+	i7_story_show_pane(story, I7_PANE_GAME);
+
+	/* Feed the commands up to the "played" pointer in the skein into the
+    interpreter */
+    i7_skein_reset(priv->skein, TRUE);
+    while(commands) {
+		chimara_glk_feed_line_input(CHIMARA_GLK(glk), (gchar *)commands->data);
+        g_free(commands->data);
+        commands = g_slist_delete_link(commands, commands);
+    }
+
+	/* Finish the rest when the input is done being processed */
+	g_signal_connect(glk, "waiting", G_CALLBACK(on_waiting), NULL);
 }
 
 void

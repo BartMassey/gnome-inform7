@@ -731,9 +731,9 @@ i7_skein_get_commands(I7Skein *self)
 	I7_SKEIN_USE_PRIVATE;
 	
     GSList *commands = NULL;
-    GNode *pointer = priv->played->gnode;
-    while(g_node_is_ancestor(pointer, priv->current->gnode)) {
-        I7Node *next = priv->current;
+    GNode *pointer = priv->root->gnode;
+    while(g_node_is_ancestor(pointer, priv->played->gnode)) {
+        I7Node *next = priv->played;
         while(next->gnode->parent != pointer)
             next = next->gnode->parent->data;
         pointer = next->gnode;
