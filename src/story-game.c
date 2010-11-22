@@ -89,16 +89,14 @@ on_waiting(ChimaraGlk *glk)
 	}
 }
 
-void
-i7_story_run_compiler_output_and_replay(I7Story *story)
+/* Force input (listed in @commands) to the interpreter. */
+static void
+play_commands(I7Story *story, GSList *commands, gboolean start_interpreter)
 {
 	I7_STORY_USE_PRIVATE(story, priv);
 	GError *err = NULL;
-
-	/* Get a list of the commands that need to be fed in */
-    GSList *commands = i7_skein_get_commands(priv->skein);
-
-    I7StoryPanel side = i7_story_choose_panel(story, I7_PANE_GAME);
+	
+	I7StoryPanel side = i7_story_choose_panel(story, I7_PANE_GAME);
 	ChimaraIF *glk = CHIMARA_IF(story->panel[side]->tabs[I7_PANE_GAME]);
 
     /* Set non-interactive if there are commands, because we don't want to
@@ -107,24 +105,63 @@ i7_story_run_compiler_output_and_replay(I7Story *story)
 		chimara_glk_set_interactive(CHIMARA_GLK(glk), FALSE);
 
 	/* Load and start the interpreter */
-	if(!chimara_if_run_game(glk, priv->compiler_output, &err)) {
-		error_dialog(GTK_WINDOW(story), err, _("Could not load interpreter: "));
-    }
-
+	if(start_interpreter) {
+		if(!chimara_if_run_game(glk, priv->compiler_output, &err)) {
+			error_dialog(GTK_WINDOW(story), err, _("Could not load interpreter: "));
+		}
+		i7_skein_reset(priv->skein, TRUE);
+	}
+	
 	/* Display the interpreter */
 	i7_story_show_pane(story, I7_PANE_GAME);
 
 	/* Feed the commands up to the "played" pointer in the skein into the
     interpreter */
-    i7_skein_reset(priv->skein, TRUE);
-    while(commands) {
-		chimara_glk_feed_line_input(CHIMARA_GLK(glk), (gchar *)commands->data);
-        g_free(commands->data);
-        commands = g_slist_delete_link(commands, commands);
-    }
+	GSList *iter;
+	for(iter = commands; iter; iter = g_slist_next(iter))
+		chimara_glk_feed_line_input(CHIMARA_GLK(glk), (gchar *)iter->data);
 
 	/* Finish the rest when the input is done being processed */
 	g_signal_connect(glk, "waiting", G_CALLBACK(on_waiting), NULL);
+}
+
+void
+i7_story_run_compiler_output_and_replay(I7Story *story)
+{
+	I7_STORY_USE_PRIVATE(story, priv);
+
+	/* Get a list of the commands that need to be fed in */
+    GSList *commands = i7_skein_get_commands(priv->skein);
+	play_commands(story, commands, TRUE);
+	g_slist_foreach(commands, (GFunc)g_free, NULL);
+	g_slist_free(commands);
+}
+
+void
+i7_story_run_compiler_output_and_play_to_node(I7Story *story, I7Node *node)
+{
+	I7_STORY_USE_PRIVATE(story, priv);
+
+	/* Get a list of the commands that need to be fed in */
+    GSList *commands = i7_skein_get_commands_to_node(priv->skein, i7_skein_get_root_node(priv->skein), node);
+	play_commands(story, commands, TRUE);
+	g_slist_foreach(commands, (GFunc)g_free, NULL);
+	g_slist_free(commands);
+}
+
+void
+i7_story_run_commands_from_node(I7Story *story, I7Node *node)
+{	
+	I7_STORY_USE_PRIVATE(story, priv);
+
+	I7Node *played = i7_skein_get_played_node(priv->skein);
+	g_assert(g_node_is_ancestor(played->gnode, node->gnode));
+
+	/* Get a list of the commands that need to be fed in */
+    GSList *commands = i7_skein_get_commands_to_node(priv->skein, played, node);
+	play_commands(story, commands, FALSE);
+	g_slist_foreach(commands, (GFunc)g_free, NULL);
+	g_slist_free(commands);
 }
 
 void

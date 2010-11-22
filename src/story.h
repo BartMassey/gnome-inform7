@@ -133,6 +133,8 @@ void i7_story_save_ifiction(I7Story *story);
 void i7_story_run_compiler_output(I7Story *story);
 void i7_story_test_compiler_output(I7Story *story);
 void i7_story_run_compiler_output_and_replay(I7Story *story);
+void i7_story_run_compiler_output_and_play_to_node(I7Story *story, I7Node *node);
+void i7_story_run_commands_from_node(I7Story *story, I7Node *node);
 void i7_story_run_compiler_output_and_entire_skein(I7Story *story);
 void i7_story_stop_running_game(I7Story *story);
 gboolean i7_story_get_game_running(I7Story *story);

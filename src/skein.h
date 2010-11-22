@@ -92,6 +92,7 @@ void i7_skein_draw(I7Skein *self, GooCanvas *canvas);
 I7Node *i7_skein_new_command(I7Skein *self, const gchar *command);
 gboolean i7_skein_next_command(I7Skein *self, gchar **command);
 GSList *i7_skein_get_commands(I7Skein *self);
+GSList *i7_skein_get_commands_to_node(I7Skein *self, I7Node *from_node, I7Node *to_node);
 void i7_skein_update_after_playing(I7Skein *self, const gchar *transcript);
 gboolean i7_skein_get_line_from_history(I7Skein *self, gchar **line, int history);
 I7Node *i7_skein_add_new(I7Skein *self, I7Node *node);

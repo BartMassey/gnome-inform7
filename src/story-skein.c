@@ -25,38 +25,6 @@
 #include "story.h"
 #include "story-private.h"
 
-#if 0
-void
-play_to_node(Skein *skein, GNode *newnode, Story *thestory)
-{
-    /* Change the current node */
-    GNode *current = skein_get_current_node(skein);
-    skein_set_current_node(skein, newnode);
-    /* Check if the new node is reachable from the old current node */
-    gboolean reachable = g_node_is_ancestor(current, newnode);
-    /* Build and run if the game isn't running, or the new node is unreachable*/
-    if(!game_is_running(thestory) || !reachable)
-        on_replay_activate(GTK_MENU_ITEM(lookup_widget(thestory->window, 
-          "replay")), NULL);
-    else {
-        GtkTerp *terp = GTK_TERP(lookup_widget(thestory->window, "game_r"));
-        if(!gtk_terp_get_running(terp))
-            terp = GTK_TERP(lookup_widget(thestory->window, "game_l"));
-        gtk_terp_set_interactive(terp, FALSE);
-        /* Get a list of the commands that need to be fed in */
-        GSList *commands = skein_get_commands(skein);
-        /* Set the current node back to what it was */
-        skein_set_current_node(skein, current);
-        while(commands != NULL) {
-            gtk_terp_feed_command(terp, (gchar *)(commands->data));
-            g_free(commands->data);
-            commands = g_slist_delete_link(commands, commands);
-        }
-        gtk_terp_set_interactive(terp, TRUE);
-    }
-}
-#endif
-
 void
 on_skein_modified(I7Skein *skein, I7Story *story)
 {
@@ -64,8 +32,22 @@ on_skein_modified(I7Skein *skein, I7Story *story)
 }
 
 void
-on_node_activate(I7Skein *skein, I7Node *node, I7Story *story)
+on_node_activate(I7Skein *skein, I7Node *newnode, I7Story *story)
 {
+	I7Node *oldnode = i7_skein_get_played_node(skein);
+	if(oldnode == newnode)
+		return;
+	
+    /* Check if the new node is reachable from the old played node */
+    gboolean reachable = g_node_is_ancestor(oldnode->gnode, newnode->gnode);
+	
+    /* Build and run if the game isn't running, or the new node is unreachable*/
+    if(!reachable || !i7_story_get_game_running(story)) {
+		i7_story_set_compile_finished_action(story, (CompileActionFunc)i7_story_run_compiler_output_and_play_to_node, newnode);
+		i7_story_compile(story, FALSE, FALSE);
+	} else {
+		i7_story_run_commands_from_node(story, newnode);
+    }
 }
 
 void

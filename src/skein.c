@@ -723,27 +723,32 @@ i7_skein_next_command(I7Skein *self, gchar **command)
     return TRUE;
 }
 
-/* Get a list of the commands from the play pointer to the current pointer,
-without resetting either of them */
+/* Get a list of the commands from @from_node to @to_node. Returns NULL if
+ @from_node is not an ancestor of @to_node. */
 GSList *
-i7_skein_get_commands(I7Skein *self)
+i7_skein_get_commands_to_node(I7Skein *self, I7Node *from_node, I7Node *to_node)
 {
-	I7_SKEIN_USE_PRIVATE;
-	
     GSList *commands = NULL;
-    GNode *pointer = priv->root->gnode;
-    while(g_node_is_ancestor(pointer, priv->played->gnode)) {
-        I7Node *next = priv->played;
+    GNode *pointer = from_node->gnode;
+    while(g_node_is_ancestor(pointer, to_node->gnode)) {
+        I7Node *next = to_node;
         while(next->gnode->parent != pointer)
             next = next->gnode->parent->data;
         pointer = next->gnode;
 		gchar *skein_command = i7_node_get_command(next);
         commands = g_slist_prepend(commands, g_strcompress(skein_command));
 		g_free(skein_command);
-        g_signal_emit_by_name(self, "show-node", I7_REASON_COMMAND, next);
     }
     commands = g_slist_reverse(commands);
     return commands;
+}
+
+/* Get a list of the commands from the root node to the play pointer */
+GSList *
+i7_skein_get_commands(I7Skein *self)
+{
+	I7_SKEIN_USE_PRIVATE;
+	return i7_skein_get_commands_to_node(self, priv->root, priv->played);
 }
 
 /* Update the status of the last played node */
