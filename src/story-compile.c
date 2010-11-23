@@ -300,6 +300,18 @@ finish_ni_compiler(GPid pid, gint status, CompilerData *data)
         return;
     }
 
+	/* Read in the Blorb manifest */
+	gchar *path = i7_document_get_path(I7_DOCUMENT(data->story));
+	gchar *manifest_filename = g_build_filename(path, "manifest.plist", NULL);
+	g_free(path);
+	PlistObject *manifest = plist_read(manifest_filename, NULL);
+	g_free(manifest_filename);
+	/* If that failed, then silently keep the old manifest */
+	if(manifest) {
+		plist_object_free(priv->manifest);
+		priv->manifest = manifest;
+	}
+	
     /* Decide what to do next */
 	if(data->refresh_only) {
 		I7Story *story = data->story;

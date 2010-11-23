@@ -45,6 +45,8 @@ typedef struct {
 	GtkSourceBuffer *i6_source;
 	/* The Settings.plist object */
 	PlistObject *settings;
+	/* The manifest.plist object */
+	PlistObject *manifest;
 	/* Compiling */
 	CompileActionFunc compile_finished_callback;
 	gpointer compile_finished_callback_data;

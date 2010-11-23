@@ -206,6 +206,39 @@ i7_story_set_use_git(I7Story *story, gboolean use_git)
 	i7_story_foreach_panel(story, (I7PanelForeachFunc)panel_set_use_git, GINT_TO_POINTER(use_git));
 }
 
+/* Blorb resource load callback */
+gchar *
+load_blorb_resource(ChimaraResourceType usage, guint32 resnum, I7Story *story)
+{
+	I7_STORY_USE_PRIVATE(story, priv);
+	g_return_val_if_fail(priv->manifest, NULL);
+	
+	/* Look up the filename in the manifest */
+	gchar *resstring = g_strdup_printf("%d", resnum);
+	const gchar *restype;
+	switch(usage) {
+		case CHIMARA_RESOURCE_SOUND:
+			restype = "Sounds";
+			break;
+		case CHIMARA_RESOURCE_IMAGE:
+		default:
+			restype = "Graphics";
+			break;
+	}
+	PlistObject *manifest_entry = plist_object_lookup(priv->manifest, restype, resstring, -1);
+	g_return_val_if_fail(manifest_entry, NULL);
+	g_free(resstring);
+
+	/* Build the full path */
+	gchar *filename = g_strdup(manifest_entry->string.val);
+	gchar *materials = i7_story_get_materials_path(story);
+	gchar *fullpath = g_build_filename(materials, filename, NULL);
+	g_free(filename);
+	g_free(materials);
+
+	return fullpath;
+}
+
 /* SIGNAL HANDLERS */
 
 /* Set the "stop" action to be sensitive when the game starts */

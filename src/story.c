@@ -66,6 +66,7 @@ void on_show_node(I7Skein *, I7SkeinShowNodeReason, I7Node *, I7Panel *);
 void on_game_started(ChimaraGlk *, I7Story *);
 void on_game_stopped(ChimaraGlk *, I7Story *);
 void on_game_command(ChimaraIF *, gchar *, gchar *, I7Story *);
+gchar *load_blorb_resource(guint32, guint32, I7Story *);
 
 static void
 on_heading_depth_value_changed(GtkRange *range, I7Story *story)
@@ -635,6 +636,9 @@ story_init_panel(I7Story *self, I7Panel *panel, PangoFontDescription *font)
 	/* Connect the Previous Section and Next Section actions to the up and down buttons */
 	gtk_action_connect_proxy(I7_DOCUMENT(self)->previous_section, panel->sourceview->previous);
 	gtk_action_connect_proxy(I7_DOCUMENT(self)->next_section, panel->sourceview->next);
+
+	/* Set the Blorb resource-loading callback */
+	chimara_glk_set_resource_load_callback(CHIMARA_GLK(panel->tabs[I7_PANE_GAME]), (ChimaraResourceLoadFunc)load_blorb_resource, self);
 }
 
 static void
@@ -781,6 +785,7 @@ i7_story_init(I7Story *self)
 	priv->copyblorbto = NULL;
 	priv->compiler_output = NULL;
 	priv->test_me = FALSE;
+	priv->manifest = NULL;
 
 	/* Set up the Skein */
 	priv->skein = i7_skein_new();
@@ -1153,7 +1158,8 @@ i7_story_show_docpage_at_anchor(I7Story *story, const gchar *file, const gchar *
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(story->panel[side]->notebook), I7_PANE_DOCUMENTATION);
 }
 
-/* Work out the location of the Materials folder, adapted from OS X source */
+/* Work out the location of the Materials folder, adapted from OS X source.
+ Free string when done. */
 gchar *
 i7_story_get_materials_path(I7Story *story)
 {
