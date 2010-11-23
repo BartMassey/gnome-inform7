@@ -956,11 +956,31 @@ i7_panel_update_fonts(I7Panel *self)
 	g_idle_add((GSourceFunc)update_font_tabs, GTK_SOURCE_VIEW(self->errors_tabs[I7_ERRORS_TAB_INFORM6]));
 
 	WebKitWebSettings *settings = I7_PANEL_PRIVATE(self)->websettings;
-	gchar *font = get_font_family();
-	PangoFontDescription *fontdesc = pango_font_description_from_string(font);
+	PangoFontDescription *fontdesc = get_font_description();
 	g_object_set(G_OBJECT(settings),
 	    "default-font-family", pango_font_description_get_family(fontdesc),
 	    NULL);
+
+	const gchar *font = pango_font_description_get_family(fontdesc);
+	gint size = pango_font_description_get_size(fontdesc) / PANGO_SCALE;
+	gchar *css = g_strdup_printf(
+	    "grid.normal { font-size: %d; }"
+		"grid.user1 { color: #303030; background-color: #ffffff; }"
+		"buffer.normal { font-size: %d; font-family: '%s'; }"
+		"buffer.header { font-size: %d; font-family: '%s';"
+		"    font-weight: bold; text-align: center; }"
+		"buffer.subheader { font-size: %d; font-family: '%s';"
+	    "    font-weight: bold; }"
+		"buffer.alert { color: #aa0000; font-weight: bold; }"
+		"buffer.note { color: #aaaa00; font-weight: bold; }"
+		"buffer.block-quote { text-align: center; font-style: italic; }"
+		"buffer.input { color: #0000aa; font-style: italic; }"
+		"buffer.user1 { }"
+		"buffer.user2 { }"
+		"buffer.pager { color: #ffffff; background-color: #aa0000; }",
+	    size, size, font, (gint)(size * RELATIVE_SIZE_MEDIUM), font, size, font);
+	chimara_glk_set_css_from_string(CHIMARA_GLK(self->tabs[I7_PANE_GAME]), css);
+	g_free(css);
 	pango_font_description_free(fontdesc);
 }
 
