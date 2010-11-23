@@ -498,8 +498,9 @@ get_focus_view(I7Story *story)
 		case I7_PANE_SETTINGS:
 		case I7_PANE_SKEIN:
 		case I7_PANE_TRANSCRIPT:
-		case I7_PANE_GAME:
 			return NULL;
+		case I7_PANE_GAME:
+			return panel->tabs[I7_PANE_GAME];
 		case I7_PANE_SOURCE:
 			return panel->source_tabs[gtk_notebook_get_current_page(GTK_NOTEBOOK(panel->tabs[I7_PANE_SOURCE]))];
 		case I7_PANE_ERRORS:
