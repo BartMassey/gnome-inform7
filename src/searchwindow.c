@@ -256,7 +256,9 @@ i7_search_window_init(I7SearchWindow *self)
 	gtk_window_set_default_size(GTK_WINDOW(self), 400, 400);
 	
 	/* Build the interface from the builder file */
-	GtkBuilder *builder = create_new_builder("searchwindow.ui", self);
+	gchar *filename = i7_app_get_datafile_path(i7_app_get(), "ui/searchwindow.ui");
+	GtkBuilder *builder = create_new_builder(filename, self);
+	g_free(filename);
 
 	/* Build the rest of the interface */
 	gtk_container_add(GTK_CONTAINER(self), GTK_WIDGET(load_object(builder, "search_window")));

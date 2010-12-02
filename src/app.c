@@ -63,9 +63,19 @@ static void
 i7_app_init(I7App *self)
 {
 	I7_APP_USE_PRIVATE(self, priv);
-	
 	GError *error = NULL;
-	GtkBuilder *builder = create_new_builder("gnome-inform7.ui", self);
+	
+	/* Retrieve data directories if set externally */
+	const gchar *env = g_getenv("GNOME_INFORM_DATA_DIR");
+	priv->datadir = env? g_strdup(env) : g_build_filename(PACKAGE_DATA_DIR, "gnome-inform7", NULL);
+	env = g_getenv("GNOME_INFORM_PIXMAP_DIR");
+	priv->pixmapdir = env? g_strdup(env) : g_build_filename(PACKAGE_DATA_DIR, "pixmaps", "gnome-inform7", NULL);
+	env = g_getenv("GNOME_INFORM_LIBEXEC_DIR");
+	priv->libexecdir = env? g_strdup(env) : g_strdup(PACKAGE_LIBEXEC_DIR);
+	
+	gchar *builderfilename = i7_app_get_datafile_path(self, "ui/gnome-inform7.ui");
+	GtkBuilder *builder = create_new_builder(builderfilename, self);
+	g_free(builderfilename);
 
 	/* Make the action groups. This for-loop is a temporary fix
 	and can be removed once Glade supports adding actions and accelerators to an
@@ -104,14 +114,6 @@ i7_app_init(I7App *self)
 	application runs (yet) */
 	priv->print_settings = NULL;
 	priv->page_setup = NULL;
-	
-	/* Retrieve data directories if set externally */
-	const gchar *env = g_getenv("GNOME_INFORM_DATA_DIR");
-	priv->datadir = env? g_strdup(env) : g_build_filename(PACKAGE_DATA_DIR, "gnome-inform7", NULL);
-	env = g_getenv("GNOME_INFORM_PIXMAP_DIR");
-	priv->pixmapdir = env? g_strdup(env) : g_build_filename(PACKAGE_DATA_DIR, "pixmaps", "gnome-inform7", NULL);
-	env = g_getenv("GNOME_INFORM_LIBEXEC_DIR");
-	priv->libexecdir = env? g_strdup(env) : g_strdup(PACKAGE_LIBEXEC_DIR);
 	
 	/* Create the Gnome Inform7 dir if it doesn't already exist */
     gchar *extensions_dir = i7_app_get_extension_path(self, NULL, NULL);

@@ -1,4 +1,4 @@
-SUBDIRS = . licenses languages styles 
+SUBDIRS = . licenses languages styles ui
 
 INFORMTARBALL = Inform_@PACKAGE_VERSION@_data.tar.lz
 

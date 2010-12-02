@@ -78,6 +78,7 @@ static void
 i7_document_init(I7Document *self)
 {
 	I7_DOCUMENT_USE_PRIVATE(self, priv);
+	I7App *theapp = i7_app_get();
 
 	/* Set the icon */
 	gtk_window_set_icon_name(GTK_WINDOW(self), "inform7");
@@ -87,7 +88,9 @@ i7_document_init(I7Document *self)
 	gtk_widget_set_size_request(GTK_WIDGET(self), 200, 100);
 	
 	/* Build the interface */
-	GtkBuilder *builder = create_new_builder("document.ui", self);
+	gchar *filename = i7_app_get_datafile_path(theapp, "ui/document.ui");
+	GtkBuilder *builder = create_new_builder(filename, self);
+	g_free(filename);
 	
 	/* Create the private properties */
 	priv->filename = NULL;
@@ -166,7 +169,7 @@ i7_document_init(I7Document *self)
 	add_actions(builder, &(priv->copy_action_group), "copy_actions", copy_actions);
 	
 	self->ui_manager = gtk_ui_manager_new();
-	i7_app_insert_action_groups(i7_app_get(), self->ui_manager);
+	i7_app_insert_action_groups(theapp, self->ui_manager);
 	gtk_ui_manager_insert_action_group(self->ui_manager, priv->document_action_group, 0);
 	gtk_ui_manager_insert_action_group(self->ui_manager, priv->selection_action_group, 0);
 	gtk_ui_manager_insert_action_group(self->ui_manager, priv->copy_action_group, 0);
@@ -272,7 +275,9 @@ i7_document_add_menus_and_findbar(I7Document *document)
 	I7_DOCUMENT_USE_PRIVATE(document, priv);
 	GError *error = NULL;
 	
-	gtk_ui_manager_add_ui_from_file(document->ui_manager, "gnome-inform7.uimanager.xml", &error);
+	gchar *filename = i7_app_get_datafile_path(i7_app_get(), "ui/gnome-inform7.uimanager.xml");
+	gtk_ui_manager_add_ui_from_file(document->ui_manager, filename, &error);
+	g_free(filename);
 	if(error)
 		ERROR(_("Building menus failed"), error);
 

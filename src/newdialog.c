@@ -253,14 +253,16 @@ create_new_dialog(void)
 	I7NewProjectOptions *options = g_slice_new0(I7NewProjectOptions);
 	options->type = I7_NEW_PROJECT_INFORM7_STORY;
 	
-	GtkBuilder *builder = create_new_builder("newdialog.ui", options);
+	gchar *filename = i7_app_get_datafile_path(i7_app_get(), "ui/newdialog.ui");
+	GtkBuilder *builder = create_new_builder(filename, options);
+	g_free(filename);
 	options->assistant = GTK_WIDGET(load_object(builder, "newdialog"));
 	options->label = GTK_WIDGET(load_object(builder, "project_type_description"));
 	options->author_box = GTK_WIDGET(load_object(builder, "new_author"));
 	options->chooser = GTK_WIDGET(load_object(builder, "new_directory"));
 
 	/* Set default button by illegally accessing GtkAssistant struct 
-	(this is naughty) */
+	(FIXME, this is naughty) */
 	GTK_WIDGET_SET_FLAGS(GTK_ASSISTANT(options->assistant)->forward, GTK_CAN_DEFAULT);
 	gtk_window_set_default(GTK_WINDOW(options->assistant), GTK_ASSISTANT(options->assistant)->forward);
 	

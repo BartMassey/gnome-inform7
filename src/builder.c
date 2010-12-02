@@ -18,7 +18,7 @@ create_new_builder(const gchar *filename, gpointer data)
 {
 	GError *error = NULL;
 	GtkBuilder *builder;
-
+	
 	builder = gtk_builder_new();
 	if(!gtk_builder_add_from_file(builder, filename, &error))
 		ERROR(_("Error while building interface"), error);

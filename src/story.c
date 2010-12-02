@@ -646,10 +646,13 @@ static void
 i7_story_init(I7Story *self)
 {
 	I7_STORY_USE_PRIVATE(self, priv);
+	I7App *theapp = i7_app_get();
 	GError *error = NULL;
 
 	/* Build the interface */
-	GtkBuilder *builder = create_new_builder("story.ui", self);
+	gchar *filename = i7_app_get_datafile_path(theapp, "ui/story.ui");
+	GtkBuilder *builder = create_new_builder(filename, self);
+	g_free(filename);
 
 	/* Make the action groups. This for-loop is a temporary fix
 	and can be removed once Glade supports adding actions and accelerators to an
@@ -714,7 +717,9 @@ i7_story_init(I7Story *self)
 	/* Build the menus and toolbars from the GtkUIManager file */
 	gtk_ui_manager_insert_action_group(I7_DOCUMENT(self)->ui_manager, priv->story_action_group, 0);
 	gtk_ui_manager_insert_action_group(I7_DOCUMENT(self)->ui_manager, priv->unimplemented_action_group, 0);
-	gtk_ui_manager_add_ui_from_file(I7_DOCUMENT(self)->ui_manager, "story.uimanager.xml", &error);
+	filename = i7_app_get_datafile_path(theapp, "ui/story.uimanager.xml");
+	gtk_ui_manager_add_ui_from_file(I7_DOCUMENT(self)->ui_manager, filename, &error);
+	g_free(filename);
 	if(error)
 		ERROR(_("Building menus failed"), error);
 	GtkWidget *menu = gtk_ui_manager_get_widget(I7_DOCUMENT(self)->ui_manager, "/StoryMenubar");
@@ -758,12 +763,12 @@ i7_story_init(I7Story *self)
 	i7_document_attach_menu_hints(I7_DOCUMENT(self), GTK_MENU_BAR(menu));
 
 	/* Build the Open Extensions menu */
-	i7_app_update_extensions_menu(i7_app_get());
+	i7_app_update_extensions_menu(theapp);
 	
 	/* Build the two panels */
 	self->panel[LEFT] = I7_PANEL(i7_panel_new());
 	self->panel[RIGHT] = I7_PANEL(i7_panel_new());
-	gchar *docs = i7_app_get_datafile_path_va(i7_app_get(), "Documentation", "index.html", NULL);
+	gchar *docs = i7_app_get_datafile_path(theapp, "Documentation/index.html");
 	i7_panel_reset_queue(self->panel[LEFT], I7_PANE_SOURCE, I7_SOURCE_VIEW_TAB_SOURCE, NULL);
 	i7_panel_reset_queue(self->panel[RIGHT], I7_PANE_DOCUMENTATION, 0, docs);
 	g_free(docs);

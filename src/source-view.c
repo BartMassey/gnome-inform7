@@ -4,6 +4,7 @@
 #include <gtk/gtk.h>
 #include <gtkspell/gtkspell.h>
 #include "source-view.h"
+#include "app.h"
 #include "builder.h"
 #include "elastic.h"
 #include "error.h"
@@ -35,7 +36,9 @@ i7_source_view_init(I7SourceView *self)
 	priv->spell = NULL;
 	
 	/* Build the interface */
-	GtkBuilder *builder = create_new_builder("source.ui", self);
+	gchar *filename = i7_app_get_datafile_path(i7_app_get(), "ui/source.ui");
+	GtkBuilder *builder = create_new_builder(filename, self);
+	g_free(filename);
 
 	/* Make our base-class frame invisible */
 	gtk_frame_set_label(GTK_FRAME(self), NULL);

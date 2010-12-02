@@ -281,6 +281,7 @@ i7_panel_init(I7Panel *self)
 {
 	GError *error = NULL;
 	I7_PANEL_USE_PRIVATE(self, priv);
+	I7App *theapp = i7_app_get();
 	int foo;
 
 	/* Initialize the history system */
@@ -292,7 +293,9 @@ i7_panel_init(I7Panel *self)
 	priv->current = 0;
 	
 	/* Build the interface */
-	GtkBuilder *builder = create_new_builder("panel.ui", self);
+	gchar *filename = i7_app_get_datafile_path(theapp, "ui/panel.ui");
+	GtkBuilder *builder = create_new_builder(filename, self);
+	g_free(filename);
 
 	/* Make the action groups */
 	const gchar *panel_actions[] = { "back", "", "forward", "", NULL };
@@ -310,7 +313,9 @@ i7_panel_init(I7Panel *self)
 	gtk_ui_manager_insert_action_group(priv->ui_manager, priv->skein_action_group, 0);
 	gtk_ui_manager_insert_action_group(priv->ui_manager, priv->transcript_action_group, 0);
 	gtk_ui_manager_insert_action_group(priv->ui_manager, priv->documentation_action_group, 0);
-	gtk_ui_manager_add_ui_from_file(priv->ui_manager, "panel.uimanager.xml", &error);
+	filename = i7_app_get_datafile_path(theapp, "ui/panel.uimanager.xml");
+	gtk_ui_manager_add_ui_from_file(priv->ui_manager, filename, &error);
+	g_free(filename);
 	if(error)
 		ERROR(_("Building menus failed"), error);
 	self->toolbar = gtk_ui_manager_get_widget(priv->ui_manager, "/PanelToolbar");
@@ -427,9 +432,9 @@ i7_panel_init(I7Panel *self)
 	priv->js_class = JSClassCreate(&project_class_definition);
 	
 	/* Load the documentation page */
-	gchar *docs = i7_app_get_datafile_path_va(i7_app_get(), "Documentation", "index.html", NULL);
-	html_load_file(WEBKIT_WEB_VIEW(self->tabs[I7_PANE_DOCUMENTATION]), docs);
-	g_free(docs);
+	filename = i7_app_get_datafile_path(theapp, "Documentation/index.html");
+	html_load_file(WEBKIT_WEB_VIEW(self->tabs[I7_PANE_DOCUMENTATION]), filename);
+	g_free(filename);
 }
 
 static void

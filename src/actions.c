@@ -1177,7 +1177,9 @@ action_report_bug(GtkAction *action, I7App *app)
 void
 action_about(GtkAction *action, I7App *app)
 {
-	GtkBuilder *builder = create_new_builder("aboutwindow.ui", NULL);
+	gchar *filename = i7_app_get_datafile_path(app, "ui/aboutwindow.ui");
+	GtkBuilder *builder = create_new_builder(filename, NULL);
+	g_free(filename);
 	GtkWindow *aboutwindow = GTK_WINDOW(load_object(builder, "aboutwindow"));
 	GtkWindow *parent = get_toplevel_for_action(action);
 	gtk_window_set_transient_for(aboutwindow, parent);

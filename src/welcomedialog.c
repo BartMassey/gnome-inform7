@@ -93,14 +93,15 @@ GtkWidget *
 create_welcome_dialog(void)
 {
 	I7App *theapp = i7_app_get();
-	GtkBuilder *builder = create_new_builder("welcomedialog.ui", theapp);
+	gchar *filename = i7_app_get_datafile_path(theapp, "ui/welcomedialog.ui");
+	GtkBuilder *builder = create_new_builder(filename, theapp);
+	g_free(filename);
 	GtkWidget *retval = GTK_WIDGET(load_object(builder, "welcomedialog"));
 	
 	/* Set the background pixmap for this window */
 	GtkRcStyle *newstyle = gtk_widget_get_modifier_style(retval);
-    gchar *filename = i7_app_get_datafile_path_va(theapp, "Documentation", "Welcome Background.png", NULL);
-    newstyle->bg_pixmap_name[GTK_STATE_NORMAL] = g_strdup(filename);
-	g_free(filename);
+    filename = i7_app_get_datafile_path_va(theapp, "Documentation", "Welcome Background.png", NULL);
+    newstyle->bg_pixmap_name[GTK_STATE_NORMAL] = filename; /* take ownership */
     gtk_widget_modify_style(retval, newstyle);
 	
     /* Set the font size to 12 pixels for the widgets in this window */

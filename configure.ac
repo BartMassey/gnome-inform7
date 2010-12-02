@@ -213,7 +213,6 @@ AC_CONFIG_FILES([
 Makefile
 gnome-inform7.spec
 src/Makefile
-src/aboutwindow.ui
 src/inform6/Makefile
 src/inweb/Makefile
 src/inweb/Materials/inweb-configuration.txt
@@ -227,6 +226,8 @@ src/interpreters/glulxe/Makefile
 src/interpreters/git/Makefile
 po/Makefile.in
 data/Makefile
+data/ui/Makefile
+data/ui/aboutwindow.ui
 data/licenses/Makefile
 data/languages/Makefile
 data/styles/Makefile
