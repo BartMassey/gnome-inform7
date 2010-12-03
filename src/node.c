@@ -8,8 +8,7 @@
 #include "node.h"
 #include "skein.h"
 
-#define MIN_TEXT_WIDTH 25.0
-#define LABEL_MULTIPLIER 0.7
+#define DIFFERS_BADGE_WIDTH 8.0
 
 enum {
     PROP_0,
@@ -203,7 +202,15 @@ i7_node_init(I7Node *self)
     	NULL);
     priv->command_item = goo_canvas_text_model_new(GOO_CANVAS_ITEM_MODEL(self), "", 0.0, 0.0, -1, GTK_ANCHOR_CENTER, NULL);
 	priv->label_item = goo_canvas_text_model_new(GOO_CANVAS_ITEM_MODEL(self), "", 0.0, 0.0, -1, GTK_ANCHOR_CENTER, NULL);
-	priv->badge_item = goo_canvas_image_model_new(GOO_CANVAS_ITEM_MODEL(self), NULL, 0.0, 0.0, NULL);
+	priv->badge_item = goo_canvas_path_model_new(GOO_CANVAS_ITEM_MODEL(self), "",
+	  "fill-color", "red",
+	  "line-width", 0,
+	  "visibility", GOO_CANVAS_ITEM_HIDDEN,
+	  NULL);
+	g_object_set_data(G_OBJECT(priv->badge_item), "path-drawn", NULL);
+	g_object_set_data(G_OBJECT(priv->badge_item), "node-part", GINT_TO_POINTER(I7_NODE_PART_DIFFERS_BADGE));
+	/* Avoid drawing the differs badges unless they're actually needed, otherwise
+	it really slows down the story startup */
 
 	priv->x = 0.0;
 	priv->command_width = -1.0;
@@ -687,7 +694,7 @@ i7_node_calculate_size(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canva
 		y properties don't yet exist */
 		goo_canvas_item_model_set_simple_transform(priv->label_item, 0.0, -height, 1.0, 0.0);
 		goo_canvas_item_model_set_simple_transform(priv->label_shape_item, 0.0, -height, 1.0, 0.0);
-		goo_canvas_item_model_set_simple_transform(priv->badge_item, width / 2, 0.0, 1.0, 0.0);
+		goo_canvas_item_model_set_simple_transform(priv->badge_item, width / 2 + DIFFERS_BADGE_WIDTH, height / 2, DIFFERS_BADGE_WIDTH, 0.0);
 		
 		/* Calculate the scale for the pattern gradients */
 		cairo_matrix_init_scale(&matrix, 0.5 / width, 1.0 / height);
@@ -748,16 +755,36 @@ i7_node_calculate_size(I7Node *self, GooCanvasItemModel *skein, GooCanvas *canva
     }
     
     /* Show or hide the differs badge */
-    if(priv->changed && priv->expected_text && *priv->expected_text)
-    	g_object_set(priv->badge_item, 
-    		"pixbuf", I7_SKEIN(skein)->differs_badge,
-    		"visibility", GOO_CANVAS_ITEM_VISIBLE, 
-    		NULL);
-    else
-    	g_object_set(priv->badge_item, 
-    		"pixbuf", I7_SKEIN(skein)->differs_badge,
-    		"visibility", GOO_CANVAS_ITEM_HIDDEN, 
-    		NULL);
+    if(priv->changed && priv->expected_text && *priv->expected_text) {
+    	if(g_object_get_data(G_OBJECT(priv->badge_item), "path-drawn") == NULL) {
+    		/* if the differs badge hasn't been drawn yet, draw it */
+    		g_object_set(priv->badge_item, "data",
+    		"M 1.0,0.0 0.691,0.112 0.949,0.317 0.62,0.325 0.799,0.601 "
+			"0.485,0.505 0.568,0.823 0.3,0.632 0.278,0.961 0.084,0.695 -0.04,0.999 "
+			"-0.14,0.686 -0.355,0.935 -0.35,0.606 -0.632,0.775 -0.524,0.464 "
+			"-0.845,0.534 -0.644,0.274 -0.971,0.239 -0.698,0.056 -0.997,-0.08 "
+			"-0.68,-0.168 -0.92,-0.392 -0.592,-0.374 -0.749,-0.663 -0.443,-0.542 "
+			"-0.5,-0.866 -0.248,-0.655 -0.2,-0.98 -0.028,-0.699 0.121,-0.993 "
+			"0.195,-0.672 0.429,-0.903 0.398,-0.576 0.693,-0.721 0.56,-0.421 "
+			"0.885,-0.465 0.664,-0.222 0.987,-0.16 0.7,-0.0 Z",
+			"visibility", GOO_CANVAS_ITEM_VISIBLE,
+			NULL);
+			/* That SVG code is generated with this Python code:
+			import numpy as N
+			angles = N.linspace(0, 2 * N.pi, 40)
+			radii = N.ones_like(angles)
+			radii[1::2] *= 0.7
+			xs = radii * N.cos(angles)
+			ys = radii * N.sin(angles)
+			print "M",
+			for x, y in zip(xs, ys):
+				print "{0:.3},{1:.3}".format(round(x, 3), round(y, 3)),
+			print "Z" */
+			g_object_set_data(G_OBJECT(priv->badge_item), "path-drawn", GINT_TO_POINTER(1));
+		} else
+    		g_object_set(priv->badge_item, "visibility", GOO_CANVAS_ITEM_VISIBLE, NULL);
+    } else
+    	g_object_set(priv->badge_item, "visibility", GOO_CANVAS_ITEM_HIDDEN, NULL);
 
 	if(size_changed)
 		g_signal_emit_by_name(skein, "needs-layout");

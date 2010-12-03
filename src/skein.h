@@ -65,7 +65,6 @@ struct _I7SkeinClass
 struct _I7Skein
 {
 	GooCanvasGroupModel parent_instance;
-	GdkPixbuf *differs_badge;
 };
 
 typedef enum _I7SkeinError {

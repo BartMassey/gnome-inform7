@@ -5,5 +5,4 @@ context = apps
 iconsdir = $(themedir)/$(size)/$(context)
 
 dist_icons_DATA = \
-	inform7.png \
-	inform7-skein-differs-badge.png
+	inform7.png

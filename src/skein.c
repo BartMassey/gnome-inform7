@@ -121,15 +121,6 @@ i7_skein_init(I7Skein *self)
     priv->vspacing = 40.0;
     gdk_color_parse("black", &priv->locked);
     gdk_color_parse("black", &priv->unlocked);
-    
-    /* Load the "differs badge" */
-    GError *err = NULL;
-    GtkIconTheme *icon_theme = gtk_icon_theme_get_default();
-    self->differs_badge = gtk_icon_theme_load_icon(icon_theme, "inform7-skein-differs-badge", 16, 0, &err);
-    if(!self->differs_badge) {
-    	g_warning("Could not load differs badge: %s", err->message);
-    	g_error_free(err);
-    }
 }
 
 static void
@@ -196,7 +187,6 @@ i7_skein_finalize(GObject *self)
 	
 	g_object_unref(priv->root);
 	goo_canvas_line_dash_unref(priv->unlocked_dash);
-	g_object_unref(I7_SKEIN(self)->differs_badge);
 	
 	G_OBJECT_CLASS(i7_skein_parent_class)->finalize(self);
 }
