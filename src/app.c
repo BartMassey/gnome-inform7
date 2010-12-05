@@ -696,7 +696,7 @@ update_installed_extensions_tree(I7App *app)
 				gtk_tree_store_set(store, &child_iter, 
 					I7_APP_EXTENSION_TEXT, displayname, 
 					I7_APP_EXTENSION_READ_ONLY, TRUE, 
-					I7_APP_EXTENSION_ICON, "inform7", 
+					I7_APP_EXTENSION_ICON, "inform7-builtin", 
 					I7_APP_EXTENSION_PATH, extname, 
 					-1);
 			}
@@ -904,7 +904,7 @@ rebuild_extensions_menu(GtkWidget *parent_item, I7App *app)
 			GtkWidget *extitem;
 			if(readonly) {
 				extitem = gtk_image_menu_item_new_with_label(extname);
-				GtkWidget *image = gtk_image_new_from_icon_name("inform7", GTK_ICON_SIZE_MENU);
+				GtkWidget *image = gtk_image_new_from_icon_name("inform7-builtin", GTK_ICON_SIZE_MENU);
 				gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(extitem), image);
 				g_signal_connect(extitem, "activate", G_CALLBACK(on_open_extension_readonly_activate), path);
 			} else {

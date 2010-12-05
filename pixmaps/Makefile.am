@@ -5,6 +5,10 @@ nobase_dist_icons_DATA = \
 	32x32/apps/inform7.png \
 	48x48/apps/inform7.png \
 	128x128/apps/inform7.png  \
+	16x16/actions/inform7-builtin.png \
+	32x32/actions/inform7-builtin.png \
+	48x48/actions/inform7-builtin.png \
+	128x128/actions/inform7-builtin.png \
 	16x16/mimetypes/application-x-inform.png \
 	32x32/mimetypes/application-x-inform.png \
 	48x48/mimetypes/application-x-inform.png \

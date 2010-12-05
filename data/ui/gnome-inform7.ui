@@ -1,80 +1,98 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
   <requires lib="gtksourceview" version="2473.34008"/>
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkTreeStore" id="installed_extensions_store">
-    <columns>
-      <!-- column-name text -->
-      <column type="gchararray"/>
-      <!-- column-name readonly -->
-      <column type="gboolean"/>
-      <!-- column-name icon -->
-      <column type="gchararray"/>
-      <!-- column-name path -->
-      <column type="gchararray"/>
-    </columns>
+  <object class="GtkAction" id="suggest_feature">
+    <property name="label">Suggest a _Feature...</property>
+    <property name="short_label">Suggest a _Feature</property>
+    <property name="tooltip">Open the Inform 7 suggestions forum in the browser</property>
+    <signal name="activate" handler="action_suggest_feature" swapped="no"/>
   </object>
-  <object class="GtkListStore" id="font_set_model">
-    <columns>
-      <!-- column-name item -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">Use font from theme</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">Use monospace font from theme</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">Use custom font</col>
-      </row>
-    </data>
+  <object class="GtkAction" id="visit_inform7_com">
+    <property name="label">_Visit Inform7.com</property>
+    <property name="tooltip">Go to the Inform 7 website in your web browser</property>
+    <signal name="activate" handler="action_visit_inform7_com" swapped="no"/>
   </object>
-  <object class="GtkListStore" id="font_size_model">
-    <columns>
-      <!-- column-name item -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">Standard</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">Medium</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">Large</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">Huge</col>
-      </row>
-    </data>
+  <object class="GtkAction" id="report_bug">
+    <property name="label">Report a _Bug...</property>
+    <property name="short_label">Report a _Bug</property>
+    <property name="tooltip">Open the Inform 7 bug tracker in the browser</property>
+    <signal name="activate" handler="action_report_bug" swapped="no"/>
   </object>
-  <object class="GtkListStore" id="schemes_list">
-    <columns>
-      <!-- column-name id -->
-      <column type="gchararray"/>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-      <!-- column-name description -->
-      <column type="gchararray"/>
-    </columns>
+  <object class="GtkSourceBuffer" id="sample_buffer">
+    <property name="text" translatable="yes">Part One - the Wharf
+
+The Customs Wharf is a room. [change the description if the cask is open] "Amid the bustle of the quayside, [if the case is open]many eyes stray to your broached cask. [otherwise]nobody takes much notice of a man heaving a cask about.[end if]Sleek gondolas jostle at the plank pier."</property>
+    <property name="highlight_matching_brackets">False</property>
+    <property name="max_undo_levels">-1</property>
   </object>
-  <object class="GtkListStore" id="glulx_terps_model">
-    <columns>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">Glulxe (default)</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">git</col>
-      </row>
-    </data>
+  <object class="GtkSourceBuffer" id="tab_buffer">
+    <property name="text" translatable="yes" comments="Make sure to keep TAB characters ('\t') between the words">	Tab	Tab	Tab	Tab	Tab	Tab	Tab	Tab	Tab	Tab	Tab</property>
+    <property name="highlight_syntax">False</property>
+    <property name="highlight_matching_brackets">False</property>
+    <property name="max_undo_levels">-1</property>
+  </object>
+  <object class="GtkRecentAction" id="open_recent">
+    <property name="label">Open Recen_t</property>
+    <property name="tooltip">Open a recently opened story</property>
+    <property name="limit">10</property>
+    <property name="sort_type">mru</property>
+    <signal name="item-activated" handler="action_open_recent" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="about">
+    <property name="label">_About</property>
+    <property name="tooltip">About this application</property>
+    <property name="stock_id">gtk-about</property>
+    <signal name="activate" handler="action_about" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="quit">
+    <property name="label">_Quit</property>
+    <property name="tooltip">Quit the program</property>
+    <property name="stock_id">gtk-quit</property>
+    <signal name="activate" handler="action_quit" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="preferences">
+    <property name="label">Pr_eferences</property>
+    <property name="tooltip">Configure the application</property>
+    <property name="stock_id">gtk-preferences</property>
+    <signal name="activate" handler="action_preferences" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="open_extension">
+    <property name="label">Open _Extension</property>
+    <property name="tooltip">Open an extension for editing</property>
+  </object>
+  <object class="GtkAction" id="install_extension">
+    <property name="label">Install E_xtension...</property>
+    <property name="tooltip">Install an extension for use in Inform projects</property>
+    <property name="stock_id">gtk-add</property>
+    <signal name="activate" handler="action_install_extension" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="open">
+    <property name="label">_Open...</property>
+    <property name="tooltip">Open an existing story</property>
+    <property name="stock_id">gtk-open</property>
+    <signal name="activate" handler="action_open" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="new">
+    <property name="label">_New...</property>
+    <property name="tooltip">Start a new story</property>
+    <property name="stock_id">gtk-new</property>
+    <signal name="activate" handler="action_new" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="help_menu">
+    <property name="label">_Help</property>
+  </object>
+  <object class="GtkAction" id="edit_menu">
+    <property name="label">_Edit</property>
+  </object>
+  <object class="GtkAction" id="file_menu">
+    <property name="label">_File</property>
+  </object>
+  <object class="GtkActionGroup" id="app_actions"/>
+  <object class="GtkAdjustment" id="tab_ruler_adjustment">
+    <property name="upper">32</property>
+    <property name="step_increment">1</property>
   </object>
   <object class="GtkDialog" id="prefs_dialog">
     <property name="border_width">5</property>
@@ -82,13 +100,11 @@
     <property name="window_position">center</property>
     <property name="icon_name">inform7</property>
     <property name="type_hint">dialog</property>
-    <property name="has_separator">False</property>
-    <signal name="close" handler="gtk_widget_hide"/>
-    <signal name="delete_event" handler="gtk_widget_hide_on_delete"/>
+    <signal name="close" handler="gtk_widget_hide" swapped="no"/>
+    <signal name="delete-event" handler="gtk_widget_hide_on_delete" swapped="no"/>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox2">
         <property name="visible">True</property>
-        <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child>
           <object class="GtkNotebook" id="prefs_notebook">
@@ -99,7 +115,6 @@
               <object class="GtkVBox" id="vbox1">
                 <property name="visible">True</property>
                 <property name="border_width">12</property>
-                <property name="orientation">vertical</property>
                 <property name="spacing">6</property>
                 <child>
                   <object class="GtkHBox" id="hbox5">
@@ -122,8 +137,8 @@
                       <object class="GtkEntry" id="author_name">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="invisible_char">&#x25CF;</property>
-                        <signal name="changed" handler="on_author_name_changed"/>
+                        <property name="invisible_char">●</property>
+                        <signal name="changed" handler="on_author_name_changed" swapped="no"/>
                       </object>
                       <packing>
                         <property name="position">1</property>
@@ -183,7 +198,6 @@
                 <property name="visible">True</property>
                 <property name="tooltip_text" translatable="yes">Preferred author's name for new Inform 7 projects</property>
                 <property name="border_width">12</property>
-                <property name="orientation">vertical</property>
                 <property name="spacing">6</property>
                 <child>
                   <object class="GtkCheckButton" id="indent_wrapped">
@@ -209,7 +223,7 @@
                     <property name="tooltip_text" translatable="yes">If this option is selected, Inform will track the number of tabs at the beginning of the last line and automatically indent the next line accordingly when you insert a new line by pressing return.</property>
                     <property name="use_underline">True</property>
                     <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_auto_indent_toggled"/>
+                    <signal name="toggled" handler="on_auto_indent_toggled" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -225,7 +239,7 @@
                     <property name="tooltip_text" translatable="yes">Inform can keep track of important items in your source files as you type. Enabling this option will allow it to automatically track sections in Natural Inform files.</property>
                     <property name="use_underline">True</property>
                     <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_follow_symbols_toggled"/>
+                    <signal name="toggled" handler="on_follow_symbols_toggled" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -241,7 +255,7 @@
                     <property name="tooltip_text" translatable="yes">If you check this option, Inform will automatically renumber sections when you insert a new one. It will also automatically insert a section number as you type: if you type "Part ", Inform will insert "2 - " and renumber the previous Part 2 to Part 3 and so on.</property>
                     <property name="use_underline">True</property>
                     <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_auto_number_toggled"/>
+                    <signal name="toggled" handler="on_auto_number_toggled" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -285,7 +299,6 @@
                 <property name="visible">True</property>
                 <property name="extension_events">cursor</property>
                 <property name="border_width">12</property>
-                <property name="orientation">vertical</property>
                 <property name="spacing">12</property>
                 <child>
                   <object class="GtkFrame" id="frame1">
@@ -299,7 +312,6 @@
                         <child>
                           <object class="GtkVBox" id="vbox2">
                             <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
                             <property name="spacing">6</property>
                             <child>
                               <object class="GtkCheckButton" id="enable_highlighting">
@@ -309,7 +321,7 @@
                                 <property name="receives_default">False</property>
                                 <property name="use_underline">True</property>
                                 <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_enable_highlighting_toggled"/>
+                                <signal name="toggled" handler="on_enable_highlighting_toggled" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -332,7 +344,7 @@
                                     <property name="use_font">True</property>
                                     <property name="show_style">False</property>
                                     <property name="show_size">False</property>
-                                    <signal name="font_set" handler="on_custom_font_font_set"/>
+                                    <signal name="font-set" handler="on_custom_font_font_set" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -388,7 +400,7 @@
                                     <property name="visible">True</property>
                                     <property name="model">font_set_model</property>
                                     <property name="active">0</property>
-                                    <signal name="changed" handler="on_font_set_changed"/>
+                                    <signal name="changed" handler="on_font_set_changed" swapped="no"/>
                                     <child>
                                       <object class="GtkCellRendererText" id="font_set_renderer"/>
                                       <attributes>
@@ -406,7 +418,7 @@
                                     <property name="visible">True</property>
                                     <property name="model">font_size_model</property>
                                     <property name="active">0</property>
-                                    <signal name="changed" handler="on_font_size_changed"/>
+                                    <signal name="changed" handler="on_font_size_changed" swapped="no"/>
                                     <child>
                                       <object class="GtkCellRendererText" id="font_size_renderer"/>
                                       <attributes>
@@ -454,7 +466,6 @@
                         <child>
                           <object class="GtkVBox" id="vbox9">
                             <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
                             <property name="spacing">12</property>
                             <child>
                               <object class="GtkScrolledWindow" id="scrolledwindow17">
@@ -472,7 +483,7 @@
                                     <property name="search_column">1</property>
                                     <property name="show_expanders">False</property>
                                     <property name="tooltip_column">2</property>
-                                    <signal name="cursor_changed" handler="on_styles_list_cursor_changed"/>
+                                    <signal name="cursor-changed" handler="on_styles_list_cursor_changed" swapped="no"/>
                                     <child>
                                       <object class="GtkTreeViewColumn" id="schemes_column">
                                         <child>
@@ -504,7 +515,7 @@
                                     <property name="receives_default">True</property>
                                     <property name="tooltip_text" translatable="yes">Add a style scheme to the list</property>
                                     <property name="use_stock">True</property>
-                                    <signal name="clicked" handler="on_style_add_clicked"/>
+                                    <signal name="clicked" handler="on_style_add_clicked" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -521,7 +532,7 @@
                                     <property name="receives_default">True</property>
                                     <property name="tooltip_text" translatable="yes">Remove the selected style scheme from the list</property>
                                     <property name="use_stock">True</property>
-                                    <signal name="clicked" handler="on_style_remove_clicked"/>
+                                    <signal name="clicked" handler="on_style_remove_clicked" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -564,7 +575,6 @@
                         <child>
                           <object class="GtkVBox" id="vbox6">
                             <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
                             <child>
                               <object class="GtkHScale" id="tab_ruler">
                                 <property name="visible">True</property>
@@ -573,8 +583,8 @@
                                 <property name="adjustment">tab_ruler_adjustment</property>
                                 <property name="restrict_to_fill_level">False</property>
                                 <property name="digits">0</property>
-                                <signal name="value_changed" handler="on_tab_ruler_value_changed"/>
-                                <signal name="format_value" handler="on_tab_ruler_format_value"/>
+                                <signal name="value-changed" handler="on_tab_ruler_value_changed" swapped="no"/>
+                                <signal name="format-value" handler="on_tab_ruler_format_value" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="position">0</property>
@@ -705,7 +715,6 @@
                     <child>
                       <object class="GtkVBox" id="vbox7">
                         <property name="visible">True</property>
-                        <property name="orientation">vertical</property>
                         <property name="spacing">12</property>
                         <child>
                           <object class="GtkScrolledWindow" id="scrolledwindow4">
@@ -720,9 +729,9 @@
                                 <property name="tooltip_text" translatable="yes">This shows the list of installed Natural Inform extensions. You can drag individual extension files here to add them to their author's directory automatically.</property>
                                 <property name="model">installed_extensions_store</property>
                                 <property name="headers_visible">False</property>
-                                <signal name="cursor_changed" handler="on_extensions_view_cursor_changed"/>
-                                <signal name="drag_drop" handler="on_extensions_view_drag_drop"/>
-                                <signal name="drag_data_received" handler="on_extensions_view_drag_data_received"/>
+                                <signal name="cursor-changed" handler="on_extensions_view_cursor_changed" swapped="no"/>
+                                <signal name="drag-drop" handler="on_extensions_view_drag_drop" swapped="no"/>
+                                <signal name="drag-data-received" handler="on_extensions_view_drag_data_received" swapped="no"/>
                                 <child>
                                   <object class="GtkTreeViewColumn" id="extensions_column">
                                     <child>
@@ -753,7 +762,7 @@
                             <child>
                               <object class="GtkImage" id="image6">
                                 <property name="visible">True</property>
-                                <property name="icon_name">inform7</property>
+                                <property name="icon_name">inform7-builtin</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -790,7 +799,7 @@
                                 <property name="receives_default">True</property>
                                 <property name="tooltip_text" translatable="yes">Adds a new Natural Inform extension using a file chooser.</property>
                                 <property name="use_stock">True</property>
-                                <signal name="clicked" handler="on_extensions_add_clicked"/>
+                                <signal name="clicked" handler="on_extensions_add_clicked" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -806,7 +815,7 @@
                                 <property name="receives_default">True</property>
                                 <property name="tooltip_text" translatable="yes">Deletes the currently selected Natural Inform extension.</property>
                                 <property name="use_stock">True</property>
-                                <signal name="clicked" handler="on_extensions_remove_clicked"/>
+                                <signal name="clicked" handler="on_extensions_remove_clicked" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -870,7 +879,6 @@
               <object class="GtkVBox" id="vbox10">
                 <property name="visible">True</property>
                 <property name="border_width">12</property>
-                <property name="orientation">vertical</property>
                 <property name="spacing">12</property>
                 <child>
                   <object class="GtkFrame" id="frame6">
@@ -884,7 +892,6 @@
                         <child>
                           <object class="GtkVBox" id="vbox11">
                             <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
                             <property name="spacing">6</property>
                             <child>
                               <object class="GtkCheckButton" id="clean_build_files">
@@ -895,7 +902,7 @@
                                 <property name="tooltip_text" translatable="yes">Build files are files that are generated while turning your story into a game file. Selecting this option will ensure that they are deleted when you close or save a project. These files can grow quite large (many times the size of your source code), so deleting them is a good idea if you are planning to send a project to someone else.</property>
                                 <property name="use_underline">True</property>
                                 <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_clean_build_files_toggled"/>
+                                <signal name="toggled" handler="on_clean_build_files_toggled" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -911,7 +918,7 @@
                                 <property name="tooltip_text" translatable="yes">Selecting this option will cause Inform to additionally clean out the project's various index files. These are generated by the Inform 7 compiler and can be safely deleted, though they may be useful the next time you open the project.</property>
                                 <property name="use_underline">True</property>
                                 <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_clean_index_files_toggled"/>
+                                <signal name="toggled" handler="on_clean_index_files_toggled" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -962,7 +969,7 @@
                               <object class="GtkComboBox" id="glulx_combo">
                                 <property name="visible">True</property>
                                 <property name="model">glulx_terps_model</property>
-                                <signal name="changed" handler="on_glulx_combo_changed"/>
+                                <signal name="changed" handler="on_glulx_combo_changed" swapped="no"/>
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext1"/>
                                   <attributes>
@@ -1003,7 +1010,6 @@
                         <child>
                           <object class="GtkVBox" id="vbox12">
                             <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
                             <property name="spacing">6</property>
                             <child>
                               <object class="GtkCheckButton" id="show_debug_tabs">
@@ -1014,7 +1020,7 @@
                                 <property name="tooltip_text" translatable="yes">Selecting this option will display two extra tabs in the Errors pane when the story is compiled. One of these shows the debugging log from the compiler, and the other shows the Inform 6 code that the compiler has generated from the story.</property>
                                 <property name="use_underline">True</property>
                                 <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_show_debug_tabs_toggled"/>
+                                <signal name="toggled" handler="on_show_debug_tabs_toggled" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="position">0</property>
@@ -1098,7 +1104,7 @@
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
-                <signal name="clicked" handler="gtk_widget_hide" object="prefs_dialog"/>
+                <signal name="clicked" handler="gtk_widget_hide" object="prefs_dialog" swapped="yes"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1119,95 +1125,77 @@
       <action-widget response="0">prefs_close</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkAdjustment" id="tab_ruler_adjustment">
-    <property name="upper">32</property>
-    <property name="step_increment">1</property>
+  <object class="GtkListStore" id="glulx_terps_model">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Glulxe (default)</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">git</col>
+      </row>
+    </data>
   </object>
-  <object class="GtkActionGroup" id="app_actions"/>
-  <object class="GtkAction" id="file_menu">
-    <property name="label">_File</property>
+  <object class="GtkListStore" id="schemes_list">
+    <columns>
+      <!-- column-name id -->
+      <column type="gchararray"/>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name description -->
+      <column type="gchararray"/>
+    </columns>
   </object>
-  <object class="GtkAction" id="edit_menu">
-    <property name="label">_Edit</property>
+  <object class="GtkListStore" id="font_size_model">
+    <columns>
+      <!-- column-name item -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Standard</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Medium</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Large</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Huge</col>
+      </row>
+    </data>
   </object>
-  <object class="GtkAction" id="help_menu">
-    <property name="label">_Help</property>
+  <object class="GtkListStore" id="font_set_model">
+    <columns>
+      <!-- column-name item -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Use font from theme</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Use monospace font from theme</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Use custom font</col>
+      </row>
+    </data>
   </object>
-  <object class="GtkAction" id="new">
-    <property name="label">_New...</property>
-    <property name="tooltip">Start a new story</property>
-    <property name="stock_id">gtk-new</property>
-    <signal name="activate" handler="action_new"/>
-  </object>
-  <object class="GtkAction" id="open">
-    <property name="label">_Open...</property>
-    <property name="tooltip">Open an existing story</property>
-    <property name="stock_id">gtk-open</property>
-    <signal name="activate" handler="action_open"/>
-  </object>
-  <object class="GtkAction" id="install_extension">
-    <property name="label">Install E_xtension...</property>
-    <property name="tooltip">Install an extension for use in Inform projects</property>
-    <property name="stock_id">gtk-add</property>
-    <signal name="activate" handler="action_install_extension"/>
-  </object>
-  <object class="GtkAction" id="open_extension">
-    <property name="label">Open _Extension</property>
-    <property name="tooltip">Open an extension for editing</property>
-  </object>
-  <object class="GtkAction" id="preferences">
-    <property name="label">Pr_eferences</property>
-    <property name="tooltip">Configure the application</property>
-    <property name="stock_id">gtk-preferences</property>
-    <signal name="activate" handler="action_preferences"/>
-  </object>
-  <object class="GtkAction" id="quit">
-    <property name="label">_Quit</property>
-    <property name="tooltip">Quit the program</property>
-    <property name="stock_id">gtk-quit</property>
-    <signal name="activate" handler="action_quit"/>
-  </object>
-  <object class="GtkAction" id="about">
-    <property name="label">_About</property>
-    <property name="tooltip">About this application</property>
-    <property name="stock_id">gtk-about</property>
-    <signal name="activate" handler="action_about"/>
-  </object>
-  <object class="GtkRecentAction" id="open_recent">
-    <property name="label">Open Recen_t</property>
-    <property name="tooltip">Open a recently opened story</property>
-    <property name="sort_type">mru</property>
-    <property name="limit">10</property>
-    <signal name="item_activated" handler="action_open_recent"/>
-  </object>
-  <object class="GtkSourceBuffer" id="tab_buffer">
-    <property name="text" translatable="yes" comments="Make sure to keep TAB characters ('\t') between the words">	Tab	Tab	Tab	Tab	Tab	Tab	Tab	Tab	Tab	Tab	Tab</property>
-    <property name="highlight_syntax">False</property>
-    <property name="highlight_matching_brackets">False</property>
-    <property name="max_undo_levels">-1</property>
-  </object>
-  <object class="GtkSourceBuffer" id="sample_buffer">
-    <property name="text" translatable="yes">Part One - the Wharf
-
-The Customs Wharf is a room. [change the description if the cask is open] "Amid the bustle of the quayside, [if the case is open]many eyes stray to your broached cask. [otherwise]nobody takes much notice of a man heaving a cask about.[end if]Sleek gondolas jostle at the plank pier."</property>
-    <property name="highlight_matching_brackets">False</property>
-    <property name="max_undo_levels">-1</property>
-  </object>
-  <object class="GtkAction" id="report_bug">
-    <property name="label">Report a _Bug...</property>
-    <property name="short_label">Report a _Bug</property>
-    <property name="tooltip">Open the Inform 7 bug tracker in the browser</property>
-    <signal name="activate" handler="action_report_bug"/>
-  </object>
-  <object class="GtkAction" id="visit_inform7_com">
-    <property name="label">_Visit Inform7.com</property>
-    <property name="tooltip">Go to the Inform 7 website in your web browser</property>
-    <signal name="activate" handler="action_visit_inform7_com"/>
-  </object>
-  <object class="GtkAction" id="suggest_feature">
-    <property name="label">Suggest a _Feature...</property>
-    <property name="short_label">Suggest a _Feature</property>
-    <property name="tooltip">Open the Inform 7 suggestions forum in the browser</property>
-    <signal name="activate" handler="action_suggest_feature"/>
+  <object class="GtkTreeStore" id="installed_extensions_store">
+    <columns>
+      <!-- column-name text -->
+      <column type="gchararray"/>
+      <!-- column-name readonly -->
+      <column type="gboolean"/>
+      <!-- column-name icon -->
+      <column type="gchararray"/>
+      <!-- column-name path -->
+      <column type="gchararray"/>
+    </columns>
   </object>
 </interface>
