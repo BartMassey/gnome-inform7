@@ -401,6 +401,18 @@ get_text_content_from_node(xmlNode *node)
     return NULL;
 }
 
+/* Doesn't actually free the node itself, but removes it from the canvas so that
+ it gets freed. Has reversed arguments and returns FALSE for use in tree 
+ traversals. */
+static gboolean
+remove_node_from_canvas(GNode *gnode, I7Skein *self)
+{
+	if(gnode->parent)
+		goo_canvas_item_model_remove_child(GOO_CANVAS_ITEM_MODEL(self), goo_canvas_item_model_find_child(GOO_CANVAS_ITEM_MODEL(self), I7_NODE(gnode->data)->tree_item));
+    goo_canvas_item_model_remove_child(GOO_CANVAS_ITEM_MODEL(self), goo_canvas_item_model_find_child(GOO_CANVAS_ITEM_MODEL(self), GOO_CANVAS_ITEM_MODEL(gnode->data)));
+	return FALSE;
+}
+
 gboolean
 i7_skein_load(I7Skein *self, const gchar *filename, GError **error)
 {
@@ -499,7 +511,7 @@ i7_skein_load(I7Skein *self, const gchar *filename, GError **error)
     }
 
     /* Discard the current skein and replace with the new */
-    g_object_unref(priv->root);
+    g_node_traverse(priv->root->gnode, G_POST_ORDER, G_TRAVERSE_ALL, -1, (GNodeTraverseFunc)remove_node_from_canvas, self);
     priv->root = I7_NODE(g_hash_table_lookup(nodetable, root_id));
     priv->played = NULL;
 	i7_skein_set_played_node(self, I7_NODE(g_hash_table_lookup(nodetable, active_id)));
@@ -801,17 +813,6 @@ i7_skein_add_new_parent(I7Skein *self, I7Node *node)
 	g_signal_emit_by_name(self, "modified");
     
     return newnode;
-}
-
-/* Doesn't actually free the node itself, but removes it from the canvas so that
- it gets freed. Has reversed arguments and returns FALSE for use in tree 
- traversals. */
-static gboolean
-remove_node_from_canvas(GNode *gnode, I7Skein *self)
-{
-	goo_canvas_item_model_remove_child(GOO_CANVAS_ITEM_MODEL(self), goo_canvas_item_model_find_child(GOO_CANVAS_ITEM_MODEL(self), I7_NODE(gnode->data)->tree_item));
-    goo_canvas_item_model_remove_child(GOO_CANVAS_ITEM_MODEL(self), goo_canvas_item_model_find_child(GOO_CANVAS_ITEM_MODEL(self), GOO_CANVAS_ITEM_MODEL(gnode->data)));
-	return FALSE;
 }
 
 gboolean
