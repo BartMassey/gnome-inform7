@@ -131,7 +131,8 @@ LT_INIT([dlopen])                # Should call it this way, but
 AC_PROG_LIBTOOL                   # Old way of declaring Libtool
 # Other tools used in this package's various make scripts
 AC_PATH_PROG([PERL], [perl])      # Perl
-AC_PATH_PROG([TAR], [gnutar gtar tar])   # tar
+AC_PATH_PROG([TAR], [tar gtar])   # tar
+AC_PATH_PROG([UNLZMA], [unlzma])  # unlzma (nonGNU tar doesn't have --lzma)
 AC_PATH_PROG([XARGS], [xargs])    # xargs
 AC_PATH_PROG([CHMOD], [chmod])    # chmod
 AC_PATH_PROG([CAT], [cat])        # cat
