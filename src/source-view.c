@@ -171,8 +171,12 @@ i7_source_view_set_spellcheck(I7SourceView *self, gboolean spellcheck)
 
 	if(spellcheck) {
 		GError *error = NULL;
-		if(!(priv->spell = gtkspell_new_attach(GTK_TEXT_VIEW(self->source), NULL, &error)))
-	    	error_dialog(NULL, error, _("Error initializing spell checking: "));
+		priv->spell = gtkspell_new_attach(GTK_TEXT_VIEW(self->source), NULL, &error);
+		/* Fail relatively quietly if there's a problem */
+		if(!priv->spell) {
+	    	g_warning(_("Error initializing spell checking: %s. Is your spelling dictionary installed?"), error->message);
+	    	g_error_free(error);
+	    }
 	} else {
 		if(priv->spell) {
 			gtkspell_detach(priv->spell);
