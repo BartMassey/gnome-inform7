@@ -105,7 +105,16 @@ get_filename_from_save_dialog(const gchar *default_filename)
 		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, 
 		NULL);
 
-	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), default_filename? default_filename : _("Untitled document"));
+	if(default_filename) {
+		gchar *path = g_path_get_dirname(default_filename);
+		gchar *file = g_path_get_basename(default_filename);
+		gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), path);
+		gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), file);
+		g_free(path);
+		g_free(file);
+	} else {
+		gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), _("Untitled document"));
+	}
 	
 	GtkFileFilter *filter = gtk_file_filter_new();
 	gtk_file_filter_add_pattern(filter, "*.inform");
