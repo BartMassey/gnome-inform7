@@ -635,15 +635,16 @@ update_installed_extensions_tree(I7App *app)
 		to it instead of making a new entry */
 		
 		gboolean found = FALSE;
-		gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &parent_iter);
-		do {
-			gchar *author;
-			gtk_tree_model_get(GTK_TREE_MODEL(store), &parent_iter, I7_APP_EXTENSION_TEXT, &author, -1);
-			if(strcmp(dir_entry, author) == 0) {
-				found = TRUE;
-				break;
-			}
-		} while(gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &parent_iter));
+		if(gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &parent_iter)) {
+			do {
+				gchar *author;
+				gtk_tree_model_get(GTK_TREE_MODEL(store), &parent_iter, I7_APP_EXTENSION_TEXT, &author, -1);
+				if(strcmp(dir_entry, author) == 0) {
+					found = TRUE;
+					break;
+				}
+			} while(gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &parent_iter));
+		}
 		if(!found) {
 			gtk_tree_store_prepend(store, &parent_iter, NULL);
 			gtk_tree_store_set(store, &parent_iter, 
