@@ -230,6 +230,7 @@ data/Makefile
 data/ui/Makefile
 data/ui/aboutwindow.ui
 data/licenses/Makefile
+data/licenses/license.html
 data/languages/Makefile
 data/styles/Makefile
 pixmaps/Makefile

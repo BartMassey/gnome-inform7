@@ -11,7 +11,7 @@
     <property name="icon_name">inform7</property>
     <property name="type_hint">dialog</property>
     <property name="program_name">Inform</property>
-    <property name="copyright" translatable="yes">Copyright 2006&#x2012;2009 P. F. Chimento (front end),
+    <property name="copyright" translatable="yes">Copyright 2006&#x2012;@COPYRIGHT_YEAR@ P. F. Chimento (front end),
 Graham Nelson et al. (compiler).</property>
     <property name="comments">Inform (1.2 6.31/@PACKAGE_VERSION@)</property>
     <property name="website">http://www.inform7.com</property>
