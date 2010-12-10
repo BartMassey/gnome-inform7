@@ -973,7 +973,7 @@ i7_panel_update_fonts(I7Panel *self)
 		"grid.user1 { color: #303030; background-color: #ffffff; }"
 		"buffer.normal { font-size: %d; font-family: '%s'; }"
 		"buffer.header { font-size: %d; font-family: '%s';"
-		"    font-weight: bold; text-align: center; }"
+		"    font-weight: bold; }"
 		"buffer.subheader { font-size: %d; font-family: '%s';"
 	    "    font-weight: bold; }"
 		"buffer.alert { color: #aa0000; font-weight: bold; }"
