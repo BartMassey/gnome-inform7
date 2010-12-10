@@ -122,9 +122,6 @@ prepare_ni_compiler(CompilerData *data)
 	I7_STORY_USE_PRIVATE(data->story, priv);
     GError *err = NULL;
     
-    /* Show the Errors/Progress tab */
-	i7_story_show_tab(data->story, I7_PANE_ERRORS, I7_ERRORS_TAB_PROGRESS);
-    
     /* Clear the previous compile output */
     gtk_text_buffer_set_text(priv->progress, "", -1);
     html_load_blank(WEBKIT_WEB_VIEW(data->story->panel[LEFT]->errors_tabs[I7_ERRORS_TAB_PROBLEMS]));
