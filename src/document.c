@@ -149,7 +149,7 @@ i7_document_init(I7Document *self)
 		"next_section", "<ctrl>Page_Down",
 		"indent", "<ctrl>T",
 		"unindent", "<shift><ctrl>T",
-		"renumber_all_sections", "<shift><ctrl>N",
+		"renumber_all_sections", "<alt><ctrl>N",
 		"enable_elastic_tabs", "", 
 		NULL
 	};

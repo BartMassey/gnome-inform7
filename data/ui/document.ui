@@ -153,8 +153,8 @@
     <signal name="activate" handler="action_increase_restriction"/>
   </object>
   <object class="GtkAction" id="decrease_restriction">
-    <property name="label">_Decrease Restriction</property>
-    <property name="short_label">Decrease</property>
+    <property name="label">Re_duce Restriction</property>
+    <property name="short_label">Reduce</property>
     <property name="tooltip">Show the surrounding hierarchical level in the Source</property>
     <property name="stock_id">gtk-go-back</property>
     <property name="sensitive">False</property>
