@@ -1,7 +1,19 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
   <!-- interface-naming-policy project-wide -->
+  <object class="GtkImage" id="welcome_reopen_image">
+    <property name="visible">True</property>
+    <property name="stock">gtk-jump-to</property>
+  </object>
+  <object class="GtkImage" id="welcome_open_image">
+    <property name="visible">True</property>
+    <property name="stock">gtk-open</property>
+  </object>
+  <object class="GtkImage" id="welcome_new_image">
+    <property name="visible">True</property>
+    <property name="stock">gtk-new</property>
+  </object>
   <object class="GtkWindow" id="welcomedialog">
     <property name="width_request">550</property>
     <property name="height_request">364</property>
@@ -10,7 +22,7 @@
     <property name="window_position">center-always</property>
     <property name="icon_name">inform7</property>
     <property name="urgency_hint">True</property>
-    <signal name="delete_event" handler="gtk_main_quit"/>
+    <signal name="delete-event" handler="gtk_main_quit" swapped="no"/>
     <child>
       <object class="GtkFixed" id="fixed1">
         <property name="visible">True</property>
@@ -45,10 +57,10 @@ Inform 7 was created by Graham Nelson, with the help of Emily Short and many oth
                 <property name="label" translatable="yes">Start a _new project</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
+                <property name="receives_default">False</property>
                 <property name="image">welcome_new_image</property>
                 <property name="use_underline">True</property>
-                <signal name="clicked" handler="on_welcome_new_button_clicked"/>
+                <signal name="clicked" handler="on_welcome_new_button_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -57,15 +69,14 @@ Inform 7 was created by Graham Nelson, with the help of Emily Short and many oth
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="welcome_reopen_button">
-                <property name="label" translatable="yes">_Reopen last project</property>
+              <object class="GtkButton" id="welcome_open_button">
+                <property name="label" translatable="yes">_Open an existing project</property>
                 <property name="visible">True</property>
-                <property name="sensitive">False</property>
                 <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="image">welcome_reopen_image</property>
+                <property name="receives_default">False</property>
+                <property name="image">welcome_open_image</property>
                 <property name="use_underline">True</property>
-                <signal name="clicked" handler="on_welcome_reopen_button_clicked"/>
+                <signal name="clicked" handler="on_welcome_open_button_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -74,14 +85,19 @@ Inform 7 was created by Graham Nelson, with the help of Emily Short and many oth
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="welcome_open_button">
-                <property name="label" translatable="yes">_Open an existing project</property>
+              <object class="GtkButton" id="welcome_reopen_button">
+                <property name="label" translatable="yes">_Reopen last project</property>
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">True</property>
+                <property name="has_focus">True</property>
+                <property name="is_focus">True</property>
+                <property name="can_default">True</property>
+                <property name="has_default">True</property>
                 <property name="receives_default">True</property>
-                <property name="image">welcome_open_image</property>
+                <property name="image">welcome_reopen_image</property>
                 <property name="use_underline">True</property>
-                <signal name="clicked" handler="on_welcome_open_button_clicked"/>
+                <signal name="clicked" handler="on_welcome_reopen_button_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -97,20 +113,5 @@ Inform 7 was created by Graham Nelson, with the help of Emily Short and many oth
         </child>
       </object>
     </child>
-  </object>
-  <object class="GtkImage" id="welcome_new_image">
-    <property name="visible">True</property>
-    <property name="stock">gtk-new</property>
-    <property name="icon-size">4</property>
-  </object>
-  <object class="GtkImage" id="welcome_reopen_image">
-    <property name="visible">True</property>
-    <property name="stock">gtk-jump-to</property>
-    <property name="icon-size">4</property>
-  </object>
-  <object class="GtkImage" id="welcome_open_image">
-    <property name="visible">True</property>
-    <property name="stock">gtk-open</property>
-    <property name="icon-size">4</property>
   </object>
 </interface>
