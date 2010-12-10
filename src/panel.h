@@ -74,6 +74,7 @@ typedef struct {
 	I7SourceView *sourceview;
 	GtkToolItem *labels;
 	GtkWidget *labels_menu;
+	GtkAction *labels_action;
 	GtkWidget *z5;
 	GtkWidget *z8;
 	GtkWidget *z6;

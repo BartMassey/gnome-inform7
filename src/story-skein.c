@@ -275,9 +275,13 @@ void
 on_labels_changed(I7Skein *skein, I7Panel *panel)
 {
 	GSList *labels = i7_skein_get_labels(skein);
-
+	
 	/* Empty the menu */
 	gtk_container_foreach(GTK_CONTAINER(panel->labels_menu), (GtkCallback)gtk_widget_destroy, NULL);
+	
+	/* Set insensitive if empty */
+	gtk_widget_set_sensitive(GTK_WIDGET(panel->labels), (labels != NULL));
+	gtk_action_set_sensitive(panel->labels_action, (labels != NULL));
 	
 	/* Create a new menu */
 	g_slist_foreach(labels, (GFunc)create_labels_menu, panel);
